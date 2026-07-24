@@ -2,10 +2,16 @@
 
 import { accountService } from "@/services/account.service";
 import type { CreateAccountResponse } from "@/types";
+import type { CreateAccountFormValues } from "@/schemas/onboarding/account.schema";
 
 export async function createAccount(
-  password: string,
+  values: CreateAccountFormValues,
 ): Promise<CreateAccountResponse> {
-  const response = await accountService.createAccount(password);
+  const response = await accountService.createAccount(
+    values.password,
+    values.gender,
+    values.image,
+    values.imagePublicId,
+  );
   return response;
 }
