@@ -1,10 +1,26 @@
 "use client";
 
 import { useEffect, useRef, useMemo } from "react";
-import { PanelRight, Users, MessageSquare } from "lucide-react";
+import { ArrowLeft, Search, MoreVertical, Info, Trash2, MessageSquare } from "lucide-react";
 import type { Conversation, Message } from "@/types/message.types";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import {
+  MessageScrollerProvider,
+  MessageScroller,
+  MessageScrollerViewport,
+  MessageScrollerContent,
+  MessageScrollerItem,
+  MessageScrollerButton,
+} from "@/components/ui/message-scroller";
+import { Marker, MarkerContent } from "@/components/ui/marker";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { OnlineStatus } from "./online-status";
@@ -22,22 +38,16 @@ interface ChatAreaProps {
   loadingMessages: boolean;
   hasMore: boolean;
   onlineUsers: Set<string>;
-  /** Whether the other participant(s) in THIS conversation are typing. */
   typing: { active: boolean; names?: string[] };
-  profileOpen: boolean;
-  onToggleProfile: () => void;
+  onOpenProfile: () => void;
   onSend: (text: string) => void;
   onSendFile: (file: File) => void;
   onTypingStart: () => void;
   onTypingStop: () => void;
   onLoadOlder: () => void;
+  onBackToList: () => void;
 }
 
-/**
- * Column 3: chat header, scrollable date-grouped message thread, and the
- * composer. Handles scroll-to-bottom on new messages and load-older on
- * scroll-to-top (infinite scroll upward).
- */
 export function ChatArea({
   conversation,
   currentUserId,
@@ -46,16 +56,15 @@ export function ChatArea({
   hasMore,
   onlineUsers,
   typing,
-  profileOpen,
-  onToggleProfile,
+  onOpenProfile,
   onSend,
   onSendFile,
   onTypingStart,
   onTypingStop,
   onLoadOlder,
+  onBackToList,
 }: ChatAreaProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const bottomRef = useRef<HTMLDivElement>(null);
   const prevLenRef = useRef(0);
 
   const { name, image, isGroup } = conversation
@@ -68,7 +77,6 @@ export function ChatArea({
     : undefined;
   const isOnline = otherId ? onlineUsers.has(otherId) : false;
 
-  // Group messages into day buckets in chronological order.
   const groups = useMemo(() => {
     const buckets: { label: string; items: Message[] }[] = [];
     for (const m of messages) {
@@ -80,24 +88,11 @@ export function ChatArea({
     return buckets;
   }, [messages]);
 
-  // Auto-scroll to bottom when new messages arrive (only if already near bottom
-  // or on first load), preserving position when prepending older messages.
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const grew = messages.length > prevLenRef.current;
-    const nearBottom =
-      el.scrollHeight - el.scrollTop - el.clientHeight < 200;
-    if (grew && (nearBottom || prevLenRef.current === 0)) {
-      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const el = e.currentTarget;
+    if (el.scrollTop < 60 && hasMore && !loadingMessages) {
+      onLoadOlder();
     }
-    prevLenRef.current = messages.length;
-  }, [messages]);
-
-  const handleScroll = () => {
-    const el = scrollRef.current;
-    if (!el || loadingMessages || !hasMore) return;
-    if (el.scrollTop < 60) onLoadOlder();
   };
 
   if (!conversation) {
@@ -112,95 +107,132 @@ export function ChatArea({
   return (
     <div className="flex h-full flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between gap-3 border-b bg-background px-4 py-3">
-        {isGroup ? (
-          <GroupChatHeader
-            conversation={conversation}
-            onlineUsers={onlineUsers}
-            currentUserId={currentUserId}
-          />
-        ) : (
-          <div className="flex items-center gap-3">
-            <Avatar id={conversation.id} name={name} src={image} className="size-10" />
-            <div>
-              <p className="font-semibold text-foreground">{name}</p>
-              <OnlineStatus online={isOnline} showLabel />
-            </div>
-          </div>
-        )}
-
+      <div className="flex items-center gap-2 border-b bg-background px-4 py-3">
         <Button
           variant="ghost"
           size="icon"
-          onClick={onToggleProfile}
-          aria-label="Toggle profile panel"
-          className={cn(profileOpen && "bg-muted")}
+          onClick={onBackToList}
+          className="shrink-0 md:hidden"
+          aria-label="Back to conversations"
         >
-          {isGroup ? <Users className="size-4" /> : <PanelRight className="size-4" />}
+          <ArrowLeft className="size-5" />
         </Button>
+
+        <button
+          type="button"
+          onClick={onOpenProfile}
+          className="flex min-w-0 flex-1 items-center gap-3 text-left"
+        >
+          {isGroup ? (
+            <GroupChatHeader
+              conversation={conversation}
+              onlineUsers={onlineUsers}
+              currentUserId={currentUserId}
+            />
+          ) : (
+            <>
+              <Avatar id={conversation.id} name={name} src={image} className="size-10 shrink-0" />
+              <div className="min-w-0">
+                <p className="truncate font-semibold text-foreground">{name}</p>
+                <OnlineStatus online={isOnline} showLabel />
+              </div>
+            </>
+          )}
+        </button>
+
+        <Button variant="ghost" size="icon" aria-label="Search in conversation">
+          <Search className="size-4" />
+        </Button>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            render={<Button variant="ghost" size="icon" />}
+          >
+            <MoreVertical className="size-4" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuItem onClick={onOpenProfile}>
+              <Info className="size-4" />
+              {isGroup ? "Group info" : "Contact info"}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem variant="destructive" onClick={() => {}}>
+              <Trash2 className="size-4" />
+              Clear messages
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
-      {/* Thread */}
-      <div
-        ref={scrollRef}
-        onScroll={handleScroll}
-        className="min-h-0 flex-1 space-y-3 overflow-y-auto bg-muted/40 px-4 py-4"
-      >
-        {loadingMessages && messages.length === 0 ? (
-          <div className="space-y-4">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="flex gap-2">
-                <Skeleton className="size-8 rounded-full" />
-                <Skeleton className="h-14 w-2/3 rounded-2xl" />
-              </div>
-            ))}
-          </div>
-        ) : (
-          <>
-            {hasMore && (
-              <p className="py-2 text-center text-xs text-[#8696a0]">
-                Load older messages…
-              </p>
-            )}
-            {groups.map((bucket, bucketIdx) => (
-              <div key={`day-${bucketIdx}`} className="space-y-2.5">
-                <div className="sticky top-0 z-10 flex justify-center py-1">
-                  <span className="rounded-full bg-background/80 px-3 py-1 text-[11px] font-medium text-muted-foreground ring-1 ring-foreground/10 backdrop-blur">
-                    {bucket.label}
-                  </span>
+      {/* Messages with MessageScroller */}
+      <MessageScrollerProvider autoScroll defaultScrollPosition="end">
+        <MessageScroller className="flex-1">
+            <MessageScrollerViewport ref={scrollRef} onScroll={handleScroll}>
+              <MessageScrollerContent className="gap-3 px-4 pb-8">
+              {loadingMessages && messages.length === 0 ? (
+                <div className="mt-auto space-y-4">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="flex gap-2">
+                      <Skeleton className="size-8 rounded-full" />
+                      <Skeleton className="h-14 w-2/3 rounded-2xl" />
+                    </div>
+                  ))}
                 </div>
-                {bucket.items.map((m, idx) => {
-                  const prev = bucket.items[idx - 1];
-                  const showSender =
-                    !prev || prev.senderId !== m.senderId || !isSameDay(prev.createdAt, m.createdAt);
-                  return (
-                    <MessageBubble
-                      key={`${bucketIdx}-${idx}-${m.id}`}
-                      message={m}
-                      isOwn={m.senderId === currentUserId}
-                      showSender={showSender}
-                      participants={
-                        conversation.conversationParticipants?.map((p) => ({
-                          id: p.userId,
-                          name: p.user?.name ?? "User",
-                          image: p.user?.image,
-                        })) ?? []
-                      }
-                    />
-                  );
-                })}
-              </div>
-            ))}
+              ) : (
+                <>
+                  <div className="flex-1" />
+                  {hasMore && (
+                    <MessageScrollerItem messageId="load-older">
+                      <p className="py-2 text-center text-xs text-muted-foreground">
+                        Load older messages...
+                      </p>
+                    </MessageScrollerItem>
+                  )}
+                  {groups.map((bucket) => (
+                    <div key={`day-group-${bucket.label}`} className="flex flex-col gap-2">
+                      <MessageScrollerItem messageId={`day-${bucket.label}`}>
+                        <Marker variant="separator">
+                          <MarkerContent>{bucket.label}</MarkerContent>
+                        </Marker>
+                      </MessageScrollerItem>
+                      {bucket.items.map((m, idx) => {
+                        const prev = bucket.items[idx - 1];
+                        const showSender =
+                          !prev || prev.senderId !== m.senderId || !isSameDay(prev.createdAt, m.createdAt);
+                        return (
+                          <MessageScrollerItem key={m.id} messageId={m.id}>
+                            <MessageBubble
+                              message={m}
+                              isOwn={m.senderId === currentUserId}
+                              showSender={showSender}
+                              participants={
+                                conversation.conversationParticipants?.map((p) => ({
+                                  id: p.userId,
+                                  name: p.user?.name ?? "User",
+                                  image: p.user?.image,
+                                })) ?? []
+                              }
+                            />
+                          </MessageScrollerItem>
+                        );
+                      })}
+                    </div>
+                  ))}
 
-            {typing.active && (
-              <div className="flex items-center gap-2 pl-10 text-xs text-muted-foreground">
-                <TypingIndicator names={typing.names} />
-              </div>
-            )}
-          </>
-        )}
-        <div ref={bottomRef} />
-      </div>
+                  {typing.active && (
+                    <MessageScrollerItem messageId="typing-indicator">
+                      <div className="flex items-center gap-2 pl-10 text-xs text-muted-foreground">
+                        <TypingIndicator names={typing.names} />
+                      </div>
+                    </MessageScrollerItem>
+                  )}
+                </>
+              )}
+            </MessageScrollerContent>
+          </MessageScrollerViewport>
+            <MessageScrollerButton />
+          </MessageScroller>
+        </MessageScrollerProvider>
 
       {/* Composer */}
       <MessageInput
