@@ -55,10 +55,12 @@ export function useUnreadCount({
   const refresh = useCallback(async () => {
     try {
       setIsLoading(true);
-      const result = await apiClient.get<UnreadCountResponse>(
-        "/notifications/unread-count",
-      );
-      setCount(result.data?.unreadCount ?? 0);
+      const result = await apiClient.get<{
+        success: boolean;
+        message: string;
+        data: UnreadCountResponse;
+      }>("/notifications/unread-count");
+      setCount(result.data?.data?.unreadCount ?? 0);
     } catch {
       // Swallow — callers can handle errors externally
     } finally {
@@ -74,11 +76,13 @@ export function useUnreadCount({
 
     (async () => {
       try {
-        const result = await apiClient.get<UnreadCountResponse>(
-          "/notifications/unread-count",
-        );
+        const result = await apiClient.get<{
+          success: boolean;
+          message: string;
+          data: UnreadCountResponse;
+        }>("/notifications/unread-count");
         if (!cancelled) {
-      setCount(result.data?.unreadCount ?? 0);
+          setCount(result.data?.data?.unreadCount ?? 0);
         }
       } catch {
         // Swallow — callers can handle errors externally
