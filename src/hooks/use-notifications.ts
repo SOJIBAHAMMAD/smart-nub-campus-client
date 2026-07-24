@@ -43,11 +43,13 @@ export function useNotifications({
     async (pageNum: number, append = false) => {
       try {
         setIsLoading(true);
-        const result = await apiClient.get<NotificationListResponse>(
-          `/notifications?page=${pageNum}&limit=${limit}`,
-        );
+        const result = await apiClient.get<{
+          success: boolean;
+          message: string;
+          data: NotificationListResponse;
+        }>(`/notifications?page=${pageNum}&limit=${limit}`);
         if (result.data) {
-          const { notifications: items, meta } = result.data;
+          const { data: items, meta } = result.data.data;
           setNotifications((prev) =>
             append ? [...prev, ...(items ?? [])] : (items ?? []),
           );
@@ -67,12 +69,14 @@ export function useNotifications({
     let cancelled = false;
     (async () => {
       try {
-        const result = await apiClient.get<NotificationListResponse>(
-          `/notifications?page=1&limit=${limit}`,
-        );
+        const result = await apiClient.get<{
+          success: boolean;
+          message: string;
+          data: NotificationListResponse;
+        }>(`/notifications?page=1&limit=${limit}`);
         if (!cancelled && result.data) {
-          setNotifications(result.data.notifications ?? []);
-          setHasMore(result.data.meta.page < result.data.meta.totalPages);
+          setNotifications(result.data.data.data ?? []);
+          setHasMore(result.data.data.meta.page < result.data.data.meta.totalPages);
         }
       } catch {
         // Swallow

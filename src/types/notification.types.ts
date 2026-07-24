@@ -48,7 +48,7 @@ export interface ListNotificationsParams {
 }
 
 export interface NotificationListResponse {
-  notifications: Notification[];
+  data: Notification[];
   meta: import("./resource.types").PaginationMeta;
 }
 

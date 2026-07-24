@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PasswordField } from "@/components/forms/fields/password-field";
+import { SelectField } from "@/components/forms/fields/select-field";
+import { FileUploadField } from "@/components/forms/file-upload-field";
 import { createAccount } from "@/actions/account.action";
 import { parseStudentId } from "@/lib/student-id-parser";
 import {
@@ -15,6 +17,7 @@ import {
 } from "@/schemas/onboarding/account.schema";
 import { OnboardingStepValue } from "@/constants/enums";
 import { VerificationRequestData } from "@/types";
+import { Gender } from "@/constants/enums";
 
 interface CreateAccountFormProps {
   defaultName: string;
@@ -25,6 +28,13 @@ interface CreateAccountFormProps {
     verificationRequest: VerificationRequestData,
   ) => void;
 }
+
+const genderOptions = [
+  { value: Gender.MALE, label: "Male" },
+  { value: Gender.FEMALE, label: "Female" },
+  { value: Gender.OTHER, label: "Other" },
+  { value: Gender.PREFER_NOT_TO_SAY, label: "Prefer not to say" },
+] as const satisfies Array<{ value: string; label: string }>;
 
 export function CreateAccountForm({
   defaultName,
@@ -37,30 +47,40 @@ export function CreateAccountForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const studentIdInfo = parseStudentId(defaultStudentId);
 
-  const { control, handleSubmit } = useForm<CreateAccountFormValues>({
+  const { control, handleSubmit, setValue } = useForm<CreateAccountFormValues>({
     resolver: zodResolver(createAccountSchema),
     defaultValues: {
+      gender: undefined,
       password: "",
+      image: "",
+      imagePublicId: "",
     },
   });
 
-  const onSubmit = useCallback(async (values: CreateAccountFormValues) => {
-    setIsSubmitting(true);
-    setError(null);
+  const onSubmit = useCallback(
+    async (values: CreateAccountFormValues) => {
+      setIsSubmitting(true);
+      setError(null);
 
-    try {
-      const result = await createAccount(values.password);
-      sessionStorage.setItem("pending_verification_email", result.user.email);
-      sessionStorage.setItem("pending_verification_source", "signup");
-      setCurrentStep(result.currentStep);
-      setVerificationRequest(result.verificationRequest);
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Account creation failed.";
-      setError(message);
-      setIsSubmitting(false);
-    }
-  }, [setCurrentStep, setVerificationRequest]);
+      try {
+        const result = await createAccount(values);
+        sessionStorage.setItem("pending_verification_email", result.user.email);
+        sessionStorage.setItem("pending_verification_source", "signup");
+        setCurrentStep(result.currentStep);
+        setVerificationRequest(result.verificationRequest);
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : "Account creation failed.";
+        setError(message);
+        setIsSubmitting(false);
+      }
+    },
+    [setCurrentStep, setVerificationRequest],
+  );
+
+  const handlePublicIdChange = useCallback((publicId: string | null) => {
+    setValue("imagePublicId", publicId ?? "");
+  }, [setValue]);
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -104,6 +124,37 @@ export function CreateAccountForm({
           type="email"
           disabled
           className="bg-muted/50"
+        />
+      </div>
+
+      {/* Gender - Required */}
+      <div className="space-y-2">
+        <Label>
+          Gender <span className="text-destructive">*</span>
+        </Label>
+        <SelectField
+          control={control}
+          name="gender"
+          options={genderOptions}
+          placeholder="Select gender"
+          disabled={isSubmitting}
+          rules={{ required: "Gender is required" }}
+        />
+      </div>
+
+      {/* Profile Image - Optional */}
+      <div className="space-y-2">
+        <Label>Profile Image</Label>
+        <FileUploadField
+          control={control}
+          name="image"
+          context="avatars"
+          type="image"
+          accept="image/*"
+          maxFiles={1}
+          maxSize={5 * 1024 * 1024}
+          onPublicIdChange={handlePublicIdChange}
+          isOnboarding={true}
         />
       </div>
 
