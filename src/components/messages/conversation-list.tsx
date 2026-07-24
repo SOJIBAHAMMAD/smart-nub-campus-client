@@ -1,34 +1,28 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Search, MessageSquare } from "lucide-react";
+import { Search, MessageSquare, Plus, Users } from "lucide-react";
 import type { Conversation } from "@/types/message.types";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { ConversationItem } from "./conversation-item";
 
-type FilterTab = "all" | "unread";
+type FilterTab = "all" | "unread" | "groups";
 
 interface ConversationListProps {
   conversations: Conversation[];
   currentUserId: string;
   activeConversationId: string | null;
   onlineUsers: Set<string>;
-  /** Map of conversationId -> whether someone (other than current user) is typing. */
   typingByConversation: Record<string, { active: boolean; names?: string[] }>;
   onSelect: (id: string) => void;
+  onNewMessage: () => void;
+  onNewGroup: () => void;
   className?: string;
 }
 
-const FILTER_TABS: { id: FilterTab; label: string }[] = [
-  { id: "all", label: "All" },
-  { id: "unread", label: "Unread" },
-];
-
-/**
- * Column 2: search input + All/Unread filter tabs + the scrollable list of
- * conversations for the active sidebar tab.
- */
 export function ConversationList({
   conversations,
   currentUserId,
@@ -36,6 +30,8 @@ export function ConversationList({
   onlineUsers,
   typingByConversation,
   onSelect,
+  onNewMessage,
+  onNewGroup,
   className,
 }: ConversationListProps) {
   const [search, setSearch] = useState("");
@@ -45,6 +41,7 @@ export function ConversationList({
     const q = search.trim().toLowerCase();
     return conversations.filter((c) => {
       if (filter === "unread" && (c.unreadCount ?? 0) <= 0) return false;
+      if (filter === "groups" && c.type !== "GROUP") return false;
       if (!q) return true;
       const display = c.type === "GROUP"
         ? c.name ?? ""
@@ -60,8 +57,21 @@ export function ConversationList({
 
   return (
     <div className={cn("flex h-full flex-col", className)}>
+      {/* Header with New buttons */}
+      <div className="flex items-center justify-between border-b px-3 py-2">
+        <h2 className="text-base font-bold text-foreground">Chats</h2>
+        <div className="flex items-center gap-1">
+          <Button variant="ghost" size="icon" onClick={onNewGroup} aria-label="New group">
+            <Users className="size-4" />
+          </Button>
+          <Button variant="ghost" size="icon" onClick={onNewMessage} aria-label="New message">
+            <Plus className="size-4" />
+          </Button>
+        </div>
+      </div>
+
       {/* Search */}
-      <div className="relative p-3">
+      <div className="relative px-3 pt-3 pb-1">
         <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           value={search}
@@ -71,27 +81,19 @@ export function ConversationList({
         />
       </div>
 
-      {/* Filter tabs */}
-      <div className="flex gap-1 px-3 pb-2">
-        {FILTER_TABS.map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            onClick={() => setFilter(t.id)}
-            className={cn(
-              "flex-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
-              filter === t.id
-                ? "bg-primary/10 text-primary"
-                : "text-muted-foreground hover:bg-muted hover:text-foreground",
-            )}
-          >
-            {t.label}
-          </button>
-        ))}
+      {/* Tabs filter */}
+      <div className="px-3 pb-2 pt-1">
+        <Tabs value={filter} onValueChange={(v) => setFilter(v as FilterTab)}>
+          <TabsList variant="line" className="w-full">
+            <TabsTrigger value="all" className="flex-1">All</TabsTrigger>
+            <TabsTrigger value="unread" className="flex-1">Unread</TabsTrigger>
+            <TabsTrigger value="groups" className="flex-1">Groups</TabsTrigger>
+          </TabsList>
+        </Tabs>
       </div>
 
       {/* List */}
-      <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-3">
+      <div className="min-h-0 flex-1 overflow-y-auto pb-2">
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-2 px-4 py-12 text-center">
             <MessageSquare className="size-7 text-muted-foreground/60" />

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { env } from "@/env";
@@ -9,8 +9,9 @@ import { useSocket, useSocketEvent } from "@/hooks/use-socket";
 import { messageClientService as messageService } from "@/services/message.client.service";
 import type { Conversation, Message, ConversationType } from "@/types/message.types";
 import type { Message as SocketMessage } from "@/lib/types/socket-events";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import { MessagesLayout } from "./messages-layout";
-import { MessagesSidebar, type SidebarTab } from "./messages-sidebar";
 import { ConversationList } from "./conversation-list";
 import { ChatArea } from "./chat-area";
 import { UserProfilePanel } from "./user-profile-panel";
@@ -18,34 +19,25 @@ import { NewMessageModal } from "./new-message-modal";
 import { CreateGroupModal } from "./create-group-modal";
 
 interface MessagesPageClientProps {
-  /** Currently authenticated user id. */
   currentUserId: string;
-  /** Initial conversation list from the server (prefetched). */
   initialConversations: Conversation[];
-  /** Map of online connection ids (for the Stay Connected indicator). */
   initialOnlineUserIds?: string[];
 }
 
 const PAGE_SIZE = 30;
 
-/**
- * Phase 20 Messages page client. Owns all conversation/message state,
- * realtime Socket.IO wiring (messaging + typing + presence), optimistic
- * sends, and the 4-column layout via MessagesLayout.
- */
 export function MessagesPageClient({
   currentUserId,
   initialConversations,
   initialOnlineUserIds = [],
 }: MessagesPageClientProps) {
   const [conversations, setConversations] = useState<Conversation[]>(initialConversations);
-  const [activeTab, setActiveTab] = useState<SidebarTab>("inbox");
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [messagesPage, setMessagesPage] = useState(1);
-  const [profileOpen, setProfileOpen] = useState(true);
+  const [profileOpen, setProfileOpen] = useState(false);
   const [newOpen, setNewOpen] = useState(false);
   const [createGroupOpen, setCreateGroupOpen] = useState(false);
   const [_loadingConvos, setLoadingConvos] = useState(false);
@@ -57,23 +49,14 @@ export function MessagesPageClient({
     Record<string, { active: boolean; names?: string[]; ts?: number }>
   >({});
 
-  const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Connect to the backend origin (not /api/v1) so Socket.IO uses the default
-  // "/" namespace; the server mounts the handler at path /socket.io.
   const socketUrl = env.NEXT_PUBLIC_BACKEND_URL.replace(/\/+$/, "");
   const { socket, isConnected: _isConnected, status } = useSocket({ url: socketUrl });
 
-  // ── Typing indicator debounce bookkeeping ──────────────────────────────────
   const typingStopTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const typingActiveRef = useRef(false);
 
-  // ── Read receipts ──────────────────────────────────────────────────────────
-  // When the recipient opens / views a conversation we tell the server which
-  // messages we've seen. The server persists isRead/readAt on the message rows
-  // and broadcasts a receipt per message so the sender's ✓✓ tick appears (and
-  // survives a reload because the state lives in the DB).
   const messagesRef = useRef<Message[]>(messages);
   useEffect(() => { messagesRef.current = messages; });
 
@@ -88,7 +71,6 @@ export function MessagesPageClient({
     [socket],
   );
 
-  // ── Presence ────────────────────────────────────────────────────────────────
   useSocketEvent(socket, "presence:update", (data) => {
     setOnlineUsers((prev) => {
       const next = new Set(prev);
@@ -98,10 +80,7 @@ export function MessagesPageClient({
     });
   });
 
-  // ── Incoming messages ────────────────────────────────────────────────────────
   useSocketEvent(socket, "messaging:new", (msg: SocketMessage) => {
-    // Only handle messages for the active conversation in the thread;
-    // conversation list previews update for all conversations.
     const incoming: Message = {
       id: msg.id ?? `srv-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       conversationId: msg.conversationId,
@@ -129,7 +108,6 @@ export function MessagesPageClient({
                 ...c,
                 lastMessage: incoming,
                 lastMessageAt: msg.createdAt,
-                // Don't bump unread if it's our own message or we're viewing it.
                 unreadCount:
                   isOwn || isActive
                     ? 0
@@ -147,9 +125,6 @@ export function MessagesPageClient({
     if (isActive) {
       setMessages((prev) => {
         if (isOwn) {
-          // Replace the optimistic temp with the real server echo.
-          // Match by content first, then fall back to the first pending temp
-          // (content can differ slightly after server persistence).
           let idx = prev.findIndex(
             (m) => typeof m.id === "string" && m.id.startsWith("temp-") && m.content === msg.content,
           );
@@ -168,15 +143,12 @@ export function MessagesPageClient({
         return dedupe(prev.concat(incoming));
       });
 
-      // If the incoming message is from the other party and we're viewing the
-      // conversation, mark it read so the sender gets a ✓✓ receipt.
       if (!isOwn) {
         emitRead(msg.conversationId);
       }
     }
   });
 
-  // ── Read receipts ─────────────────────────────────────────────────────────────
   useSocketEvent(socket, "messaging:read-receipt", (receipt) => {
     setMessages((prev) =>
       prev.map((m) =>
@@ -185,7 +157,6 @@ export function MessagesPageClient({
     );
   });
 
-  // ── Typing updates ────────────────────────────────────────────────────────────
   useSocketEvent(socket, "typing:update", (data) => {
     if (data.userId === currentUserId) return;
     setTypingByConversation((prev) => {
@@ -199,7 +170,6 @@ export function MessagesPageClient({
         },
       };
     });
-    // Auto-expire a stuck typing indicator after 5s.
     if (data.isTyping) {
       setTimeout(() => {
         setTypingByConversation((prev) => {
@@ -213,7 +183,6 @@ export function MessagesPageClient({
     }
   });
 
-  // ── Reconnection: re-join active room + refresh data ──────────────────────────
   const refreshConversations = useCallback(async () => {
     setLoadingConvos(true);
     try {
@@ -236,9 +205,6 @@ export function MessagesPageClient({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status]);
 
-  // ── Load conversation for active id ────────────────────────────────────────────
-  // Server returns messages DESC (newest first) using page/limit pagination.
-  // We reverse to ASC for display and prepend older pages on scroll-up.
   const loadMessages = useCallback(
     async (conversationId: string, page = 1) => {
       setLoadingMessages(true);
@@ -248,16 +214,14 @@ export function MessagesPageClient({
           limit: PAGE_SIZE,
           page,
         });
-        const fetched = [...(res.messages ?? [])].reverse(); // DESC → ASC
+        const fetched = [...(res.messages ?? [])].reverse();
         setMessages((prev) => {
           if (page === 1) return dedupe(fetched);
-          // Older page: prepend to the top (already-ascending prev).
           return dedupe(fetched.concat(prev));
         });
         setMessagesPage(page);
         setHasMore(page < (res.meta?.totalPages ?? 1));
         if (page === 1) {
-          // Mark as read locally + on server.
           void messageService.markAsRead(conversationId).catch(() => {});
           setConversations((prev) =>
             prev.map((c) =>
@@ -280,18 +244,14 @@ export function MessagesPageClient({
       setMessages([]);
       setHasMore(false);
       setMessagesPage(1);
-      // Reflect the active conversation in the URL (?c=...).
       const params = new URLSearchParams(Array.from(searchParams.entries()));
       params.set("c", id);
-      router.replace(`?${params.toString()}`, { scroll: false });
+      window.history.replaceState(null, "", `?${params.toString()}`);
       void loadMessages(id).then(() => emitRead(id));
     },
-    [loadMessages, router, searchParams, emitRead],
+    [loadMessages, searchParams, emitRead],
   );
 
-  // Open the conversation referenced by ?c= on first mount (deep link / reload).
-  // Don't gate on `conversations` being populated yet — load it directly and
-  // refresh the list if it isn't present, so the selection + URL survive reload.
   useEffect(() => {
     const c = searchParams.get("c");
     if (!c) return;
@@ -306,7 +266,6 @@ export function MessagesPageClient({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Join/leave room when the active conversation changes.
   useEffect(() => {
     if (!socket || !activeConversationId) return;
       socket.emit("conversation:join", { conversationId: activeConversationId });
@@ -315,7 +274,6 @@ export function MessagesPageClient({
     };
   }, [socket, activeConversationId]);
 
-  // ── Sending (optimistic) ────────────────────────────────────────────────────
   const sendText = useCallback(
     async (text: string) => {
       if (!activeConversationId) return;
@@ -333,9 +291,6 @@ export function MessagesPageClient({
       };
       setMessages((prev) => dedupe(prev.concat(optimistic)));
 
-      // The socket handler persists + broadcasts; do NOT also call REST
-      // (that would create a second copy). The `messaging:new` echo
-      // reconciles the optimistic temp with the real record.
       socket?.emit("messaging:send", {
         conversationId: activeConversationId,
         content: text,
@@ -381,7 +336,6 @@ export function MessagesPageClient({
           fileName: file.name,
           fileSize: file.size,
         });
-        // Reflect the real server id; file url comes from upload.
         setMessages((prev) =>
           prev.map((m) =>
             m.id === tempId
@@ -397,7 +351,6 @@ export function MessagesPageClient({
     [activeConversationId, currentUserId],
   );
 
-  // ── Typing emit (debounced) ───────────────────────────────────────────────────
   const emitTypingStart = useCallback(() => {
     if (!activeConversationId || !socket) return;
     if (!typingActiveRef.current) {
@@ -423,29 +376,6 @@ export function MessagesPageClient({
     void loadMessages(activeConversationId, messagesPage + 1);
   }, [activeConversationId, loadingMessages, hasMore, messagesPage, loadMessages]);
 
-  // ── Derived lists per tab ──────────────────────────────────────────────────────
-  const filteredConversations = useMemo(() => {
-    switch (activeTab) {
-      case "groups":
-        return conversations.filter((c) => c.type === ("GROUP" as ConversationType));
-      case "starred":
-        // Starred conversations are not modeled server-side; treat as empty set
-        // for now (kept as a distinct tab per design).
-        return [];
-      case "archive":
-        // Archive not modeled server-side yet; empty.
-        return [];
-      case "inbox":
-      default:
-        return conversations;
-    }
-  }, [conversations, activeTab]);
-
-  const groupsList = useMemo(
-    () => conversations.filter((c) => c.type === ("GROUP" as ConversationType)),
-    [conversations],
-  );
-
   const activeConversation = useMemo(
     () => conversations.find((c) => c.id === activeConversationId) ?? null,
     [conversations, activeConversationId],
@@ -463,7 +393,17 @@ export function MessagesPageClient({
     ? typingByConversation[activeConversationId] ?? { active: false }
     : { active: false };
 
-  const onlineConnectionsCount = onlineUsers.size;
+  const isMobile = useMediaQuery("(max-width: 767px)");
+
+  const profilePanelContent = activeConversation && (
+    <UserProfilePanel
+      conversation={activeConversation}
+      currentUserId={currentUserId}
+      onlineUsers={onlineUsers}
+      sharedFiles={sharedFiles}
+      onClose={() => setProfileOpen(false)}
+    />
+  );
 
   return (
     <>
@@ -475,29 +415,17 @@ export function MessagesPageClient({
       )}
 
       <MessagesLayout
-        profileOpen={profileOpen}
-        sidebar={
-          <MessagesSidebar
-            activeTab={activeTab}
-            onTabChange={setActiveTab}
-            groups={groupsList}
-            currentUserId={currentUserId}
-            onlineUsers={onlineUsers}
-            onNewMessage={() => setNewOpen(true)}
-            onNewGroup={() => setCreateGroupOpen(true)}
-            onSelectGroup={selectConversation}
-            activeConversationId={activeConversationId}
-            onlineConnectionsCount={onlineConnectionsCount}
-          />
-        }
+        activeConversationId={activeConversationId}
         conversationList={
           <ConversationList
-            conversations={filteredConversations}
+            conversations={conversations}
             currentUserId={currentUserId}
             activeConversationId={activeConversationId}
             onlineUsers={onlineUsers}
             typingByConversation={typingByConversation}
             onSelect={selectConversation}
+            onNewMessage={() => setNewOpen(true)}
+            onNewGroup={() => setCreateGroupOpen(true)}
           />
         }
         chat={
@@ -509,25 +437,31 @@ export function MessagesPageClient({
             hasMore={hasMore}
             onlineUsers={onlineUsers}
             typing={activeTyping}
-            profileOpen={profileOpen}
-            onToggleProfile={() => setProfileOpen((v) => !v)}
+            onOpenProfile={() => setProfileOpen(true)}
             onSend={sendText}
             onSendFile={sendFile}
             onTypingStart={emitTypingStart}
             onTypingStop={emitTypingStop}
             onLoadOlder={loadOlder}
+            onBackToList={() => {
+              setActiveConversationId(null);
+              const params = new URLSearchParams(Array.from(searchParams.entries()));
+              params.delete("c");
+              window.history.replaceState(null, "", `?${params.toString()}`);
+            }}
           />
         }
-        profile={
-          <UserProfilePanel
-            conversation={activeConversation}
-            currentUserId={currentUserId}
-            onlineUsers={onlineUsers}
-            sharedFiles={sharedFiles}
-            onClose={() => setProfileOpen(false)}
-          />
-        }
+        profilePanel={!isMobile && profileOpen ? profilePanelContent : undefined}
       />
+
+      {/* Mobile: Sheet overlay for profile */}
+      {isMobile && (
+        <Sheet open={profileOpen} onOpenChange={setProfileOpen}>
+          <SheetContent side="right" className="w-72 p-0 sm:max-w-72">
+            {profilePanelContent}
+          </SheetContent>
+        </Sheet>
+      )}
 
       <NewMessageModal
         open={newOpen}
@@ -548,7 +482,6 @@ export function MessagesPageClient({
         createGroup={(data) => messageService.createGroup(data)}
         onCreated={(c) => {
           const conv = c as Conversation;
-          setActiveTab("groups");
           setConversations((prev) =>
             prev.some((x) => x.id === conv.id) ? prev : [conv, ...prev],
           );
@@ -559,7 +492,6 @@ export function MessagesPageClient({
   );
 }
 
-/** Remove duplicate messages by id (guards against socket + REST race). */
 function dedupe(list: Message[]): Message[] {
   const seen = new Set<string>();
   const out: Message[] = [];

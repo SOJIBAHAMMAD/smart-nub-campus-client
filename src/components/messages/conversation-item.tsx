@@ -48,7 +48,7 @@ export function ConversationItem({
       type="button"
       onClick={() => onSelect(conversation.id)}
       className={cn(
-        "flex w-full items-start gap-3 rounded-xl px-3 py-2.5 text-left transition-colors",
+        "flex w-full items-start gap-3 rounded-xl px-4 py-3 text-left transition-colors",
         active
           ? "bg-primary/10 ring-1 ring-primary/20"
           : "hover:bg-muted",

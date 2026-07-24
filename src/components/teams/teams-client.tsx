@@ -13,6 +13,9 @@ import { listTeamRequests } from "@/actions/team.actions";
 import { authClient } from "@/lib/auth-client";
 import type { TeamRequest } from "@/types/team.types";
 import { cn } from "@/lib/utils";
+import { useSocket, useSocketEvent } from "@/hooks/use-socket";
+import { env } from "@/env";
+import { toast } from "sonner";
 
 type FilterTab = "all" | "open";
 
@@ -96,6 +99,15 @@ export function TeamsClient({
   const [deadlineTs, setDeadlineTs] = useState<Map<string, number | null>>(
     () => new Map(),
   );
+
+  // ── Socket.IO for real-time team updates ────────────────────────────────
+  const socketUrl = env.NEXT_PUBLIC_BACKEND_URL.replace(/\/+$/, "");
+  const { socket } = useSocket({ url: socketUrl });
+
+  // When someone applies to a team, show notification
+  useSocketEvent(socket, "team:application", (_data) => {
+    toast.info(`New application received for team!`);
+  });
 
   const updateParams = useCallback(
     (updates: Record<string, string | null>) => {

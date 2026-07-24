@@ -24,6 +24,8 @@ import {
 } from "@/actions/qa.actions";
 import type { Question, QuestionCategory } from "@/types/qa.types";
 import type { PaginationMeta } from "@/types/resource.types";
+import { useSocket, useSocketEvent } from "@/hooks/use-socket";
+import { env } from "@/env";
 
 interface QAClientProps {
   initialQuestions: Question[];
@@ -83,6 +85,30 @@ export function QAClient({
   const [searchInput, setSearchInput] = useState(search);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const hasFetched = useRef(false);
+
+  // ── Socket.IO for real-time Q&A updates ─────────────────────────────────
+  const socketUrl = env.NEXT_PUBLIC_BACKEND_URL.replace(/\/+$/, "");
+  const { socket } = useSocket({ url: socketUrl });
+
+  // When someone posts a new question, prepend to list
+  useSocketEvent(socket, "qa:newQuestion", (data) => {
+    setQuestions((prev) => {
+      // Avoid duplicates
+      if (prev.some((q) => q.id === data.id)) return prev;
+      return [data as unknown as Question, ...prev];
+    });
+  });
+
+  // When vote counts change, update the relevant question
+  useSocketEvent(socket, "qa:voteUpdate", (data) => {
+    if (data.entityType !== "question") return;
+    setQuestions((prev) =>
+      prev.map((q) => {
+        if (q.id !== data.entityId) return q;
+        return { ...q, upvoteCount: data.upvoteCount };
+      }),
+    );
+  });
 
   const safeCategories = categories ?? [];
 

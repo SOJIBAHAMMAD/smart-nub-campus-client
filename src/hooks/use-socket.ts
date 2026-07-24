@@ -59,6 +59,7 @@ export function useSocket(options: UseSocketOptions = {}): UseSocketReturn {
 
   // Use a ref to track whether we've already connected in this component lifecycle
   const connectedRef = useRef(false);
+  const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const connect = useCallback(() => {
     if (connectedRef.current) return;
@@ -99,6 +100,22 @@ export function useSocket(options: UseSocketOptions = {}): UseSocketReturn {
       setStatus("connected");
     });
 
+    // ── Presence heartbeat ────────────────────────────────────────────────
+    // Keep the user's presence alive on the server. The server marks users
+    // offline after 30 s without a heartbeat, so we emit every 20 s.
+    heartbeatRef.current = setInterval(() => {
+      if (socketInstance.connected) {
+        socketInstance.emit("presence:heartbeat");
+      }
+    }, 20_000);
+
+    socketInstance.on("disconnect", () => {
+      if (heartbeatRef.current) {
+        clearInterval(heartbeatRef.current);
+        heartbeatRef.current = null;
+      }
+    });
+
     setSocket(socketInstance);
   }, [url, token]);
 
@@ -116,6 +133,10 @@ export function useSocket(options: UseSocketOptions = {}): UseSocketReturn {
     }
 
     return () => {
+      if (heartbeatRef.current) {
+        clearInterval(heartbeatRef.current);
+        heartbeatRef.current = null;
+      }
       socket?.disconnect();
       setSocket(null);
       connectedRef.current = false;

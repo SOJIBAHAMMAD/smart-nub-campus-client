@@ -17,6 +17,8 @@ import {
 import { PageLayout } from "@/components/layout/page-layout";
 import type { Event, EventStatus } from "@/types/event.types";
 import type { PaginationMeta } from "@/types/resource.types";
+import { useSocket, useSocketEvent } from "@/hooks/use-socket";
+import { env } from "@/env";
 
 function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString("en-US", {
@@ -60,6 +62,20 @@ export function EventsListClient({
 }: EventsListClientProps) {
   const router = useRouter();
   const [search, setSearch] = useState(initialFilters.search);
+  const [events, setEvents] = useState<Event[]>(initialEvents);
+
+  // ── Socket.IO for real-time event updates ───────────────────────────────
+  const socketUrl = env.NEXT_PUBLIC_BACKEND_URL.replace(/\/+$/, "");
+  const { socket } = useSocket({ url: socketUrl });
+
+  // When someone creates a new event, prepend to list
+  useSocketEvent(socket, "event:new", (data) => {
+    setEvents((prev) => {
+      // Avoid duplicates
+      if (prev.some((e) => e.id === data.id)) return prev;
+      return [data as unknown as Event, ...prev];
+    });
+  });
 
   const updateParams = (key: string, value: string | null) => {
     const params = new URLSearchParams();
@@ -120,7 +136,7 @@ export function EventsListClient({
           </Select>
         </div>
 
-        {initialEvents.length === 0 ? (
+        {events.length === 0 ? (
           <div className="rounded-xl border bg-card p-12 text-center ring-1 ring-foreground/10">
             <CalendarDays className="mx-auto size-12 text-muted-foreground/50" />
             <p className="mt-4 text-sm text-muted-foreground">
@@ -129,7 +145,7 @@ export function EventsListClient({
           </div>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {initialEvents.map((event) => (
+            {events.map((event) => (
               <Link
                 key={event.id}
                 href={`/events/${event.id}`}

@@ -27,6 +27,8 @@ import type {
 } from "@/types/discussion.types";
 import type { PaginationMeta } from "@/types/resource.types";
 import type { TopContributor } from "@/components/discussions/discussions-trending";
+import { useSocket, useSocketEvent } from "@/hooks/use-socket";
+import { env } from "@/env";
 
 interface DiscussionsClientProps {
   initialDiscussions: Discussion[];
@@ -85,6 +87,23 @@ export function DiscussionsClient({
   const [searchInput, setSearchInput] = useState(search);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const hasFetched = useRef(false);
+
+  // ── Socket.IO for real-time discussion updates ──────────────────────────
+  const socketUrl = env.NEXT_PUBLIC_BACKEND_URL.replace(/\/+$/, "");
+  const { socket } = useSocket({ url: socketUrl });
+
+  // When someone replies to a discussion, update the reply count
+  useSocketEvent(socket, "discussion:reply", (data) => {
+    setDiscussions((prev) =>
+      prev.map((d) => {
+        if (d.id !== data.discussionId) return d;
+        return {
+          ...d,
+          replyCount: (d.replyCount ?? 0) + 1,
+        };
+      }),
+    );
+  });
 
   const safeCategories = categories ?? [];
 

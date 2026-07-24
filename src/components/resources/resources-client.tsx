@@ -18,6 +18,8 @@ import { Input } from "@/components/ui/input";
 import { listResources, voteResource, bookmarkResource } from "@/actions/resource.actions";
 import type { Resource, ResourceCategory, PaginationMeta } from "@/types/resource.types";
 import { cn } from "@/lib/utils";
+import { useSocket, useSocketEvent } from "@/hooks/use-socket";
+import { env } from "@/env";
 
 type TabOption = "all" | "bookmarks" | "uploads";
 type ViewMode = "grid" | "list";
@@ -98,6 +100,20 @@ export function ResourcesClient({
   const [activeTab, setActiveTab] = useState<TabOption>("all");
   const [searchInput, setSearchInput] = useState(search);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+
+  // ── Socket.IO for real-time resource updates ────────────────────────────
+  const socketUrl = env.NEXT_PUBLIC_BACKEND_URL.replace(/\/+$/, "");
+  const { socket } = useSocket({ url: socketUrl });
+
+  // When someone uploads a new resource, prepend to list
+  useSocketEvent(socket, "resource:new", (data) => {
+    setResources((prev) => {
+      const resource = data.resource as unknown as Resource;
+      // Avoid duplicates
+      if (prev.some((r) => r.id === resource.id)) return prev;
+      return [resource, ...prev];
+    });
+  });
 
   const updateParams = useCallback(
     (updates: Record<string, string | null>) => {

@@ -3,8 +3,8 @@
 import { X, FileText } from "lucide-react";
 import type { Conversation, Message } from "@/types/message.types";
 import { Avatar } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
 import { SharedFiles } from "./shared-files";
 import { OnlineStatus } from "./online-status";
 import { getConversationDisplay } from "./conversation-utils";
@@ -14,16 +14,11 @@ interface UserProfilePanelProps {
   conversation: Conversation | null;
   currentUserId: string;
   onlineUsers: Set<string>;
-  /** Messages carrying file/image attachments, for the Shared Files section. */
   sharedFiles: Message[];
   onClose: () => void;
   className?: string;
 }
 
-/**
- * Column 4 (toggleable): shows the other user's profile for direct chats,
- * or group info + member list for group chats, plus the Shared Files list.
- */
 export function UserProfilePanel({
   conversation,
   currentUserId,
@@ -40,25 +35,21 @@ export function UserProfilePanel({
     const members = conversation.conversationParticipants ?? [];
     return (
       <div className={cn("flex h-full flex-col", className)}>
-        <PanelHeader title="Group info" onClose={onClose} />
+        <div className="flex items-center justify-between border-b px-4 py-3">
+          <h2 className="text-base font-bold">Group info</h2>
+          <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close">
+            <X className="size-4" />
+          </Button>
+        </div>
         <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4">
           <div className="flex flex-col items-center gap-2 text-center">
-            <Avatar
-              id={conversation.id}
-              name={name}
-              src={image}
-              className="size-16"
-            />
+            <Avatar id={conversation.id} name={name} src={image} className="size-16" />
             <p className="font-semibold text-foreground">{name}</p>
             {conversation.description && (
-              <p className="text-xs text-muted-foreground">
-                {conversation.description}
-              </p>
+              <p className="text-xs text-muted-foreground">{conversation.description}</p>
             )}
           </div>
-
           <Separator />
-
           <div>
             <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Members ({members.length})
@@ -67,12 +58,7 @@ export function UserProfilePanel({
               {members.map((m) => (
                 <li key={m.id} className="flex items-center gap-2">
                   <div className="relative">
-                    <Avatar
-                      id={m.userId}
-                      name={m.user?.name ?? "?"}
-                      src={m.user?.image}
-                      className="size-8"
-                    />
+                    <Avatar id={m.userId} name={m.user?.name ?? "?"} src={m.user?.image} className="size-8" />
                     {m.user && onlineUsers.has(m.user.id) && (
                       <span className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full bg-emerald-500 ring-2 ring-background" />
                     )}
@@ -87,7 +73,6 @@ export function UserProfilePanel({
               ))}
             </ul>
           </div>
-
           <Separator />
           <SharedFilesSection files={sharedFiles} />
         </div>
@@ -95,7 +80,6 @@ export function UserProfilePanel({
     );
   }
 
-  // Direct conversation: show the other participant's profile.
   const other = conversation.conversationParticipants?.find(
     (p) => p.userId !== currentUserId,
   );
@@ -104,28 +88,21 @@ export function UserProfilePanel({
 
   return (
     <div className={cn("flex h-full flex-col", className)}>
-      <PanelHeader title="Profile" onClose={onClose} />
+      <div className="flex items-center justify-between border-b px-4 py-3">
+        <h2 className="text-base font-bold">Contact info</h2>
+        <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close">
+          <X className="size-4" />
+        </Button>
+      </div>
       <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4">
         <div className="flex flex-col items-center gap-2 text-center">
           <Avatar id={otherId ?? conversation.id} name={name} src={image} className="size-16" />
           <p className="font-semibold text-foreground">{name}</p>
           <OnlineStatus online={isOnline} showLabel />
         </div>
-
         <Separator />
         <SharedFilesSection files={sharedFiles} />
       </div>
-    </div>
-  );
-}
-
-function PanelHeader({ title, onClose }: { title: string; onClose: () => void }) {
-  return (
-    <div className="flex items-center justify-between border-b px-4 py-3">
-      <h3 className="font-semibold text-foreground">{title}</h3>
-      <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close panel">
-        <X className="size-4" />
-      </Button>
     </div>
   );
 }

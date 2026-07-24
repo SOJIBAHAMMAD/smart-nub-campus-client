@@ -38,6 +38,8 @@ import {
 } from "@/actions/connection.actions";
 import { listTagsAction } from "@/actions/resource.actions";
 import type { ConnectionFilterState } from "./connection-filters";
+import { useSocket, useSocketEvent } from "@/hooks/use-socket";
+import { env } from "@/env";
 
 type SubTab = "all" | "seniors" | "juniors" | "same" | "favorites";
 
@@ -182,6 +184,27 @@ export function ConnectionsClient({
     setReloadKey((k) => k + 1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab, subTab, filters, search, page]);
+
+  // ── Socket.IO for real-time connection updates ──────────────────────────
+  const socketUrl = env.NEXT_PUBLIC_BACKEND_URL.replace(/\/+$/, "");
+  const { socket } = useSocket({ url: socketUrl });
+
+  // When someone sends you a connection request
+  useSocketEvent(socket, "connection:request", () => {
+    onChanged();
+    toast.info("New connection request received!");
+  });
+
+  // When someone accepts your connection request
+  useSocketEvent(socket, "connection:accepted", () => {
+    onChanged();
+    toast.success("Your connection request was accepted!");
+  });
+
+  // When someone removes you from their connections
+  useSocketEvent(socket, "connection:removed", () => {
+    onChanged();
+  });
 
   // ── Data loader based on active tab / sub-tab ───────────────────────────────
   const loadData = useCallback(async () => {
