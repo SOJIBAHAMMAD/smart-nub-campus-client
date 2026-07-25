@@ -4,8 +4,6 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import {
   ChevronLeft,
-  ChevronUp,
-  ChevronDown,
   Bookmark,
   Share2,
   Eye,
@@ -13,8 +11,11 @@ import {
   CheckCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Card, CardContent } from "@/components/ui/card";
+import { TagPill } from "@/components/ui/tag-pill";
+import { VoteControls } from "@/components/ui/vote-controls";
+import { AuthorInfo } from "@/components/ui/author-info";
 import { toast } from "sonner";
-import Image from "next/image";
 import { VoteButtons, type VoteState } from "@/components/qa/vote-buttons";
 import { AnswerCard } from "@/components/qa/answer-card";
 import { AnswerForm } from "@/components/qa/answer-form";
@@ -67,7 +68,6 @@ export function QuestionDetail({
 
   const isAuthor = currentUserId != null && question.authorId === currentUserId;
   const bookmarked = question.isBookmarked ?? false;
-  const upvoted = question.userVote === "UP";
   const userVote = (question.userVote ?? null) as VoteState;
   // Question authors cannot vote on their own question.
   const canVoteQuestion = !isAuthor;
@@ -269,96 +269,73 @@ export function QuestionDetail({
       </div>
 
       {/* ── Content ────────────────────────────────────────────── */}
-      <div className="rounded-xl border bg-card p-5 ring-1 ring-foreground/10">
-        <div className="prose prose-sm max-w-none dark:prose-invert">
-          {question.content}
-        </div>
-
-        {/* Tags */}
-        {tags.length > 0 && (
-          <div className="mt-4 flex flex-wrap gap-1.5">
-            {tags.map((qt) => (
-              <Link
-                key={qt.id}
-                href={`/qa?tag=${qt.tag?.slug ?? ""}`}
-                className="rounded-full bg-secondary px-2.5 py-0.5 text-xs text-secondary-foreground transition-colors hover:bg-primary/10 hover:text-primary"
-              >
-                {qt.tag?.name}
-              </Link>
-            ))}
+      <Card>
+        <CardContent className="p-5">
+          <div className="prose prose-sm max-w-none dark:prose-invert">
+            {question.content}
           </div>
-        )}
 
-        {/* Actions */}
-        <div className="mt-4 flex items-center gap-2 border-t border-border/50 pt-3">
-          <button
-            onClick={() => handleQuestionVote("UP")}
-            disabled={!canVoteQuestion}
-            className={cn(
-              "flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors disabled:opacity-50",
-              upvoted ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground hover:bg-muted/70",
-            )}
-          >
-            <ChevronUp className="size-4" />
-            <span className="tabular-nums">{question.upvoteCount}</span>
-            <ChevronDown className="size-4" />
-          </button>
+          {/* Tags */}
+          {tags.length > 0 && (
+            <div className="mt-4 flex flex-wrap gap-1.5">
+              {tags.map((qt) => (
+                <TagPill
+                  key={qt.id}
+                  name={qt.tag?.name ?? "tag"}
+                  href={`/qa?tag=${qt.tag?.slug ?? ""}`}
+                  size="sm"
+                />
+              ))}
+            </div>
+          )}
 
-          <button
-            onClick={handleBookmark}
-            className={cn(
-              "flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
-              bookmarked
-                ? "bg-primary/10 text-primary"
-                : "bg-muted text-muted-foreground hover:bg-muted/70",
-            )}
-          >
-            <Bookmark className={cn("size-4", bookmarked && "fill-current")} />
-            {bookmarked ? "Bookmarked" : "Bookmark"}
-          </button>
+          {/* Actions */}
+          <div className="mt-4 flex items-center gap-2 border-t border-border/50 pt-3">
+            <VoteControls
+              upvotes={question.upvoteCount}
+              activeVote={(question.userVote ?? null) as "UP" | "DOWN" | null}
+              onVote={handleQuestionVote}
+              orientation="horizontal"
+              disabled={!canVoteQuestion}
+            />
 
-          <button
-            onClick={() => {
-              if (typeof navigator !== "undefined" && navigator.share) {
-                navigator.share({ title: question.title, url: window.location.href });
-              } else if (typeof window !== "undefined") {
-                navigator.clipboard?.writeText(window.location.href);
-              }
-            }}
-            className="flex items-center gap-1 rounded-lg bg-muted px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted/70"
-          >
-            <Share2 className="size-4" />
-            Share
-          </button>
-        </div>
-      </div>
+            <button
+              onClick={handleBookmark}
+              className={cn(
+                "flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
+                bookmarked
+                  ? "bg-primary/10 text-primary"
+                  : "bg-muted text-muted-foreground hover:bg-muted/70",
+              )}
+            >
+              <Bookmark className={cn("size-4", bookmarked && "fill-current")} />
+              {bookmarked ? "Bookmarked" : "Bookmark"}
+            </button>
+
+            <button
+              onClick={() => {
+                if (typeof navigator !== "undefined" && navigator.share) {
+                  navigator.share({ title: question.title, url: window.location.href });
+                } else if (typeof window !== "undefined") {
+                  navigator.clipboard?.writeText(window.location.href);
+                }
+              }}
+              className="flex items-center gap-1 rounded-lg bg-muted px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted/70"
+            >
+              <Share2 className="size-4" />
+              Share
+            </button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* ── Author card ────────────────────────────────────────── */}
       {question.author && (
-        <div className="flex items-center gap-3 rounded-xl border bg-card p-3 ring-1 ring-foreground/10">
-          {question.author.image ? (
-            <Image
-              src={question.author.image}
-              alt={question.author.name ?? "Author"}
-              width={36}
-              height={36}
-              unoptimized
-              className="size-9 rounded-full object-cover"
-            />
-          ) : (
-            <div className="flex size-9 items-center justify-center rounded-full bg-muted text-sm font-medium text-muted-foreground">
-              {question.author.name?.charAt(0) ?? "?"}
-            </div>
-          )}
-          <div className="min-w-0">
-            <p className="text-sm font-medium text-foreground">
-              {question.author.name ?? "Unknown"}
-            </p>
-            <p className="text-[11px] text-muted-foreground">
-              {question.author.reputation ?? 0} reputation
-            </p>
-          </div>
-        </div>
+        <AuthorInfo
+          user={{ id: question.authorId, name: question.author.name ?? "Unknown", image: question.author.image }}
+          timestamp={question.createdAt}
+          size="md"
+        />
       )}
 
       {/* ── Answers ────────────────────────────────────────────── */}
@@ -374,13 +351,15 @@ export function QuestionDetail({
             ))}
           </div>
         ) : answers.length === 0 ? (
-          <div className="rounded-xl border bg-card p-8 text-center ring-1 ring-foreground/10">
-            <MessageCircle className="mx-auto size-8 text-muted-foreground/40" />
-            <p className="mt-2 text-sm font-medium text-foreground">No answers yet</p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Be the first to answer this question.
-            </p>
-          </div>
+          <Card>
+            <CardContent className="p-8 text-center ring-1 ring-foreground/10">
+              <MessageCircle className="mx-auto size-8 text-muted-foreground/40" />
+              <p className="mt-2 text-sm font-medium text-foreground">No answers yet</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Be the first to answer this question.
+              </p>
+            </CardContent>
+          </Card>
         ) : (
           <div className="space-y-3">
             {answers.map((answer) => (

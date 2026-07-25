@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import {
-  ChevronUp,
   Download,
   Bookmark,
   Flag,
@@ -11,6 +10,9 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { TagPill } from "@/components/ui/tag-pill";
+import { VoteControls } from "@/components/ui/vote-controls";
 import { CommentSection } from "@/components/resources/comment-section";
 import { FileIcon, getFileColor, formatFileSize, formatRelativeTime } from "@/components/resources/file-type-utils";
 import { voteResource, bookmarkResource, reportResource, recordResourceDownload, listResources } from "@/actions/resource.actions";
@@ -226,14 +228,12 @@ export function ResourceDetail({ resource: initialResource }: ResourceDetailProp
 
       {/* ── Action Buttons ────────────────────────────────────────── */}
       <div className="flex flex-wrap items-center gap-3">
-        <Button
-          variant={upvoted ? "default" : "outline"}
-          size="sm"
-          onClick={handleUpvote}
-        >
-          <ChevronUp className="size-4" />
-          {resource.upvoteCount}
-        </Button>
+        <VoteControls
+          upvotes={resource.upvoteCount}
+          activeVote={upvoted ? "UP" : null}
+          onVote={() => handleUpvote()}
+          orientation="horizontal"
+        />
 
         <Button variant="outline" size="sm" onClick={handleDownload} disabled={downloading}>
           <Download className="size-4" />
@@ -261,7 +261,8 @@ export function ResourceDetail({ resource: initialResource }: ResourceDetailProp
       </div>
 
       {/* ── Resource Info ─────────────────────────────────────────── */}
-      <div className="rounded-xl border bg-card p-5 ring-1 ring-foreground/10 space-y-4">
+      <Card>
+        <CardContent className="p-5 space-y-4">
         {resource.description && (
           <div>
             <h3 className="text-sm font-semibold text-foreground">Description</h3>
@@ -318,21 +319,22 @@ export function ResourceDetail({ resource: initialResource }: ResourceDetailProp
             <span className="text-sm text-muted-foreground">Tags</span>
             <div className="mt-1.5 flex flex-wrap gap-1.5">
               {resource.resourceTags.map((rt) => (
-                <Link
+                <TagPill
                   key={rt.id}
+                  name={rt.tag?.name ?? "tag"}
                   href={`/resources?tags=${encodeURIComponent(rt.tag?.slug ?? "")}`}
-                  className="rounded-full bg-secondary px-2.5 py-0.5 text-xs text-secondary-foreground transition-colors hover:bg-primary/10 hover:text-primary"
-                >
-                  {rt.tag?.name}
-                </Link>
+                  size="sm"
+                />
               ))}
             </div>
           </div>
         )}
-      </div>
+      </CardContent>
+      </Card>
 
       {/* ── File Preview / Download ───────────────────────────────── */}
-      <div className="rounded-xl border bg-card p-5 ring-1 ring-foreground/10">
+      <Card>
+        <CardContent className="p-5">
         <h3 className="mb-3 text-sm font-semibold text-foreground">File</h3>
         {resource.fileType.includes("image") ? (
           <Image
@@ -360,7 +362,8 @@ export function ResourceDetail({ resource: initialResource }: ResourceDetailProp
             </Button>
           </div>
         )}
-      </div>
+      </CardContent>
+      </Card>
 
       {/* ── Comments Section ──────────────────────────────────────── */}
       <CommentSection resourceId={resource.id} currentUserId={currentUserId} />
@@ -456,8 +459,8 @@ export function ResourceDetail({ resource: initialResource }: ResourceDetailProp
               </Button>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+          </div>
+        )}
+      </div>
   );
 }

@@ -4,6 +4,7 @@
 
 import { TrendingUp } from "lucide-react";
 import type { AIStudyStats } from "@/types/ai.types";
+import { Card, CardContent } from "@/components/ui/card";
 import { StudyStats } from "@/components/ai/study-stats";
 import { aiComposer } from "@/components/ai/ai-composer-store";
 
@@ -33,7 +34,8 @@ export function AIRightPanel({ studyStats }: AIRightPanelProps) {
   return (
     <div className="space-y-6">
       {/* ── Popular Prompts ─────────────────────────────────── */}
-      <div className="rounded-xl border bg-card p-4 ring-1 ring-foreground/5">
+      <Card>
+        <CardContent className="p-4">
         <div className="mb-3 flex items-center gap-2">
           <TrendingUp className="size-4 text-primary" />
           <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -55,7 +57,8 @@ export function AIRightPanel({ studyStats }: AIRightPanelProps) {
             </li>
           ))}
         </ol>
-      </div>
+        </CardContent>
+      </Card>
 
       {/* ── Study Stats ─────────────────────────────────────── */}
       <StudyStats stats={studyStats} />

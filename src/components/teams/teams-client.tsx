@@ -8,6 +8,7 @@ import { TeamsSidebar, type TeamsTab } from "@/components/teams/teams-sidebar";
 import { TeamsTrending } from "@/components/teams/teams-trending";
 import { TeamCard } from "@/components/teams/team-card";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { listTeamRequests } from "@/actions/team.actions";
 import { authClient } from "@/lib/auth-client";
@@ -384,17 +385,19 @@ export function TeamsClient({
             ))}
           </div>
         ) : displayTeams.length === 0 ? (
-          <div className="rounded-xl border bg-card p-12 text-center ring-1 ring-foreground/10">
-            <AlertCircle className="mx-auto size-10 text-muted-foreground/40" />
-            <p className="mt-3 text-sm font-medium text-foreground">
-              No team requests found
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              {tab === "teams"
-                ? "You haven't created any teams yet."
-                : "Try adjusting your search or filters."}
-            </p>
-          </div>
+          <Card>
+            <CardContent className="p-12 text-center ring-1 ring-foreground/10">
+              <AlertCircle className="mx-auto size-10 text-muted-foreground/40" />
+              <p className="mt-3 text-sm font-medium text-foreground">
+                No team requests found
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {tab === "teams"
+                  ? "You haven't created any teams yet."
+                  : "Try adjusting your search or filters."}
+              </p>
+            </CardContent>
+          </Card>
         ) : (
           <div className="space-y-3">
             {displayTeams.map((team) => (

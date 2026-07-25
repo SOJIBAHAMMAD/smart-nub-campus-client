@@ -5,9 +5,7 @@ import { MessageCircle, Trash2 } from "lucide-react";
 import type { Comment } from "@/types/resource.types";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import Image from "next/image";
-
-import { formatRelativeTime } from "@/components/resources/file-type-utils";
+import { AuthorInfo } from "@/components/ui/author-info";
 
 interface CommentItemProps {
   /** The comment data to display. */
@@ -44,25 +42,11 @@ export function CommentItem({
       <div className="rounded-lg bg-card p-3 ring-1 ring-foreground/5">
         {/* ── Author + timestamp ──────────────────────────────────── */}
         <div className="flex items-center gap-2">
-          {comment.user?.image ? (
-            <Image
-              src={comment.user.image}
-              alt={comment.user.name}
-              width={24}
-              height={24}
-              className="rounded-full object-cover"
-            />
-          ) : (
-            <div className="flex size-6 items-center justify-center rounded-full bg-muted text-[10px] font-medium text-muted-foreground">
-              {comment.user?.name?.charAt(0) ?? "?"}
-            </div>
-          )}
-          <span className="text-xs font-medium text-foreground">
-            {comment.user?.name ?? "Unknown"}
-          </span>
-          <span className="text-[10px] text-muted-foreground">
-            {formatRelativeTime(comment.createdAt)}
-          </span>
+          <AuthorInfo
+            user={comment.user ?? { id: "", name: "Unknown" }}
+            timestamp={comment.createdAt}
+            size="sm"
+          />
         </div>
 
         {/* ── Content ─────────────────────────────────────────────── */}

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { MessageCircle, ArrowUpDown } from "lucide-react";
 import { CommentItem } from "@/components/resources/comment-item";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { listResourceComments, addResourceComment, deleteResourceComment } from "@/actions/resource.actions";
 import type { Comment } from "@/types/resource.types";
 import { cn } from "@/lib/utils";
@@ -250,12 +251,14 @@ export function CommentSection({ resourceId, currentUserId = null }: CommentSect
           ))}
         </div>
       ) : comments.length === 0 ? (
-        <div className="rounded-xl border bg-card p-8 text-center ring-1 ring-foreground/10">
-          <MessageCircle className="mx-auto size-8 text-muted-foreground/50" />
-          <p className="mt-2 text-sm text-muted-foreground">
-            No comments yet. Be the first to comment!
-          </p>
-        </div>
+        <Card>
+          <CardContent className="p-8 text-center ring-1 ring-foreground/10">
+            <MessageCircle className="mx-auto size-8 text-muted-foreground/50" />
+            <p className="mt-2 text-sm text-muted-foreground">
+              No comments yet. Be the first to comment!
+            </p>
+          </CardContent>
+        </Card>
       ) : (
         <div className="space-y-3">
           {getSortedComments().map((comment) => (

@@ -6,6 +6,7 @@ import { Upload, X, FileText, CheckCircle, AlertCircle, Loader2 } from "lucide-r
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { TagPill } from "@/components/ui/tag-pill";
 import { createResource } from "@/actions/resource.actions";
 import { uploadService } from "@/services/upload.service";
 import type { ResourceCourse, ResourceCategory } from "@/types/resource.types";
@@ -347,18 +348,13 @@ export function ResourceUploadForm({
             </Label>
             <div className="flex flex-wrap gap-1.5">
               {tags.map((tag, idx) => (
-                <span
+                <TagPill
                   key={idx}
-                  className="flex items-center gap-1 rounded-full bg-secondary px-2.5 py-0.5 text-xs text-secondary-foreground"
-                >
-                  {tag}
-                  <button
-                    onClick={() => removeTag(idx)}
-                    className="rounded-full p-0.5 hover:bg-muted"
-                  >
-                    <X className="size-2.5" />
-                  </button>
-                </span>
+                  name={tag}
+                  showIcon={false}
+                  removable
+                  onRemove={() => removeTag(idx)}
+                />
               ))}
             </div>
             <div className="flex gap-2">

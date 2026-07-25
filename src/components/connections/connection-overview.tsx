@@ -1,5 +1,6 @@
 import { Users, Clock, Send, Star, Ban } from "lucide-react";
 import type { ConnectionOverview } from "@/types";
+import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 interface ConnectionOverviewProps {
@@ -24,7 +25,8 @@ const ITEMS: {
  */
 export function ConnectionOverview({ overview }: ConnectionOverviewProps) {
   return (
-    <div className="rounded-xl border bg-card p-4 ring-1 ring-foreground/10">
+    <Card>
+      <CardContent className="p-4">
       <h3 className="mb-3 text-sm font-semibold text-foreground">
         Connection Overview
       </h3>
@@ -44,6 +46,7 @@ export function ConnectionOverview({ overview }: ConnectionOverviewProps) {
           </div>
         ))}
       </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }

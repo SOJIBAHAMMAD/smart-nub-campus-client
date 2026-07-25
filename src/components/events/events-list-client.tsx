@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -159,12 +160,14 @@ export function EventsListClient({
         </div>
 
         {events.length === 0 ? (
-          <div className="rounded-xl border bg-card p-12 text-center ring-1 ring-foreground/10">
-            <CalendarDays className="mx-auto size-12 text-muted-foreground/50" />
-            <p className="mt-4 text-sm text-muted-foreground">
-              No events found.
-            </p>
-          </div>
+          <Card>
+            <CardContent className="p-12 text-center ring-1 ring-foreground/10">
+              <CalendarDays className="mx-auto size-12 text-muted-foreground/50" />
+              <p className="mt-4 text-sm text-muted-foreground">
+                No events found.
+              </p>
+            </CardContent>
+          </Card>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {events.map((event) => (

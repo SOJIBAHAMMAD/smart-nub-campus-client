@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { TrendingUp, Tag, HelpCircle, CheckCircle } from "lucide-react";
 import type { Question } from "@/types/qa.types";
+import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 export interface TopContributor {
@@ -51,18 +52,20 @@ export function QATrending({
   return (
     <div className="space-y-6">
       {/* ── Ask a Question CTA ───────────────────────────────── */}
-      <div className="rounded-xl border bg-card p-4 ring-1 ring-foreground/10">
-        <h3 className="text-sm font-semibold text-foreground">Ask a Question</h3>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Have a question? Get help from the NUB community.
-        </p>
-        <Link
-          href="/qa/ask"
-          className="mt-3 flex w-full items-center justify-center gap-1 rounded-xl bg-brand px-3 py-1.5 text-xs font-medium text-white transition-all hover:bg-brand/90"
-        >
-          Ask Question
-        </Link>
-      </div>
+      <Card>
+        <CardContent className="p-4 ring-1 ring-foreground/10">
+          <h3 className="text-sm font-semibold text-foreground">Ask a Question</h3>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Have a question? Get help from the NUB community.
+          </p>
+          <Link
+            href="/qa/ask"
+            className="mt-3 flex w-full items-center justify-center gap-1 rounded-xl bg-brand px-3 py-1.5 text-xs font-medium text-white transition-all hover:bg-brand/90"
+          >
+            Ask Question
+          </Link>
+        </CardContent>
+      </Card>
 
       {/* ── Top Questions (this week) ─────────────────────────── */}
       <div>

@@ -5,6 +5,7 @@ import Image from "next/image";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { TrendingUp, Tag, Users } from "lucide-react";
 import type { Discussion } from "@/types/discussion.types";
+import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 export interface TopContributor {
@@ -165,18 +166,20 @@ export function DiscussionsTrending({
       </div>
 
       {/* ── Have a topic? CTA ──────────────────────────────────── */}
-      <div className="rounded-xl border bg-card p-4 ring-1 ring-foreground/10">
-        <h3 className="text-sm font-semibold text-foreground">Have a topic?</h3>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Start a discussion and get the community talking.
-        </p>
-        <Link
-          href="/discussions/create"
-          className="mt-3 flex w-full items-center justify-center gap-1 rounded-xl border border-success bg-success/2 px-2.5 py-1.5 text-xs font-medium text-success/90 transition-colors hover:bg-success/5"
-        >
-          Start Discussion
-        </Link>
-      </div>
+      <Card>
+        <CardContent className="p-4 ring-1 ring-foreground/10">
+          <h3 className="text-sm font-semibold text-foreground">Have a topic?</h3>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Start a discussion and get the community talking.
+          </p>
+          <Link
+            href="/discussions/create"
+            className="mt-3 flex w-full items-center justify-center gap-1 rounded-xl border border-success bg-success/2 px-2.5 py-1.5 text-xs font-medium text-success/90 transition-colors hover:bg-success/5"
+          >
+            Start Discussion
+          </Link>
+        </CardContent>
+      </Card>
     </div>
   );
 }

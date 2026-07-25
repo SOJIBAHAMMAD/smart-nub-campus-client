@@ -14,11 +14,12 @@ import {
   Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import Image from "next/image";
+import { Card, CardContent } from "@/components/ui/card";
+import { TagPill } from "@/components/ui/tag-pill";
+import { AuthorInfo } from "@/components/ui/author-info";
 
 import { cn } from "@/lib/utils";
 import { TEAM_STATUS_BADGE } from "@/constants/team";
-import { formatRelativeTime } from "@/components/resources/file-type-utils";
 import {
   applyToTeam,
   reviewTeamApplication,
@@ -198,57 +199,65 @@ export function TeamDetail({ team: initialTeam, currentUserId }: TeamDetailProps
       </div>
 
       {/* ── Description ───────────────────────────────────────────── */}
-      <div className="rounded-xl border bg-card p-5 ring-1 ring-foreground/10">
-        <h3 className="text-sm font-semibold text-foreground">Description</h3>
-        <p className="mt-2 whitespace-pre-line text-sm text-foreground/80">
-          {team.description}
-        </p>
-      </div>
+      <Card>
+        <CardContent className="p-5">
+          <h3 className="text-sm font-semibold text-foreground">Description</h3>
+          <p className="mt-2 whitespace-pre-line text-sm text-foreground/80">
+            {team.description}
+          </p>
+        </CardContent>
+      </Card>
 
       {/* ── Meta: skills, deadline, members ──────────────────────── */}
       <div className="grid gap-4 sm:grid-cols-3">
         {/* Skills */}
-        <div className="rounded-xl border bg-card p-4 ring-1 ring-foreground/10">
-          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Skills
-          </h3>
-          <div className="flex flex-wrap gap-1.5">
-            {team.teamRequestSkills && team.teamRequestSkills.length > 0 ? (
-              team.teamRequestSkills.map((skill) => (
-                <span
-                  key={skill.id}
-                  className="rounded-full bg-secondary px-2.5 py-0.5 text-xs text-secondary-foreground"
-                >
-                  {skill.tag?.name}
-                </span>
-              ))
-            ) : (
-              <p className="text-xs text-muted-foreground">No skills listed.</p>
-            )}
-          </div>
-        </div>
+        <Card size="sm">
+          <CardContent className="p-4">
+            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Skills
+            </h3>
+            <div className="flex flex-wrap gap-1.5">
+              {team.teamRequestSkills && team.teamRequestSkills.length > 0 ? (
+                team.teamRequestSkills.map((skill) => (
+                  <TagPill
+                    key={skill.id}
+                    name={skill.tag?.name ?? "skill"}
+                    size="sm"
+                    showIcon={false}
+                  />
+                ))
+              ) : (
+                <p className="text-xs text-muted-foreground">No skills listed.</p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Deadline */}
-        <div className="rounded-xl border bg-card p-4 ring-1 ring-foreground/10">
-          <h3 className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            <CalendarClock className="size-3.5" />
-            Deadline
-          </h3>
-          <p className="text-sm font-medium text-foreground">
-            {formatDeadline(team.deadline)}
-          </p>
-        </div>
+        <Card size="sm">
+          <CardContent className="p-4">
+            <h3 className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <CalendarClock className="size-3.5" />
+              Deadline
+            </h3>
+            <p className="text-sm font-medium text-foreground">
+              {formatDeadline(team.deadline)}
+            </p>
+          </CardContent>
+        </Card>
 
         {/* Members count */}
-        <div className="rounded-xl border bg-card p-4 ring-1 ring-foreground/10">
-          <h3 className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            <Users className="size-3.5" />
-            Members
-          </h3>
-          <p className="text-sm font-medium text-foreground">
-            {team.currentMemberCount}/{team.lookingForCount}
-          </p>
-        </div>
+        <Card size="sm">
+          <CardContent className="p-4">
+            <h3 className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <Users className="size-3.5" />
+              Members
+            </h3>
+            <p className="text-sm font-medium text-foreground">
+              {team.currentMemberCount}/{team.lookingForCount}
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
       {/* ── Members list ─────────────────────────────────────────── */}
@@ -262,27 +271,12 @@ export function TeamDetail({ team: initialTeam, currentUserId }: TeamDetailProps
               key={member.id}
               className="flex items-center gap-3 rounded-lg border bg-card p-3 ring-1 ring-foreground/10"
             >
-              {member.user?.image ? (
-                <Image
-                  src={member.user.image}
-                  alt={member.user.name}
-                  width={36}
-                  height={36}
-                  className="rounded-full object-cover"
-                />
-              ) : (
-                <div className="flex size-9 items-center justify-center rounded-full bg-muted text-sm font-medium text-muted-foreground">
-                  {member.user?.name?.charAt(0) ?? "?"}
-                </div>
-              )}
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-foreground">
-                  {member.user?.name ?? "Unknown"}
-                </p>
-                <p className="text-[10px] text-muted-foreground">
-                  Joined {formatRelativeTime(member.joinedAt)}
-                </p>
-              </div>
+              <AuthorInfo
+                user={member.user ?? { id: "", name: "Unknown" }}
+                action="Joined"
+                timestamp={member.joinedAt}
+                size="md"
+              />
               <span
                 className={cn(
                   "rounded-full px-2 py-0.5 text-[10px] font-semibold",

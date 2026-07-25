@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Plus, Users, Inbox, FolderKanban, Lightbulb } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { POPULAR_SKILLS } from "@/constants/team";
 
@@ -65,19 +66,21 @@ export function TeamsSidebar({
       </nav>
 
       {/* ── Quick Guide ─────────────────────────────────────────── */}
-      <div className="rounded-xl border bg-card p-3 ring-1 ring-foreground/10">
-        <div className="mb-2 flex items-center gap-2">
-          <Lightbulb className="size-4 text-primary" />
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Quick Guide
-          </h3>
-        </div>
-        <p className="text-xs leading-relaxed text-muted-foreground">
-          Discover and join project teams at NUB. Browse open requests, apply with a
-          short message, or create your own team and invite members with the right
-          skills.
-        </p>
-      </div>
+      <Card>
+        <CardContent className="p-3 ring-1 ring-foreground/10">
+          <div className="mb-2 flex items-center gap-2">
+            <Lightbulb className="size-4 text-primary" />
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Quick Guide
+            </h3>
+          </div>
+          <p className="text-xs leading-relaxed text-muted-foreground">
+            Discover and join project teams at NUB. Browse open requests, apply with a
+            short message, or create your own team and invite members with the right
+            skills.
+          </p>
+        </CardContent>
+      </Card>
 
       {/* ── Popular Skills ───────────────────────────────────────── */}
       {onSkillToggle && (

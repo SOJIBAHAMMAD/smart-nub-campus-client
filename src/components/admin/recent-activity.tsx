@@ -1,5 +1,6 @@
 import { formatDistanceToNow } from "date-fns";
 import { UserPlus, Upload, ShieldCheck, MessageSquare, HelpCircle } from "lucide-react";
+import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -53,17 +54,17 @@ interface RecentActivityProps {
 export function RecentActivity({ activities }: RecentActivityProps) {
   if (activities.length === 0) {
     return (
-      <div className="rounded-xl border bg-white p-6 shadow-sm dark:bg-gray-800">
+      <Card className="p-6">
         <h3 className="text-base font-semibold mb-4">Recent Activity</h3>
         <p className="text-sm text-muted-foreground text-center py-8">
           No recent activity to display.
         </p>
-      </div>
+      </Card>
     );
   }
 
   return (
-    <div className="rounded-xl border bg-white shadow-sm dark:bg-gray-800">
+    <Card>
       <div className="p-6 pb-0">
         <h3 className="text-base font-semibold">Recent Activity</h3>
         <p className="text-sm text-muted-foreground">
@@ -129,6 +130,6 @@ export function RecentActivity({ activities }: RecentActivityProps) {
           </tbody>
         </table>
       </div>
-    </div>
+    </Card>
   );
 }

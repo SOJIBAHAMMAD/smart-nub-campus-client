@@ -2,10 +2,11 @@
 
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, X, Check, Search, Loader2, AlertCircle } from "lucide-react";
+import { Plus, Check, Search, Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { TagPill } from "@/components/ui/tag-pill";
 import { createTeamRequest } from "@/actions/team.actions";
 import type { Tag } from "@/types/resource.types";
 import { TEAM_CATEGORIES } from "@/constants/team";
@@ -232,20 +233,13 @@ export function TeamCreateForm({ tags }: TeamCreateFormProps) {
         </Label>
         <div className="flex flex-wrap gap-1.5">
           {selectedTags.map((tag) => (
-            <span
+            <TagPill
               key={tag.id}
-              className="flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs text-primary"
-            >
-              {tag.name}
-              <button
-                type="button"
-                onClick={() => toggleSkill(tag.id)}
-                className="rounded-full p-0.5 hover:bg-muted"
-                disabled={submitting}
-              >
-                <X className="size-2.5" />
-              </button>
-            </span>
+              name={tag.name}
+              variant="brand"
+              removable
+              onRemove={() => toggleSkill(tag.id)}
+            />
           ))}
         </div>
         <div className="relative">

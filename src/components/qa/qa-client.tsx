@@ -15,6 +15,7 @@ import {
   type QASortOption,
 } from "@/components/qa/question-filters";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import {
   listQuestions,
@@ -359,13 +360,15 @@ export function QAClient({
             ))}
           </div>
         ) : questions.length === 0 ? (
-          <div className="rounded-xl border bg-card p-12 text-center ring-1 ring-foreground/10">
-            <AlertCircle className="mx-auto size-10 text-muted-foreground/40" />
-            <p className="mt-3 text-sm font-medium text-foreground">No questions found</p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Try adjusting your search or filters, or ask a new question.
-            </p>
-          </div>
+          <Card>
+            <CardContent className="p-12 text-center ring-1 ring-foreground/10">
+              <AlertCircle className="mx-auto size-10 text-muted-foreground/40" />
+              <p className="mt-3 text-sm font-medium text-foreground">No questions found</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Try adjusting your search or filters, or ask a new question.
+              </p>
+            </CardContent>
+          </Card>
         ) : (
           <div className="space-y-3">
             {questions.map((question) => (
