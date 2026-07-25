@@ -6,6 +6,7 @@ import { getTagIcon } from "@/lib/tag-icons";
 interface TagPillProps {
   name: string;
   href?: string;
+  onClick?: () => void;
   size?: "xs" | "sm" | "md";
   variant?: "default" | "outline" | "brand";
   showIcon?: boolean;
@@ -45,6 +46,7 @@ const iconSizes = {
 export function TagPill({
   name,
   href,
+  onClick,
   size = "sm",
   variant = "default",
   showIcon = true,
@@ -93,6 +95,14 @@ export function TagPill({
       <Link href={href} className={classes}>
         {content}
       </Link>
+    );
+  }
+
+  if (onClick) {
+    return (
+      <button type="button" onClick={onClick} className={classes}>
+        {content}
+      </button>
     );
   }
 

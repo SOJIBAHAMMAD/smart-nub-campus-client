@@ -1,6 +1,6 @@
 "use client";
 
-import { cn } from "@/lib/utils";
+import { TagPill } from "@/components/ui/tag-pill";
 
 interface PopularSkillsProps {
   skills: { id: string; name: string; slug: string; count?: number }[];
@@ -27,18 +27,13 @@ export function PopularSkills({
       {skills.map((skill) => {
         const isActive = active.includes(skill.id);
         return (
-          <button
+          <TagPill
             key={skill.id}
+            name={skill.name}
+            active={isActive}
             onClick={() => onSelect?.(skill.id)}
-            className={cn(
-              "rounded-full px-2.5 py-1 text-xs font-medium transition-colors",
-              isActive
-                ? "bg-primary/15 text-primary"
-                : "bg-muted text-muted-foreground hover:bg-muted/70",
-            )}
-          >
-            {skill.name}
-          </button>
+
+          />
         );
       })}
     </div>

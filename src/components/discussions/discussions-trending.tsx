@@ -6,7 +6,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { TrendingUp, Tag, Users } from "lucide-react";
 import type { Discussion } from "@/types/discussion.types";
 import { Card, CardContent } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
+import { TagPill } from "@/components/ui/tag-pill";
 
 export interface TopContributor {
   rank: number;
@@ -98,19 +98,13 @@ export function DiscussionsTrending({
             {popularTags.map((tag) => {
               const active = selectedTags.includes(tag.slug);
               return (
-                <button
+                <TagPill
                   key={tag.id}
-                  type="button"
+                  name={tag.name}
+                  active={active}
                   onClick={() => toggleTag(tag.slug)}
-                  className={cn(
-                    "rounded-full px-2.5 py-1 text-xs font-medium transition-colors",
-                    active
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-secondary text-secondary-foreground hover:bg-primary/10 hover:text-primary",
-                  )}
-                >
-                  {tag.name}
-                </button>
+
+                />
               );
             })}
           </div>

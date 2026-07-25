@@ -6,6 +6,7 @@ import { Plus, Bookmark, MessageCircle, Pin, ChevronDown } from "lucide-react";
 import type { DiscussionCategory } from "@/types/discussion.types";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { TagPill } from "@/components/ui/tag-pill";
 
 export type DiscussionTab = "all" | "mine" | "bookmarks" | "replies";
 
@@ -157,8 +158,10 @@ export function DiscussionsSidebar({
             {tags.map((tag) => {
               const active = selectedTags.includes(tag.slug);
               return (
-                <button
+                <TagPill
                   key={tag.id}
+                  name={tag.name}
+                  active={active}
                   onClick={() =>
                     onTagsChange(
                       active
@@ -166,15 +169,8 @@ export function DiscussionsSidebar({
                         : [...selectedTags, tag.slug],
                     )
                   }
-                  className={cn(
-                    "rounded-full px-2.5 py-1 text-xs font-medium transition-colors",
-                    active
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-muted-foreground hover:bg-muted/70",
-                  )}
-                >
-                  {tag.name}
-                </button>
+
+                />
               );
             })}
           </div>

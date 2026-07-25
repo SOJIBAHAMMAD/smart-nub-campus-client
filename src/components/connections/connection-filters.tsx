@@ -2,7 +2,7 @@
 
 import { X } from "lucide-react";
 import { DEPARTMENTS, SEMESTER_OPTIONS } from "@/lib/constants";
-import { cn } from "@/lib/utils";
+import { TagPill } from "@/components/ui/tag-pill";
 
 export interface ConnectionFilterState {
   department: string;
@@ -99,18 +99,13 @@ export function ConnectionFilters({
             {skills.map((skill) => {
               const active = filters.skills.includes(skill.id);
               return (
-                <button
+                <TagPill
                   key={skill.id}
+                  name={skill.name}
+                  active={active}
                   onClick={() => toggleSkill(skill.id)}
-                  className={cn(
-                    "rounded-full px-2.5 py-1 text-xs font-medium transition-colors",
-                    active
-                      ? "bg-primary/15 text-primary"
-                      : "bg-muted text-muted-foreground hover:bg-muted/70",
-                  )}
-                >
-                  {skill.name}
-                </button>
+
+                />
               );
             })}
           </div>

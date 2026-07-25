@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Plus, Users, Inbox, FolderKanban, Lightbulb } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { TagPill } from "@/components/ui/tag-pill";
 import { POPULAR_SKILLS } from "@/constants/team";
 
 export type TeamsTab = "finder" | "applications" | "teams";
@@ -103,19 +104,13 @@ export function TeamsSidebar({
               const slug = skill.toLowerCase();
               const active = selectedSkills.includes(slug);
               return (
-                <button
+                <TagPill
                   key={skill}
+                  name={skill}
+                  active={active}
                   onClick={() => onSkillToggle(slug)}
-                  aria-pressed={active}
-                  className={cn(
-                    "rounded-full px-2.5 py-1 text-xs font-medium transition-colors",
-                    active
-                      ? "bg-primary/10 text-primary ring-1 ring-primary/30"
-                      : "bg-secondary text-secondary-foreground hover:bg-primary/10 hover:text-primary",
-                  )}
-                >
-                  {skill}
-                </button>
+
+                />
               );
             })}
           </div>
