@@ -150,7 +150,7 @@ export function TopNav({ userName, userImage, userId }: TopNavProps) {
             variant="ghost"
             size="icon"
             onClick={() => setTheme(isDark ? "light" : "dark")}
-            aria-label={`Switch to ${isDark ? "light" : "dark"} mode`}
+            aria-label="Toggle theme"
             className="size-8"
           >
             {!mounted ? (
