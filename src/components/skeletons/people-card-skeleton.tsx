@@ -6,7 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
  */
 export function PeopleCardSkeleton({ compact = false }: { compact?: boolean }) {
   return (
-    <div className={`flex gap-3 rounded-xl border bg-card ring-1 ring-foreground/10 ${compact ? "p-3" : "p-4"}`} aria-hidden="true">
+    <div className={`flex gap-3 rounded-xl border border-border/60 bg-card ${compact ? "p-3" : "p-4"}`} aria-hidden="true">
       <Skeleton className={compact ? "size-9 shrink-0 rounded-full" : "size-11 shrink-0 rounded-full"} />
       <div className="min-w-0 flex-1 space-y-2">
         <div className="flex items-start justify-between gap-2">

@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { FileText, FileImage, Presentation, File, AlertTriangle } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { TagPill } from "@/components/ui/tag-pill";
 import type { Resource } from "@/types/resource.types";
 
 /** Returns a lucide icon based on file type extension. */
@@ -54,50 +56,45 @@ export function TrendingResources({ resources, error }: TrendingResourcesProps) 
           {resources.map((resource) => {
             const FileIcon = getFileIcon(resource.fileType);
             return (
-              <Link
-                key={resource.id}
-                href={`/resources/${resource.id}`}
-                className="flex items-start gap-3 rounded-xl border bg-card p-4 ring-1 ring-foreground/10 transition-all hover:shadow-md"
-              >
-                {/* File type icon */}
-                <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-                  <FileIcon className="size-5 text-primary" />
-                </div>
-
-                {/* Content */}
-                <div className="min-w-0 flex-1">
-                  <h3 className="truncate text-sm font-medium text-foreground">
-                    {resource.title}
-                  </h3>
-                  <p className="mt-0.5 text-xs text-muted-foreground">
-                    {resource.course?.code} — {resource.course?.name}
-                  </p>
-
-                  {/* Tags */}
-                  {resource.resourceTags && resource.resourceTags.length > 0 && (
-                    <div className="mt-2 flex flex-wrap gap-1.5">
-                      {resource.resourceTags.slice(0, 3).map((rt) => (
-                        <span
-                          key={rt.id}
-                          className="rounded-full bg-secondary px-2 py-0.5 text-xs text-secondary-foreground"
-                        >
-                          {rt.tag?.name}
-                        </span>
-                      ))}
+              <Card key={resource.id} interactive>
+                <Link href={`/resources/${resource.id}`} className="contents">
+                  <CardContent className="flex items-start gap-3 py-4">
+                    {/* File type icon */}
+                    <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                      <FileIcon className="size-5 text-primary" />
                     </div>
-                  )}
-                </div>
 
-                {/* Upvote count */}
-                <div className="shrink-0 text-center">
-                  <span className="text-sm font-semibold text-foreground">
-                    {resource.upvoteCount}
-                  </span>
-                  <span className="block text-xs text-muted-foreground">
-                    upvotes
-                  </span>
-                </div>
-              </Link>
+                    {/* Content */}
+                    <div className="min-w-0 flex-1">
+                      <h3 className="truncate text-sm font-medium text-foreground">
+                        {resource.title}
+                      </h3>
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        {resource.course?.code} — {resource.course?.name}
+                      </p>
+
+                      {/* Tags */}
+                      {resource.resourceTags && resource.resourceTags.length > 0 && (
+                        <div className="mt-2 flex flex-wrap gap-1.5">
+                          {resource.resourceTags.slice(0, 3).map((rt) => (
+                            <TagPill key={rt.id} name={rt.tag?.name ?? ""} size="xs" />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Upvote count */}
+                    <div className="shrink-0 text-center">
+                      <span className="text-sm font-semibold text-foreground">
+                        {resource.upvoteCount}
+                      </span>
+                      <span className="block text-xs text-muted-foreground">
+                        upvotes
+                      </span>
+                    </div>
+                  </CardContent>
+                </Link>
+              </Card>
             );
           })}
         </div>

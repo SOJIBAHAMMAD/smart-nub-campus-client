@@ -225,6 +225,15 @@
   --sidebar-border: oklch(92% 0.01 280);
 
   --sidebar-ring: var(--ring);
+
+  /* ==========================================================================
+     Card Redesign Tokens
+     ========================================================================== */
+  --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
+  --card-shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04);
+  --card-border: oklch(93% 0.01 280);
+  --card-surface: oklch(100% 0 0);
+  --card-accent: oklch(58% 0.24 285);
 }
 
 .dark {
@@ -289,6 +298,15 @@
   --sidebar-border: oklch(30% 0.01 280);
 
   --sidebar-ring: var(--ring);
+
+  /* ==========================================================================
+     Card Redesign Tokens (Dark)
+     ========================================================================== */
+  --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(0, 0, 0, 0.3);
+  --card-shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2);
+  --card-border: oklch(31% 0.01 280);
+  --card-surface: oklch(22% 0.015 280);
+  --card-accent: oklch(70% 0.2 285);
 }
 
 @layer base {

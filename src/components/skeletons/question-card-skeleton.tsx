@@ -6,7 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
  */
 export function QuestionCardSkeleton() {
   return (
-    <div className="flex gap-3 rounded-xl border bg-card p-4 ring-1 ring-foreground/10" aria-hidden="true">
+    <div className="flex gap-3 rounded-xl border border-border/60 bg-card p-4" aria-hidden="true">
       {/* Left: vote control */}
       <div className="flex shrink-0 flex-col items-center gap-1 pt-0.5">
         <Skeleton className="size-8 rounded-md" />

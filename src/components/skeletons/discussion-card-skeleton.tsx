@@ -6,7 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
  */
 export function DiscussionCardSkeleton() {
   return (
-    <div className="rounded-xl border bg-card p-4 ring-1 ring-foreground/10" aria-hidden="true">
+    <div className="rounded-xl border border-border/60 bg-card p-4" aria-hidden="true">
       {/* Header: title */}
       <div className="flex items-start gap-2">
         <Skeleton className="h-4 w-3/4" />

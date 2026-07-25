@@ -16,6 +16,13 @@ import {
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardAction,
+} from "@/components/ui/card";
+import { TagPill } from "@/components/ui/tag-pill";
+import {
   ConnectionStatusBadge,
   type Relationship,
 } from "./connection-status-badge";
@@ -29,18 +36,14 @@ import {
   blockUserAction,
   unblockUserAction,
 } from "@/actions/connection.actions";
-import { cn } from "@/lib/utils";
-
 export interface PeopleCardUser {
   id: string;
   name: string;
   email?: string;
   image?: string | null;
-  /** Top-level (used by suggestions/transformed data). */
   department?: string | null;
   currentSemester?: number | null;
   admissionSemester?: string | null;
-  /** Backend nested shape (otherUser / search result). */
   student?: {
     department?: string | null;
     admissionYear?: number;
@@ -50,37 +53,26 @@ export interface PeopleCardUser {
     currentSemester?: number | null;
     batchYear?: number | null;
   } | null;
-  /** Backend nested skills (search results). */
   userSkills?: { tag: { id: string; name: string; slug: string } }[];
   skills?: { tag: { id: string; name: string; slug: string } }[] | string[];
   mutualConnections?: number;
-  /** Relationship of the current user to this person (server-resolved). */
   connectionStatus?:
     | "NONE"
     | "CONNECTED"
     | "PENDING_INCOMING"
     | "PENDING_OUTGOING";
-  /** Connection record id when a pending/established connection exists. */
   connectionId?: string | null;
 }
 
 interface PeopleCardProps {
   user: PeopleCardUser;
-  /** Relationship from the current user's perspective. */
   relationship?: Relationship;
-  /** Connection record id when an existing connection/pending row exists. */
   connectionId?: string;
-  /** Tag describing the relationship context (e.g. "incoming" pending). */
   direction?: "incoming" | "outgoing" | "none";
-  /** Show the mutual connections line. */
   showMutual?: boolean;
-  /** Compact rendering for sidebar suggestions. */
   compact?: boolean;
-  /** Callback fired after a successful mutation (to refresh lists). */
   onChanged?: () => void;
-  /** Callback to unblock this user (shown when relationship is "blocked"). */
   onUnblock?: () => void;
-  /** Optional note attached to the connection request (e.g. from the sender). */
   note?: string | null;
 }
 
@@ -90,11 +82,6 @@ function skillName(skill: unknown): string {
   return s.tag?.name ?? s.name ?? "";
 }
 
-/**
- * People card used across the Connections page — discoverable people, suggested
- * people, and pending/established connections. Renders the appropriate action
- * buttons based on the current relationship and performs optimistic mutations.
- */
 export function PeopleCard({
   user,
   relationship = "none",
@@ -113,7 +100,6 @@ export function PeopleCard({
   const [connectNote, setConnectNote] = useState("");
   const cardRef = useRef<HTMLDivElement>(null);
 
-  // Close the "more actions" menu on outside click or Escape.
   useEffect(() => {
     if (!menuOpen) return;
     const onPointerDown = (e: MouseEvent | TouchEvent) => {
@@ -132,8 +118,6 @@ export function PeopleCard({
     };
   }, [menuOpen]);
 
-  // Resolve fields that arrive nested from the backend (otherUser / search
-  // results) as well as the flattened shape used by suggestions.
   const department = user.department ?? user.student?.department ?? null;
   const currentSemester =
     user.currentSemester ?? user.profile?.currentSemester ?? null;
@@ -230,61 +214,55 @@ export function PeopleCard({
   const skills = (rawSkills ?? []).map(skillName).filter(Boolean);
 
   return (
-    <div
-      ref={cardRef}
-      className={cn(
-        "group relative flex gap-3 rounded-xl border bg-card p-4 ring-1 ring-foreground/10 transition-shadow hover:shadow-md",
-        compact && "p-3",
-      )}
-    >
-      <Avatar
-        id={user.id}
-        name={user.name}
-        src={user.image}
-        className={compact ? "size-9" : "size-11"}
-      />
-
-      <div className="min-w-0 flex-1">
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-foreground">
-              {user.name}
-            </p>
-            <p className="truncate text-xs text-muted-foreground">
-              {[department, currentSemester ? `Sem ${currentSemester}` : null]
-                .filter(Boolean)
-                .join(" · ") || "NUB Student"}
-            </p>
-          </div>
-          {!compact && <ConnectionStatusBadge relationship={status} />}
+    <Card ref={cardRef} size={compact ? "sm" : "default"}>
+      <CardHeader className="flex-row items-center gap-3 px-4 pt-4 sm:px-5 sm:pt-5">
+        <Avatar
+          id={user.id}
+          name={user.name}
+          src={user.image}
+          className={compact ? "size-9" : "size-11"}
+        />
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-semibold text-foreground">
+            {user.name}
+          </p>
+          <p className="truncate text-xs text-muted-foreground">
+            {[department, currentSemester ? `Sem ${currentSemester}` : null]
+              .filter(Boolean)
+              .join(" · ") || "NUB Student"}
+          </p>
         </div>
+        <CardAction>
+          <ConnectionStatusBadge relationship={status} />
+        </CardAction>
+      </CardHeader>
 
-        {/* Skills */}
+      <CardContent className="space-y-3 px-4 pb-4 sm:px-5 sm:pb-5">
         {skills.length > 0 && (
-          <div className="mt-2 flex flex-wrap gap-1">
+          <div className="flex flex-wrap gap-1">
             {skills.slice(0, compact ? 2 : 4).map((skill) => (
-              <span
+              <TagPill
                 key={skill}
-                className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary"
-              >
-                {skill}
-              </span>
+                name={skill}
+                size="xs"
+                variant="brand"
+                showIcon={false}
+              />
             ))}
           </div>
         )}
 
         {mutual && (
-          <p className="mt-2 text-xs text-muted-foreground">{mutual}</p>
+          <p className="text-xs text-muted-foreground">{mutual}</p>
         )}
 
         {note && (
-          <p className="mt-2 rounded-lg bg-muted/60 px-2.5 py-1.5 text-xs italic text-muted-foreground">
-            “{note}”
+          <p className="rounded-lg bg-muted/60 px-2.5 py-1.5 text-xs italic text-muted-foreground">
+            &ldquo;{note}&rdquo;
           </p>
         )}
 
-        {/* Actions */}
-        <div className="mt-3 flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 pt-1">
           {status === "none" && (
             <>
               <Button
@@ -308,16 +286,6 @@ export function PeopleCard({
                 <MessageSquare className="size-3.5" />
                 Note
               </Button>
-              {noteOpen && (
-                <textarea
-                  value={connectNote}
-                  onChange={(e) => setConnectNote(e.target.value)}
-                  maxLength={500}
-                  rows={2}
-                  placeholder={`Add a note for ${user.name}…`}
-                  className="mt-2 w-full resize-none rounded-lg border border-input bg-transparent px-2.5 py-2 text-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-                />
-              )}
             </>
           )}
 
@@ -405,6 +373,17 @@ export function PeopleCard({
             </button>
           )}
 
+          {noteOpen && status === "none" && (
+            <textarea
+              value={connectNote}
+              onChange={(e) => setConnectNote(e.target.value)}
+              maxLength={500}
+              rows={2}
+              placeholder={`Add a note for ${user.name}…`}
+              className="w-full resize-none rounded-lg border border-input bg-transparent px-2.5 py-2 text-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+            />
+          )}
+
           {menuOpen && (
             <div className="absolute right-3 top-12 z-10 w-40 overflow-hidden rounded-lg border bg-popover p-1 shadow-lg ring-1 ring-foreground/10">
               {status === "none" && (
@@ -434,7 +413,7 @@ export function PeopleCard({
             </div>
           )}
         </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }

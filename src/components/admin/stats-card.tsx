@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import { TrendingUp, TrendingDown } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 
 // ── Component ────────────────────────────────────────────────────────────────
 
@@ -35,63 +36,62 @@ export function StatsCard({
   const isNegative = hasTrend && trend! < 0;
 
   return (
-    <div
+    <Card
       className={cn(
-        "rounded-xl border bg-white p-6 shadow-sm transition-shadow hover:shadow-md dark:bg-gray-800",
-        isWarning
-          ? "border-red-200 dark:border-red-800"
-          : "border-gray-200 dark:border-gray-700",
+        isWarning && "border-destructive/40",
         className,
       )}
     >
-      <div className="flex items-center justify-between">
-        <div className="space-y-1">
-          <p className="text-sm font-medium text-muted-foreground">{label}</p>
-          <p className="text-2xl font-bold">{value}</p>
-        </div>
-        <div
-          className={cn(
-            "flex size-12 items-center justify-center rounded-lg",
-            isWarning
-              ? "bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400"
-              : "bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400",
-          )}
-        >
-          <Icon className="size-6" />
-        </div>
-      </div>
-
-      {/* Trend indicator */}
-      {hasTrend && (
-        <div className="mt-3 flex items-center gap-1">
-          {isPositive ? (
-            <TrendingUp className="size-4 text-green-600" />
-          ) : isNegative ? (
-            <TrendingDown className="size-4 text-red-600" />
-          ) : null}
-          <span
+      <CardContent className="py-5">
+        <div className="flex items-center justify-between">
+          <div className="space-y-1">
+            <p className="text-sm font-medium text-muted-foreground">{label}</p>
+            <p className="text-2xl font-bold">{value}</p>
+          </div>
+          <div
             className={cn(
-              "text-sm font-medium",
-              isPositive && "text-green-600",
-              isNegative && "text-red-600",
-              !isPositive && !isNegative && "text-muted-foreground",
+              "flex size-12 items-center justify-center rounded-lg",
+              isWarning
+                ? "bg-destructive/10 text-destructive"
+                : "bg-primary/10 text-primary",
             )}
           >
-            {isPositive && "+"}
-            {trend}%
-          </span>
-          <span className="text-sm text-muted-foreground">from last month</span>
+            <Icon className="size-6" />
+          </div>
         </div>
-      )}
 
-      {/* Warning indicator for pending items */}
-      {isWarning && !hasTrend && (
-        <div className="mt-3 flex items-center gap-1">
-          <span className="text-sm font-medium text-red-600">
-            Requires attention
-          </span>
-        </div>
-      )}
-    </div>
+        {/* Trend indicator */}
+        {hasTrend && (
+          <div className="mt-3 flex items-center gap-1">
+            {isPositive ? (
+              <TrendingUp className="size-4 text-emerald-600 dark:text-emerald-400" />
+            ) : isNegative ? (
+              <TrendingDown className="size-4 text-destructive" />
+            ) : null}
+            <span
+              className={cn(
+                "text-sm font-medium",
+                isPositive && "text-emerald-600 dark:text-emerald-400",
+                isNegative && "text-destructive",
+                !isPositive && !isNegative && "text-muted-foreground",
+              )}
+            >
+              {isPositive && "+"}
+              {trend}%
+            </span>
+            <span className="text-sm text-muted-foreground">from last month</span>
+          </div>
+        )}
+
+        {/* Warning indicator for pending items */}
+        {isWarning && !hasTrend && (
+          <div className="mt-3 flex items-center gap-1">
+            <span className="text-sm font-medium text-destructive">
+              Requires attention
+            </span>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }

@@ -1,11 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronUp, Bookmark } from "lucide-react";
+import { ChevronUp, Bookmark, Download, Eye, CheckCircle2 } from "lucide-react";
 import type { Resource } from "@/types/resource.types";
 import { FileIcon, getFileColor, getFileLabel, formatFileSize } from "@/components/resources/file-type-utils";
-import Image from "next/image";
-
+import { Card, CardContent } from "@/components/ui/card";
+import { TagPill } from "@/components/ui/tag-pill";
+import { AuthorInfo } from "@/components/ui/author-info";
+import { Metric } from "@/components/ui/metric";
 import { cn } from "@/lib/utils";
 
 interface ResourceCardProps {
@@ -15,10 +17,6 @@ interface ResourceCardProps {
   onBookmark?: (resourceId: string, currentBookmarked: boolean) => void;
 }
 
-/**
- * Resource card showing file icon, title, course, tags, author, and vote/bookmark actions.
- * Clicking the card navigates to the resource detail page; vote/bookmark buttons stop propagation.
- */
 export function ResourceCard({ resource, variant = "grid", onVote, onBookmark }: ResourceCardProps) {
   const fileColor = getFileColor(resource.fileType);
   const fileLabel = getFileLabel(resource.fileType);
@@ -28,129 +26,188 @@ export function ResourceCard({ resource, variant = "grid", onVote, onBookmark }:
 
   const stop = (e: React.MouseEvent) => e.preventDefault();
 
-  const cardContent = (
-    <>
-      {/* ── Header: icon + title ─────────────────────────────────── */}
-      <div className="flex items-start gap-3">
-        <div className={`flex size-10 shrink-0 items-center justify-center rounded-lg ${fileColor}`}>
-          <FileIcon fileType={resource.fileType} className="size-5" />
-        </div>
-
-        <div className="min-w-0 flex-1">
-          <h3 className="line-clamp-2 text-sm font-medium text-foreground transition-colors group-hover:text-primary">
-            {resource.title}
-          </h3>
-          {resource.isVerified && (
-            <span className="ml-1 inline-block text-xs text-primary">✓</span>
-          )}
-          {resource.course && (
-            <p className="mt-1 text-xs text-muted-foreground">
-              {resource.course.code} — {resource.course.name}
-            </p>
-          )}
-        </div>
-      </div>
-
-      {/* ── Tags (grid only) ─────────────────────────────────────── */}
-      {variant === "grid" && resource.resourceTags && resource.resourceTags.length > 0 && (
-        <div className="mt-2 flex flex-wrap gap-1.5">
-          {resource.resourceTags.slice(0, 3).map((rt) => (
-            <span
-              key={rt.id}
-              className="rounded-full bg-secondary px-2 py-0.5 text-xs text-secondary-foreground"
-            >
-              {rt.tag?.name}
-            </span>
-          ))}
-          {resource.resourceTags.length > 3 && (
-            <span className="rounded-full bg-secondary px-2 py-0.5 text-xs text-secondary-foreground">
-              +{resource.resourceTags.length - 3}
-            </span>
-          )}
-        </div>
-      )}
-
-      {/* ── Footer: author + meta + actions ──────────────────────── */}
-      <div className="mt-3 flex items-center justify-between border-t border-border/50 pt-3">
-        <div className="flex min-w-0 items-center gap-2">
-          {resource.uploader?.image ? (
-            <Image
-              src={resource.uploader.image}
-              alt={resource.uploader.name}
-              width={24}
-              height={24}
-              className="rounded-full object-cover"
-            />
-          ) : (
-            <div className="flex size-6 items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground">
-              {resource.uploader?.name?.charAt(0) ?? "?"}
+  if (variant === "list") {
+    return (
+      <Card data-interactive className="group">
+        <Link href={`/resources/${resource.id}`} className="contents">
+          <CardContent className="flex gap-4 py-4">
+            {/* File type icon */}
+            <div className={cn(
+              "flex size-12 shrink-0 flex-col items-center justify-center rounded-xl",
+              fileColor,
+            )}>
+              <FileIcon fileType={resource.fileType} className="size-5" />
+              <span className="mt-0.5 text-[9px] font-bold uppercase leading-none opacity-70">
+                {fileLabel}
+              </span>
             </div>
-          )}
-          <span className="truncate text-xs text-muted-foreground">
-            {resource.uploader?.name ?? "Unknown"}
-          </span>
-        </div>
 
-        <div className="flex shrink-0 items-center gap-1.5">
-          <button
-            onClick={(e) => {
-              stop(e);
-              onVote?.(resource.id, resource.userVote);
-            }}
-            className={cn(
-              "flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs font-medium transition-colors",
-              upvoted
-                ? "bg-primary/10 text-primary"
-                : "text-muted-foreground hover:bg-muted",
-            )}
-            aria-label="Upvote"
-          >
-            <ChevronUp className="size-3.5" />
-            {resource.upvoteCount}
-          </button>
-          <button
-            onClick={(e) => {
-              stop(e);
-              onBookmark?.(resource.id, bookmarked);
-            }}
-            className={cn(
-              "flex items-center rounded-md px-1.5 py-0.5 text-xs font-medium transition-colors",
-              bookmarked
-                ? "bg-primary/10 text-primary"
-                : "text-muted-foreground hover:bg-muted",
-            )}
-            aria-label="Bookmark"
-          >
-            <Bookmark className={cn("size-3.5", bookmarked && "fill-current")} />
-          </button>
-        </div>
-      </div>
+            {/* Main content */}
+            <div className="min-w-0 flex-1 space-y-1.5">
+              {/* Title row */}
+              <div className="flex items-start gap-2">
+                <h3 className="flex-1 text-sm font-semibold text-foreground line-clamp-1 group-hover/link:text-primary">
+                  {resource.title}
+                </h3>
+                {resource.isVerified && (
+                  <CheckCircle2 className="size-4 shrink-0 text-primary" />
+                )}
+                <button
+                  onClick={(e) => {
+                    stop(e);
+                    onBookmark?.(resource.id, bookmarked);
+                  }}
+                  className={cn(
+                    "shrink-0 rounded-md p-1 transition-colors",
+                    bookmarked
+                      ? "text-primary"
+                      : "text-muted-foreground/60 hover:text-foreground",
+                  )}
+                  aria-label="Bookmark"
+                >
+                  <Bookmark className={cn("size-3.5", bookmarked && "fill-current")} />
+                </button>
+              </div>
 
-      {/* ── File type badge + size (grid only) ───────────────────── */}
-      {variant === "grid" && (
-        <div className="mt-2 flex items-center gap-2">
-          <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold uppercase ${fileColor}`}>
-            {fileLabel}
-          </span>
-          <span className="text-[10px] text-muted-foreground">
-            {formatFileSize(resource.fileSize)}
-          </span>
-        </div>
-      )}
-    </>
-  );
+              {/* Description */}
+              {resource.description && (
+                <p className="text-xs text-muted-foreground line-clamp-1">
+                  {resource.description}
+                </p>
+              )}
+
+              {/* Tags */}
+              {resource.resourceTags && resource.resourceTags.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {resource.resourceTags.slice(0, 4).map((rt) =>
+                    rt.tag ? (
+                      <TagPill key={rt.id} name={rt.tag.name} size="xs" />
+                    ) : null,
+                  )}
+                  {resource.resourceTags.length > 4 && (
+                    <span className="inline-flex h-5 items-center px-1.5 text-[10px] text-muted-foreground">
+                      +{resource.resourceTags.length - 4}
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {/* Bottom row: author + meta + vote */}
+              <div className="flex items-center gap-3 pt-0.5">
+                {resource.uploader && (
+                  <AuthorInfo user={resource.uploader} timestamp={resource.createdAt} size="sm" />
+                )}
+
+                <span className="text-muted-foreground/40">·</span>
+
+                {resource.course && (
+                  <span className="inline-flex items-center rounded-md bg-muted/60 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                    {resource.course.code}
+                  </span>
+                )}
+
+                <span className="text-muted-foreground/40">·</span>
+
+                <span className="text-[10px] text-muted-foreground">
+                  {formatFileSize(resource.fileSize)}
+                </span>
+
+                <div className="ml-auto flex items-center gap-2.5">
+                  {resource.downloadCount > 0 && (
+                    <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground">
+                      <Download className="size-3" />
+                      {resource.downloadCount}
+                    </span>
+                  )}
+                  {resource.viewCount > 0 && (
+                    <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground">
+                      <Eye className="size-3" />
+                      {resource.viewCount}
+                    </span>
+                  )}
+                  <button
+                    onClick={(e) => {
+                      stop(e);
+                      onVote?.(resource.id, resource.userVote);
+                    }}
+                    className={cn(upvoted && "text-primary")}
+                    aria-label="Upvote"
+                  >
+                    <Metric icon={ChevronUp} value={resource.upvoteCount} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Link>
+      </Card>
+    );
+  }
 
   return (
-    <Link
-      href={`/resources/${resource.id}`}
-      className={cn(
-        "group flex rounded-xl border bg-card ring-1 ring-foreground/10 transition-all hover:shadow-md",
-        variant === "grid"
-          ? "flex-col p-4"
-          : "flex-row items-center gap-3 p-3",
-      )}
-    >
-      {cardContent}
-    </Link>
+    <Card data-interactive className="group">
+      <Link href={`/resources/${resource.id}`} className="contents">
+        <CardContent className="flex flex-col gap-3 py-4">
+          <div className="flex items-center justify-between">
+            <div className={cn("flex size-10 items-center justify-center rounded-lg", fileColor)}>
+              <FileIcon fileType={resource.fileType} className="size-5" />
+            </div>
+            <div className="flex items-center gap-2">
+              <span className={cn("rounded px-1.5 py-0.5 text-[10px] font-bold uppercase", fileColor)}>
+                {fileLabel}
+              </span>
+              <span className="text-[10px] text-muted-foreground">{formatFileSize(resource.fileSize)}</span>
+            </div>
+          </div>
+
+          <h3 className="text-sm font-semibold text-foreground line-clamp-2 group-hover/link:text-primary">
+            {resource.title}
+          </h3>
+
+          {resource.resourceTags && resource.resourceTags.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {resource.resourceTags.slice(0, 3).map((rt) =>
+                rt.tag ? (
+                  <TagPill key={rt.id} name={rt.tag.name} size="xs" />
+                ) : null,
+              )}
+            </div>
+          )}
+
+          <div className="flex items-center justify-between border-t border-border/40 pt-3">
+            {resource.uploader && (
+              <AuthorInfo user={resource.uploader} timestamp={resource.createdAt} size="sm" />
+            )}
+            <div className="flex items-center gap-1">
+              <button
+                onClick={(e) => {
+                  stop(e);
+                  onVote?.(resource.id, resource.userVote);
+                }}
+                className={cn(upvoted && "text-primary")}
+                aria-label="Upvote"
+              >
+                <Metric icon={ChevronUp} value={resource.upvoteCount} />
+              </button>
+              <button
+                onClick={(e) => {
+                  stop(e);
+                  onBookmark?.(resource.id, bookmarked);
+                }}
+                className={cn(
+                  "rounded-md p-1 transition-colors",
+                  bookmarked
+                    ? "text-primary"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+                aria-label="Bookmark"
+              >
+                <Bookmark className={cn("size-4", bookmarked && "fill-current")} />
+              </button>
+            </div>
+          </div>
+        </CardContent>
+      </Link>
+    </Card>
   );
 }
