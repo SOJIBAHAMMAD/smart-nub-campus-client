@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Check, Search, Loader2, AlertCircle, Lightbulb } from "lucide-react";
+import { Plus, Loader2, AlertCircle, Lightbulb } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { TagPill } from "@/components/ui/tag-pill";
+import { TagInput, type TagInputTag } from "@/components/ui/tag-input";
 import { createQuestion } from "@/actions/qa.actions";
 import type { QuestionCategory } from "@/types/qa.types";
 import type { Tag } from "@/types/resource.types";
@@ -33,7 +33,7 @@ const TIPS = [
  */
 export function QuestionCreateForm({
   categories,
-  tags,
+  tags: _tags,
   courses,
 }: QuestionCreateFormProps) {
   const router = useRouter();
@@ -42,29 +42,9 @@ export function QuestionCreateForm({
   const [content, setContent] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [courseId, setCourseId] = useState("");
-  const [tagSearch, setTagSearch] = useState("");
-  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
-  const [showTagDropdown, setShowTagDropdown] = useState(false);
+  const [selectedTagIds, setSelectedTagIds] = useState<TagInputTag[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const filteredTags = useMemo(() => {
-    const q = tagSearch.trim().toLowerCase();
-    if (!q) return tags;
-    return tags.filter((t) => t.name.toLowerCase().includes(q));
-  }, [tags, tagSearch]);
-
-  const selectedTags = tags.filter((t) => selectedTagIds.includes(t.id));
-
-  function toggleTag(id: string) {
-    setSelectedTagIds((prev) =>
-      prev.includes(id)
-        ? prev.filter((s) => s !== id)
-        : prev.length >= 5
-          ? prev
-          : [...prev, id],
-    );
-  }
 
   async function handleSubmit() {
     setError(null);
@@ -93,7 +73,7 @@ export function QuestionCreateForm({
         content: content.trim(),
         categoryId,
         courseId: courseId || undefined,
-        tagIds: selectedTagIds,
+        tagIds: selectedTagIds.map((t) => t.id),
       });
 
       if (result.success && result.data) {
@@ -198,66 +178,13 @@ export function QuestionCreateForm({
       </div>
 
       {/* Tags */}
-      <div className="space-y-1.5">
-        <Label>Tags (optional, max 5)</Label>
-        <div className="flex flex-wrap gap-1.5">
-          {selectedTags.map((tag) => (
-            <TagPill
-              key={tag.id}
-              name={tag.name}
-              variant="brand"
-              removable
-              onRemove={() => toggleTag(tag.id)}
-            />
-          ))}
-        </div>
-        <div className="relative">
-          <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={tagSearch}
-              onChange={(e) => setTagSearch(e.target.value)}
-              onFocus={() => setShowTagDropdown(true)}
-              onBlur={() => setTimeout(() => setShowTagDropdown(false), 150)}
-              placeholder="Search tags..."
-              className="h-9 pl-9"
-              disabled={submitting}
-            />
-          </div>
-          {showTagDropdown && (
-            <div className="absolute z-10 mt-1 max-h-48 w-full overflow-y-auto rounded-md border bg-card p-1 shadow-lg ring-1 ring-foreground/10">
-              {filteredTags.length > 0 ? (
-                filteredTags.map((tag) => {
-                  const active = selectedTagIds.includes(tag.id);
-                  const disabled = !active && selectedTagIds.length >= 5;
-                  return (
-                    <button
-                      key={tag.id}
-                      type="button"
-                      onMouseDown={(e) => {
-                        e.preventDefault();
-                        if (!disabled) toggleTag(tag.id);
-                      }}
-                      className="flex w-full items-center justify-between rounded-md px-2.5 py-1.5 text-sm transition-colors hover:bg-muted disabled:opacity-40"
-                      disabled={disabled}
-                    >
-                      <span className="truncate">{tag.name}</span>
-                      {active && <Check className="size-3.5 text-primary" />}
-                    </button>
-                  );
-                })
-              ) : (
-                <p className="px-2.5 py-1.5 text-xs text-muted-foreground">
-                  No matching tags.
-                </p>
-              )}
-            </div>
-          )}
-        </div>
-        <p className="text-[10px] text-muted-foreground">
-          {selectedTagIds.length}/5 selected.
-        </p>
-      </div>
+      <TagInput
+        value={selectedTagIds}
+        onChange={setSelectedTagIds}
+        maxTags={5}
+        placeholder="Search or create tags..."
+        label="Tags"
+      />
 
       {/* Tips */}
       <div className="flex gap-2 rounded-xl border bg-card p-4 ring-1 ring-foreground/10">

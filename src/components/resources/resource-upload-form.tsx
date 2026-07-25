@@ -6,7 +6,7 @@ import { Upload, X, FileText, CheckCircle, AlertCircle, Loader2 } from "lucide-r
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { TagPill } from "@/components/ui/tag-pill";
+import { TagInput, type TagInputTag } from "@/components/ui/tag-input";
 import { createResource } from "@/actions/resource.actions";
 import { uploadService } from "@/services/upload.service";
 import type { ResourceCourse, ResourceCategory } from "@/types/resource.types";
@@ -66,8 +66,7 @@ export function ResourceUploadForm({
   const [description, setDescription] = useState("");
   const [courseId, setCourseId] = useState("");
   const [categoryId, setCategoryId] = useState("");
-  const [tags, setTags] = useState<string[]>([]);
-  const [tagInput, setTagInput] = useState("");
+  const [tags, setTags] = useState<TagInputTag[]>([]);
 
   /** Validates and sets the selected file. */
   function handleFileSelect(selectedFile: File) {
@@ -114,20 +113,6 @@ export function ResourceUploadForm({
     }
   }
 
-  /** Adds a tag from the input field. */
-  function addTag() {
-    const trimmed = tagInput.trim();
-    if (trimmed && !tags.includes(trimmed) && tags.length < 10) {
-      setTags((prev) => [...prev, trimmed]);
-      setTagInput("");
-    }
-  }
-
-  /** Removes a tag by index. */
-  function removeTag(index: number) {
-    setTags((prev) => prev.filter((_, i) => i !== index));
-  }
-
   /** Submits the form: uploads file to Cloudinary, then creates resource via API. */
   async function handleSubmit() {
     if (!file || !title.trim() || !courseId || !categoryId || tags.length === 0) {
@@ -155,7 +140,7 @@ export function ResourceUploadForm({
         fileSize: file.size,
         courseId,
         categoryId,
-        tags,
+        tags: tags.map((t) => t.name),
       });
 
       if (result.success) {
@@ -182,7 +167,6 @@ export function ResourceUploadForm({
     setCourseId("");
     setCategoryId("");
     setTags([]);
-    setTagInput("");
     setStage("idle");
     setError(null);
     setUploadProgress(0);
@@ -342,49 +326,16 @@ export function ResourceUploadForm({
           </div>
 
           {/* Tags */}
-          <div className="space-y-1.5">
-            <Label>
-              Tags <span className="text-destructive">*</span>
-            </Label>
-            <div className="flex flex-wrap gap-1.5">
-              {tags.map((tag, idx) => (
-                <TagPill
-                  key={idx}
-                  name={tag}
-                  showIcon={false}
-                  removable
-                  onRemove={() => removeTag(idx)}
-                />
-              ))}
-            </div>
-            <div className="flex gap-2">
-              <Input
-                value={tagInput}
-                onChange={(e) => setTagInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    addTag();
-                  }
-                }}
-                placeholder="Type a tag and press Enter"
-                disabled={stage === "uploading" || stage === "submitting"}
-                className="h-8 text-xs"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={addTag}
-                disabled={!tagInput.trim() || tags.length >= 10 || stage === "uploading" || stage === "submitting"}
-              >
-                Add
-              </Button>
-            </div>
-            <p className="text-[10px] text-muted-foreground">
-              At least 1 tag required. Max 10 tags.
-            </p>
-          </div>
+          <TagInput
+            value={tags}
+            onChange={setTags}
+            maxTags={10}
+            minTags={1}
+            required
+            placeholder="Type a tag and press Enter"
+            label="Tags"
+            disabled={stage === "uploading" || stage === "submitting"}
+          />
 
           {/* ── Error message ──────────────────────────────────────── */}
           {error && (
