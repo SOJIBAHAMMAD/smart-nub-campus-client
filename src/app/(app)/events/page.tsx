@@ -9,10 +9,10 @@ import type { PaginationMeta } from "@/types/resource.types";
 export const metadata: Metadata = {
   title: "Events | Smart NUB Campus",
   description:
-    "Browse upcoming campus events at North South University — workshops, seminars, and more.",
+    "Browse upcoming campus events at Northern University Bangladesh — workshops, seminars, and more.",
   openGraph: {
     title: "Events | Smart NUB Campus",
-    description: "Browse upcoming campus events at NSU.",
+    description: "Browse upcoming campus events at NUB.",
     type: "website",
   },
 };
@@ -23,7 +23,8 @@ export default async function EventsPage({
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const params = await searchParams;
-  const page = typeof params.page === "string" ? parseInt(params.page, 10) || 1 : 1;
+  const page =
+    typeof params.page === "string" ? parseInt(params.page, 10) || 1 : 1;
   const search = typeof params.search === "string" ? params.search : undefined;
   const status = typeof params.status === "string" ? params.status : undefined;
 
@@ -35,7 +36,12 @@ export default async function EventsPage({
       page,
       limit: 12,
       search,
-      status: status as "UPCOMING" | "ONGOING" | "COMPLETED" | "CANCELLED" | undefined,
+      status: status as
+        | "UPCOMING"
+        | "ONGOING"
+        | "COMPLETED"
+        | "CANCELLED"
+        | undefined,
     });
     events = result.data ?? [];
     meta = result.meta ?? null;

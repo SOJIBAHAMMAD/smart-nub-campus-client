@@ -39,7 +39,7 @@ export default async function ResourceUploadPage() {
             Upload Resource
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Share study materials with the NSU community.
+            Share study materials with the NUB community.
           </p>
         </div>
 

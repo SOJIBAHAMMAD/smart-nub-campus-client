@@ -5,10 +5,10 @@ import { qaService } from "@/services/qa.service";
 export const metadata: Metadata = {
   title: "Q&A | Smart NUB Campus",
   description:
-    "Ask questions, find answers and help fellow students at North South University.",
+    "Ask questions, find answers and help fellow students at Northern University Bangladesh.",
   openGraph: {
     title: "Q&A | Smart NUB Campus",
-    description: "Academic Q&A at North South University.",
+    description: "Academic Q&A at Northern University Bangladesh.",
     type: "website",
   },
 };
@@ -29,11 +29,16 @@ interface PageProps {
  */
 export default async function QAPage({ searchParams }: PageProps) {
   const params = await searchParams;
-  const page = typeof params.page === "string" ? parseInt(params.page, 10) || 1 : 1;
+  const page =
+    typeof params.page === "string" ? parseInt(params.page, 10) || 1 : 1;
   const search = typeof params.search === "string" ? params.search : undefined;
-  const categorySlug = typeof params.category === "string" ? params.category : undefined;
+  const categorySlug =
+    typeof params.category === "string" ? params.category : undefined;
   const tagSlug = typeof params.tag === "string" ? params.tag : undefined;
-  const sort = typeof params.sort === "string" ? (params.sort as "latest" | "trending" | "most_answered" | "unanswered") : "latest";
+  const sort =
+    typeof params.sort === "string"
+      ? (params.sort as "latest" | "trending" | "most_answered" | "unanswered")
+      : "latest";
   const tab = typeof params.tab === "string" ? params.tab : "all";
 
   let initialQuestions: Question[] = [];
@@ -44,15 +49,26 @@ export default async function QAPage({ searchParams }: PageProps) {
   let contributors: TopContributor[] = [];
 
   try {
-    const [categoriesResult, tagsResult, contributorsResult, trendingResult] = await Promise.all([
-      qaService.listCategories(),
-      qaService.listTags(),
-      qaService.getTopContributors(5),
-      qaService.getTrending(5),
-    ]);
+    const [categoriesResult, tagsResult, contributorsResult, trendingResult] =
+      await Promise.all([
+        qaService.listCategories(),
+        qaService.listTags(),
+        qaService.getTopContributors(5),
+        qaService.getTrending(5),
+      ]);
 
-    categories = (categoriesResult as unknown as (QuestionCategory & { _count: { questions: number } })[]) ?? [];
-    popularTags = (tagsResult as unknown as { id: string; name: string; slug: string; _count: { questionTags: number } }[])
+    categories =
+      (categoriesResult as unknown as (QuestionCategory & {
+        _count: { questions: number };
+      })[]) ?? [];
+    popularTags = (
+      tagsResult as unknown as {
+        id: string;
+        name: string;
+        slug: string;
+        _count: { questionTags: number };
+      }[]
+    )
       .map((t) => ({
         id: t.id,
         name: t.name,

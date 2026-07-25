@@ -5,10 +5,10 @@ import { Suspense } from "react";
 export const metadata: Metadata = {
   title: "AI Assistant | Smart NUB Campus",
   description:
-    "AI-powered study tools — PDF summarizer, quiz generator, flashcards and more for NSU students.",
+    "AI-powered study tools — PDF summarizer, quiz generator, flashcards and more for NUB students.",
   openGraph: {
     title: "AI Assistant | Smart NUB Campus",
-    description: "AI-powered study tools for NSU students.",
+    description: "AI-powered study tools for NUB students.",
     type: "website",
   },
 };

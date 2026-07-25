@@ -5,10 +5,10 @@ import { serverApi } from "@/lib/server-api";
 export const metadata: Metadata = {
   title: "Messages | Smart NUB Campus",
   description:
-    "Chat with peers, send direct messages and coordinate with your teams at North South University.",
+    "Chat with peers, send direct messages and coordinate with your teams at Northern University Bangladesh.",
   openGraph: {
     title: "Messages | Smart NUB Campus",
-    description: "Chat with peers at North South University.",
+    description: "Chat with peers at Northern University Bangladesh.",
     type: "website",
   },
 };

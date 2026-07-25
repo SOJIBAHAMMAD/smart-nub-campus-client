@@ -41,14 +41,25 @@ export interface PeopleCardUser {
   currentSemester?: number | null;
   admissionSemester?: string | null;
   /** Backend nested shape (otherUser / search result). */
-  student?: { department?: string | null; admissionYear?: number; admissionSemester?: string | null } | null;
-  profile?: { currentSemester?: number | null; batchYear?: number | null } | null;
+  student?: {
+    department?: string | null;
+    admissionYear?: number;
+    admissionSemester?: string | null;
+  } | null;
+  profile?: {
+    currentSemester?: number | null;
+    batchYear?: number | null;
+  } | null;
   /** Backend nested skills (search results). */
   userSkills?: { tag: { id: string; name: string; slug: string } }[];
   skills?: { tag: { id: string; name: string; slug: string } }[] | string[];
   mutualConnections?: number;
   /** Relationship of the current user to this person (server-resolved). */
-  connectionStatus?: "NONE" | "CONNECTED" | "PENDING_INCOMING" | "PENDING_OUTGOING";
+  connectionStatus?:
+    | "NONE"
+    | "CONNECTED"
+    | "PENDING_INCOMING"
+    | "PENDING_OUTGOING";
   /** Connection record id when a pending/established connection exists. */
   connectionId?: string | null;
 }
@@ -124,17 +135,23 @@ export function PeopleCard({
   // Resolve fields that arrive nested from the backend (otherUser / search
   // results) as well as the flattened shape used by suggestions.
   const department = user.department ?? user.student?.department ?? null;
-  const currentSemester = user.currentSemester ?? user.profile?.currentSemester ?? null;
-  const rawSkills = user.userSkills ?? (user.skills as
-    | { tag: { id: string; name: string; slug: string } }[]
-    | undefined);
+  const currentSemester =
+    user.currentSemester ?? user.profile?.currentSemester ?? null;
+  const rawSkills =
+    user.userSkills ??
+    (user.skills as
+      | { tag: { id: string; name: string; slug: string } }[]
+      | undefined);
 
   const mutual =
     showMutual && user.mutualConnections
       ? `${user.mutualConnections} mutual connection${user.mutualConnections === 1 ? "" : "s"}`
       : "";
 
-  const run = async (key: string, fn: () => Promise<{ success: boolean; message: string }>) => {
+  const run = async (
+    key: string,
+    fn: () => Promise<{ success: boolean; message: string }>,
+  ) => {
     setBusy(key);
     try {
       const res = await fn();
@@ -236,12 +253,10 @@ export function PeopleCard({
             <p className="truncate text-xs text-muted-foreground">
               {[department, currentSemester ? `Sem ${currentSemester}` : null]
                 .filter(Boolean)
-                .join(" · ") || "NSU Student"}
+                .join(" · ") || "NUB Student"}
             </p>
           </div>
-          {!compact && (
-            <ConnectionStatusBadge relationship={status} />
-          )}
+          {!compact && <ConnectionStatusBadge relationship={status} />}
         </div>
 
         {/* Skills */}
@@ -274,7 +289,11 @@ export function PeopleCard({
             <>
               <Button
                 size="sm"
-                onClick={() => handleConnect(noteOpen ? connectNote.trim() || undefined : undefined)}
+                onClick={() =>
+                  handleConnect(
+                    noteOpen ? connectNote.trim() || undefined : undefined,
+                  )
+                }
                 disabled={busy === "connect"}
               >
                 <UserPlus className="size-3.5" />

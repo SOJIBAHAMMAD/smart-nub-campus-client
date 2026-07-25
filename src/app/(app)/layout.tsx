@@ -8,7 +8,7 @@ export const metadata: Metadata = {
     template: "%s | Smart NUB Campus",
   },
   description:
-    "Smart NUB Campus — the all-in-one platform for North South University students to collaborate, share resources, and build community.",
+    "Smart NUB Campus — the all-in-one platform for Northern University Bangladesh students to collaborate, share resources, and build community.",
 };
 
 interface IdentityMeResponse {
