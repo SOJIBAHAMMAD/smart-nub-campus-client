@@ -15,7 +15,7 @@ interface CommentItemProps {
   /** Whether the current user is the author of this comment. */
   isAuthor?: boolean;
   /** Callback when the user wants to reply to this comment. */
-  onReply?: (parentId: string) => void;
+  onReply?: (parentId: string, content: string) => void;
   /** Callback when the user wants to delete this comment. */
   onDelete?: (commentId: string) => void;
   /** Depth level for nesting (max 1 for display). */
@@ -80,8 +80,8 @@ export function CommentItem({
             <span>{upvoted ? 1 : 0}</span>
           </button>
 
-          {/* Reply (only at depth 0) */}
-          {depth === 0 && onReply && (
+          {/* Reply (max depth 1) */}
+          {depth < 2 && onReply && (
             <button
               onClick={() => setShowReplyInput(!showReplyInput)}
               className="flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
@@ -117,7 +117,7 @@ export function CommentItem({
                 size="xs"
                 onClick={() => {
                   if (replyContent.trim()) {
-                    onReply?.(comment.id);
+                    onReply?.(comment.id, replyContent.trim());
                     setReplyContent("");
                     setShowReplyInput(false);
                   }
@@ -142,7 +142,7 @@ export function CommentItem({
       </div>
 
       {/* ── Nested replies ────────────────────────────────────────── */}
-      {comment.replies && comment.replies.length > 0 && depth < 1 && (
+      {comment.replies && comment.replies.length > 0 && depth < 2 && (
         <div className="mt-2 space-y-2">
           {comment.replies.map((reply) => (
             <CommentItem

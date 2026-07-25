@@ -78,11 +78,22 @@ export function CommentSection({ resourceId }: CommentSectionProps) {
       if (result.success && result.data) {
         const reply = result.data as Comment;
         setComments((prev) =>
-          prev.map((c) =>
-            c.id === parentId
-              ? { ...c, replies: [...(c.replies ?? []), reply] }
-              : c
-          )
+          prev.map((c) => {
+            if (c.id === parentId) {
+              return { ...c, replies: [...(c.replies ?? []), reply] };
+            }
+            if (c.replies?.some((r) => r.id === parentId)) {
+              return {
+                ...c,
+                replies: c.replies.map((r) =>
+                  r.id === parentId
+                    ? { ...r, replies: [...(r.replies ?? []), reply] }
+                    : r
+                ),
+              };
+            }
+            return c;
+          })
         );
       }
     } catch {
@@ -217,7 +228,7 @@ export function CommentSection({ resourceId }: CommentSectionProps) {
             <CommentItem
               key={comment.id}
               comment={comment}
-              onReply={(parentId) => handleReply(parentId, "Reply content")}
+              onReply={(parentId, content) => handleReply(parentId, content)}
               onDelete={handleDelete}
             />
           ))}
