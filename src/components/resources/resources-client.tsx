@@ -105,12 +105,12 @@ export function ResourcesClient({
   const socketUrl = env.NEXT_PUBLIC_BACKEND_URL.replace(/\/+$/, "");
   const { socket } = useSocket({ url: socketUrl });
 
-  // When someone uploads a new resource, prepend to list
+  // When someone uploads a new resource, prepend to list (only if no active filters)
   useSocketEvent(socket, "resource:new", (data) => {
     setResources((prev) => {
       const resource = data.resource as unknown as Resource;
-      // Avoid duplicates
       if (prev.some((r) => r.id === resource.id)) return prev;
+      if (search || categorySlug || courseIdParam || tags.length > 0) return prev;
       return [resource, ...prev];
     });
   });
@@ -277,7 +277,7 @@ export function ResourcesClient({
           categories={categories}
           courses={courses}
           allTags={allTags}
-          onCourseChange={(_id) => updateParams({ category: null, tags: null })}
+          onCourseChange={(id) => updateParams({ courseId: id })}
         />
       }
       rightSidebar={

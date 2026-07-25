@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronUp, MessageCircle, Trash2 } from "lucide-react";
+import { MessageCircle, Trash2 } from "lucide-react";
 import type { Comment } from "@/types/resource.types";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -12,31 +12,32 @@ import { formatRelativeTime } from "@/components/resources/file-type-utils";
 interface CommentItemProps {
   /** The comment data to display. */
   comment: Comment;
-  /** Whether the current user is the author of this comment. */
-  isAuthor?: boolean;
+  /** The current logged-in user's ID. */
+  currentUserId?: string | null;
   /** Callback when the user wants to reply to this comment. */
   onReply?: (parentId: string, content: string) => void;
   /** Callback when the user wants to delete this comment. */
   onDelete?: (commentId: string) => void;
-  /** Depth level for nesting (max 1 for display). */
+  /** Depth level for nesting (max 2 for display). */
   depth?: number;
 }
 
 /**
- * Single comment with author, content, timestamp, reply button, and upvote.
- * Supports one level of nesting for replies.
+ * Single comment with author, content, timestamp, reply button, and delete.
+ * Supports two levels of nesting for replies.
  */
 export function CommentItem({
   comment,
-  isAuthor = false,
+  currentUserId = null,
   onReply,
   onDelete,
   depth = 0,
 }: CommentItemProps) {
-  const [upvoted, setUpvoted] = useState(false);
   const [showReplyInput, setShowReplyInput] = useState(false);
   const [replyContent, setReplyContent] = useState("");
   const [showReplies, setShowReplies] = useState(false);
+
+  const isAuthor = currentUserId != null && currentUserId === comment.userId;
 
   return (
     <div className={cn("group/comment", depth > 0 && "ml-8 border-l-2 border-border/50 pl-4")}>
@@ -69,18 +70,6 @@ export function CommentItem({
 
         {/* ── Actions ─────────────────────────────────────────────── */}
         <div className="mt-2 flex items-center gap-3">
-          {/* Upvote */}
-          <button
-            onClick={() => setUpvoted(!upvoted)}
-            className={cn(
-              "flex items-center gap-1 text-xs transition-colors",
-              upvoted ? "text-primary font-medium" : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            <ChevronUp className="size-3.5" />
-            <span>{upvoted ? 1 : 0}</span>
-          </button>
-
           {/* Reply (max depth 1) */}
           {depth < 2 && onReply && (
             <button
@@ -110,6 +99,7 @@ export function CommentItem({
               value={replyContent}
               onChange={(e) => setReplyContent(e.target.value)}
               placeholder="Write a reply..."
+              maxLength={5000}
               className="flex-1 resize-none rounded-md border bg-transparent px-2.5 py-1.5 text-xs outline-none focus:border-ring focus:ring-2 focus:ring-ring/50"
               rows={2}
             />
@@ -157,7 +147,7 @@ export function CommentItem({
                 <CommentItem
                   key={reply.id}
                   comment={reply}
-                  isAuthor={isAuthor}
+                  currentUserId={currentUserId}
                   onReply={onReply}
                   onDelete={onDelete}
                   depth={depth + 1}

@@ -23,7 +23,8 @@ export function getFileColor(fileType: string): string {
   if (ext.includes("doc") || ext.includes("word")) return "text-blue-500 bg-blue-500/10";
   if (ext.includes("ppt") || ext.includes("presentation")) return "text-orange-500 bg-orange-500/10";
   if (ext.includes("xls") || ext.includes("sheet")) return "text-green-500 bg-green-500/10";
-  if (ext.includes("image") || ext.includes("png") || ext.includes("jpg")) return "text-purple-500 bg-purple-500/10";
+  if (ext.includes("image") || ext.includes("png") || ext.includes("jpg") || ext.includes("jpeg"))
+    return "text-purple-500 bg-purple-500/10";
   if (ext.includes("zip") || ext.includes("rar")) return "text-yellow-600 bg-yellow-500/10";
   return "text-muted-foreground bg-muted";
 }
@@ -42,10 +43,10 @@ export function getFileLabel(fileType: string): string {
 
 /** Formats a byte size into a human-readable string. */
 export function formatFileSize(bytes: number): string {
-  if (bytes === 0) return "0 B";
+  if (bytes <= 0) return "0 B";
   const k = 1024;
   const sizes = ["B", "KB", "MB", "GB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  const i = Math.min(Math.floor(Math.log(bytes) / Math.log(k)), sizes.length - 1);
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
 }
 
@@ -54,11 +55,20 @@ export function formatRelativeTime(dateStr: string): string {
   const date = new Date(dateStr);
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
+
+  if (diffMs < 0) return "just now";
+
   const diffSec = Math.floor(diffMs / 1000);
   const diffMin = Math.floor(diffSec / 60);
   const diffHr = Math.floor(diffMin / 60);
   const diffDay = Math.floor(diffHr / 24);
+  const diffWeek = Math.floor(diffDay / 7);
+  const diffMonth = Math.floor(diffDay / 30);
+  const diffYear = Math.floor(diffDay / 365);
 
+  if (diffYear > 0) return `${diffYear}y ago`;
+  if (diffMonth > 0) return `${diffMonth}mo ago`;
+  if (diffWeek > 0) return `${diffWeek}w ago`;
   if (diffDay > 0) return `${diffDay}d ago`;
   if (diffHr > 0) return `${diffHr}h ago`;
   if (diffMin > 0) return `${diffMin}m ago`;
