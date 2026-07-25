@@ -145,7 +145,7 @@ export function CommentSection({ resourceId }: CommentSectionProps) {
         <div className="flex items-center gap-2">
           <MessageCircle className="size-5 text-foreground" />
           <h2 className="text-lg font-semibold text-foreground">
-            Comments ({comments.length})
+            Comments ({comments.reduce((acc, c) => acc + 1 + (c.replies?.reduce((ra, r) => ra + 1 + (r.replies?.length ?? 0), 0) ?? 0), 0)})
           </h2>
         </div>
 

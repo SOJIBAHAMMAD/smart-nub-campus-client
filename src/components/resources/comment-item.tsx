@@ -36,6 +36,7 @@ export function CommentItem({
   const [upvoted, setUpvoted] = useState(false);
   const [showReplyInput, setShowReplyInput] = useState(false);
   const [replyContent, setReplyContent] = useState("");
+  const [showReplies, setShowReplies] = useState(false);
 
   return (
     <div className={cn("group/comment", depth > 0 && "ml-8 border-l-2 border-border/50 pl-4")}>
@@ -143,17 +144,27 @@ export function CommentItem({
 
       {/* ── Nested replies ────────────────────────────────────────── */}
       {comment.replies && comment.replies.length > 0 && depth < 2 && (
-        <div className="mt-2 space-y-2">
-          {comment.replies.map((reply) => (
-            <CommentItem
-              key={reply.id}
-              comment={reply}
-              isAuthor={isAuthor}
-              onReply={onReply}
-              onDelete={onDelete}
-              depth={depth + 1}
-            />
-          ))}
+        <div className="mt-2">
+          <button
+            onClick={() => setShowReplies(!showReplies)}
+            className="flex items-center gap-1 text-xs text-primary font-medium transition-colors hover:underline"
+          >
+            {showReplies ? "Hide" : "Show"} {comment.replies.length} {comment.replies.length === 1 ? "reply" : "replies"}
+          </button>
+          {showReplies && (
+            <div className="mt-2 space-y-2">
+              {comment.replies.map((reply) => (
+                <CommentItem
+                  key={reply.id}
+                  comment={reply}
+                  isAuthor={isAuthor}
+                  onReply={onReply}
+                  onDelete={onDelete}
+                  depth={depth + 1}
+                />
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
