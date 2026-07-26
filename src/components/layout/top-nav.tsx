@@ -29,7 +29,7 @@ import {
   Users,
   MessageSquare,
   HelpCircle,
-  UserPlus,
+  UsersRound,
   MessageCircle,
   Sparkles,
 } from "lucide-react";
@@ -55,7 +55,7 @@ const navItems: NavItem[] = [
   { label: "Discussions", href: ROUTES.DISCUSSIONS, icon: MessageSquare },
   { label: "Q&A", href: ROUTES.QA, icon: HelpCircle },
   { label: "AI Assistant", href: ROUTES.AI, icon: Sparkles },
-  { label: "Connections", href: ROUTES.CONNECTIONS, icon: UserPlus },
+  { label: "My Network", href: ROUTES.MY_NETWORK, icon: UsersRound },
   { label: "Messages", href: ROUTES.MESSAGES, icon: MessageCircle },
 ];
 

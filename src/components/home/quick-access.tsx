@@ -12,7 +12,7 @@ import { Card, CardContent } from "@/components/ui/card";
 const shortcuts = [
   { label: "Resources", icon: BookOpen, href: "/resources" },
   { label: "Teams", icon: Users, href: "/teams" },
-  { label: "Network", icon: UserPlus, href: "/connections" },
+  { label: "My Network", icon: UserPlus, href: "/my-network" },
   { label: "Discussions", icon: MessageSquare, href: "/discussions" },
   { label: "Q&A", icon: HelpCircle, href: "/qa" },
   { label: "AI Assistant", icon: Bot, href: "/ai" },

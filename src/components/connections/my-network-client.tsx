@@ -10,16 +10,25 @@ import {
   Sparkles,
   Inbox,
   SearchX,
+  SlidersHorizontal,
 } from "lucide-react";
-import { ConnectionsSidebar, type ConnectionTab } from "./connections-sidebar";
-import { ConnectionsRightPanel } from "./connections-right-panel";
-import { toast } from "sonner";
-import type { Relationship } from "./connection-status-badge";
+import { motion } from "motion/react";
+import { MyNetworkSidebar, type ConnectionTab } from "./my-network-sidebar";
+import { MyNetworkRightPanel } from "./my-network-right-panel";
+import { InvitationsSection } from "./invitations-section";
 import { PeopleCard, type PeopleCardUser } from "./people-card";
 import { PeopleGrid } from "./people-grid";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Sheet,
+  SheetTrigger,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import type {
   ConnectionOverview,
   ConnectionWithUser,
@@ -41,6 +50,7 @@ import { listTagsAction } from "@/actions/resource.actions";
 import type { ConnectionFilterState } from "./connection-filters";
 import { useSocket, useSocketEvent } from "@/hooks/use-socket";
 import { env } from "@/env";
+import { toast } from "sonner";
 
 type SubTab = "all" | "seniors" | "juniors" | "same" | "favorites";
 
@@ -85,26 +95,17 @@ const EMPTY_STATE: Record<string, { icon: React.ReactNode; title: string; desc: 
   },
 };
 
-interface ConnectionsClientProps {
+interface MyNetworkClientProps {
   initialOverview: ConnectionOverview;
   initialSuggestions: SuggestedPerson[];
   initialPopularSkills: { id: string; name: string; slug: string; count?: number }[];
 }
 
-/**
- * Main Connections page client. Handles:
- *  - Left sidebar tabs (All / Pending / Sent / Blocked)
- *  - Sub-tabs within connections (All / Seniors / Juniors / Same / Favorites)
- *  - Debounced people search with filters
- *  - Discoverable people grid + connection lists
- *  - Right sidebar overview, suggestions, popular skills
- *  - Optimistic mutations via PeopleCard callbacks
- */
-export function ConnectionsClient({
+export function MyNetworkClient({
   initialOverview,
   initialSuggestions,
   initialPopularSkills,
-}: ConnectionsClientProps) {
+}: MyNetworkClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -132,14 +133,13 @@ export function ConnectionsClient({
     initialSuggestions as PeopleCardUser[],
   );
   const [popularSkills, setPopularSkills] =
-    useState<{ id: string; name: string; slug: string }[]>(initialPopularSkills);
+    useState<{ id: string; name: string; slug: string; count?: number }[]>(initialPopularSkills);
   const [activeSkills, setActiveSkills] = useState<string[]>(initialSkills);
-  const [_allTags, setAllTags] = useState<{ id: string; name: string; slug: string }[]>([]);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
 
-  // Discoverable people (search) + connections list
   const [people, setPeople] = useState<PeopleCardUser[]>([]);
   const [connections, setConnections] = useState<ConnectionWithUser[]>([]);
   const [pending, setPending] = useState<ConnectionWithUser[]>([]);
@@ -175,39 +175,11 @@ export function ConnectionsClient({
     } catch {
       /* non-critical */
     }
-  }, [mapSuggested]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [_reloadKey, setReloadKey] = useState(0);
 
-  const onChanged = useCallback(() => {
-    void refreshMeta();
-    // Trigger a re-fetch of the currently visible dataset via the reload key.
-    setReloadKey((k) => k + 1);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab, subTab, filters, search, page]);
-
-  // ── Socket.IO for real-time connection updates ──────────────────────────
-  const socketUrl = env.NEXT_PUBLIC_BACKEND_URL.replace(/\/+$/, "");
-  const { socket } = useSocket({ url: socketUrl });
-
-  // When someone sends you a connection request
-  useSocketEvent(socket, "connection:request", () => {
-    onChanged();
-    toast.info("New connection request received!");
-  });
-
-  // When someone accepts your connection request
-  useSocketEvent(socket, "connection:accepted", () => {
-    onChanged();
-    toast.success("Your connection request was accepted!");
-  });
-
-  // When someone removes you from their connections
-  useSocketEvent(socket, "connection:removed", () => {
-    onChanged();
-  });
-
-  // ── Data loader based on active tab / sub-tab ───────────────────────────────
   const loadData = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -219,11 +191,10 @@ export function ConnectionsClient({
         const res = await getSentRequestsAction();
         setSent((res.data as unknown as ConnectionWithUser[]) ?? []);
       } else if (tab === "blocked") {
-        // Fetch the actual list of blocked users from the backend.
         const res = await getBlockedUsersAction();
-        const blocked = (res.data as unknown as ConnectionOtherUser[]) ?? [];
+        const blockedUsers = (res.data as unknown as ConnectionOtherUser[]) ?? [];
         setPeople(
-          blocked.map((u) => ({
+          blockedUsers.map((u) => ({
             id: u.id,
             name: u.name,
             email: u.email,
@@ -233,7 +204,6 @@ export function ConnectionsClient({
           })),
         );
       } else {
-        // "all" tab: either discoverable search or established connections
         const isSearching =
           !!search ||
           !!filters.department ||
@@ -267,7 +237,7 @@ export function ConnectionsClient({
         }
       }
     } catch (err) {
-      console.error("[connections] loadData failed:", err);
+      console.error("[network] loadData failed:", err);
       setError(
         err instanceof Error
           ? `Failed to load data: ${err.message}`
@@ -278,12 +248,22 @@ export function ConnectionsClient({
     }
   }, [tab, subTab, search, filters, page]);
 
-  // Initial + dependency-driven load
+  const loadDataRef = useRef(loadData);
+  loadDataRef.current = loadData;
+
+  const handleChanged = useCallback(() => {
+    void refreshMeta();
+    setReloadKey((k) => k + 1);
+    void loadDataRef.current();
+  }, [refreshMeta]);
+
+  const handleChangedRef = useRef(handleChanged);
+  handleChangedRef.current = handleChanged;
+
   useEffect(() => {
     void loadData();
   }, [loadData]);
 
-  // Load real skill tags for the filters + popular skills (keyed by tag id).
   useEffect(() => {
     void (async () => {
       try {
@@ -296,7 +276,6 @@ export function ConnectionsClient({
           name: t.name,
           slug: t.slug,
         }));
-        setAllTags(mapped);
         setPopularSkills(mapped.slice(0, 8));
       } catch {
         /* non-critical */
@@ -304,7 +283,6 @@ export function ConnectionsClient({
     })();
   }, []);
 
-  // Sync current state to the URL query string (shareable / restorable).
   useEffect(() => {
     const params = new URLSearchParams();
     if (tab !== "all") params.set("tab", tab);
@@ -317,26 +295,44 @@ export function ConnectionsClient({
     router.replace(qs ? `?${qs}` : window.location.pathname, { scroll: false });
   }, [tab, subTab, search, filters, router]);
 
-  // Debounced search trigger
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
       if (tab === "all") {
         setPage(1);
-        void loadData();
+        void loadDataRef.current();
       }
     }, 300);
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, filters]);
+  }, [search, filters, tab]);
+
+  const socketUrl = env.NEXT_PUBLIC_BACKEND_URL.replace(/\/+$/, "");
+  const { socket } = useSocket({ url: socketUrl });
+
+  useSocketEvent(socket, "connection:request", () => {
+    handleChangedRef.current();
+    toast.info("New connection request received!");
+  });
+
+  useSocketEvent(socket, "connection:accepted", () => {
+    handleChangedRef.current();
+    toast.success("Your connection request was accepted!");
+  });
+
+  useSocketEvent(socket, "connection:removed", () => {
+    handleChangedRef.current();
+  });
 
   const handleFindPeople = () => {
     setTab("all");
     setSubTab("all");
+    setSheetOpen(false);
     if (typeof document !== "undefined") {
-      document.getElementById("connections-search")?.focus();
+      setTimeout(() => {
+        document.getElementById("network-search")?.focus();
+      }, 100);
     }
   };
 
@@ -345,7 +341,7 @@ export function ConnectionsClient({
       const res = await unblockUserAction(userId);
       if (res.success) {
         toast.success(res.message);
-        onChanged();
+        handleChanged();
       } else {
         toast.error(res.message);
       }
@@ -381,13 +377,13 @@ export function ConnectionsClient({
       filters.skills.length > 0);
 
   const totalPages = meta?.totalPages ?? 1;
+  const showInvitations = tab === "all" && (pending.length > 0 || sent.length > 0);
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[240px_1fr_240px]">
-      {/* Left sidebar */}
+    <div className="grid gap-6 lg:grid-cols-[260px_1fr_280px]">
       <aside className="hidden lg:block">
         <div className="sticky top-20">
-          <ConnectionsSidebar
+          <MyNetworkSidebar
             activeTab={tab}
             onTabChange={(t) => {
               setTab(t);
@@ -399,123 +395,165 @@ export function ConnectionsClient({
               setFilters(f);
               setPage(1);
             }}
-            skills={initialPopularSkills}
+            skills={popularSkills}
             onFindPeople={handleFindPeople}
           />
         </div>
       </aside>
 
-      {/* Main content */}
-      <main className="min-w-0">
-        <div className="mb-4">
-          <h1 className="text-xl font-semibold text-foreground">Connections</h1>
-          <p className="text-sm text-muted-foreground">
-            Discover and connect with fellow students.
-          </p>
-        </div>
-
-        {/* Sub-tabs (only on the "all" tab) */}
-        {tab === "all" && (
-          <Card className="mb-4 flex flex-wrap gap-1 p-1">
-            {SUB_TABS.map((st) => (
-              <button
-                key={st.id}
-                onClick={() => {
-                  setSubTab(st.id);
+      <aside className="lg:hidden">
+        <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+          <SheetTrigger
+            render={
+              <Button variant="outline" size="sm">
+                <SlidersHorizontal className="size-4" />
+                Filters
+              </Button>
+            }
+          />
+          <SheetContent side="left">
+            <SheetHeader>
+              <SheetTitle>Network Filters</SheetTitle>
+            </SheetHeader>
+            <div className="px-4 pb-4">
+              <MyNetworkSidebar
+                activeTab={tab}
+                onTabChange={(t) => {
+                  setTab(t);
+                  setPage(1);
+                  setSheetOpen(false);
+                }}
+                counts={counts}
+                filters={filters}
+                onFiltersChange={(f) => {
+                  setFilters(f);
                   setPage(1);
                 }}
-                className={cn(
-                  "flex-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
-                  subTab === st.id
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                )}
-              >
-                {st.label}
-              </button>
-            ))}
-          </Card>
-        )}
+                skills={popularSkills}
+                onFindPeople={handleFindPeople}
+              />
+            </div>
+          </SheetContent>
+        </Sheet>
+      </aside>
 
-        {/* Search bar */}
-        {(tab === "all") && (
-          <div className="relative mb-4">
-            <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-            <input
-              id="connections-search"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search people..."
-              className="w-full rounded-xl border border-input bg-transparent py-2.5 pr-3 pl-9 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
+      <main className="min-w-0">
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25 }}
+        >
+          <div className="mb-4">
+            <h1 className="text-xl font-semibold text-foreground">My Network</h1>
+            <p className="text-sm text-muted-foreground">
+              Discover and connect with fellow students.
+            </p>
+          </div>
+
+          {tab === "all" && (
+            <div className="relative mb-4">
+              <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                id="network-search"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search people by name, department, or skill..."
+                className="pl-9"
+              />
+            </div>
+          )}
+
+          {showInvitations && (
+            <InvitationsSection
+              pending={pending}
+              sent={sent}
+              onChanged={handleChanged}
             />
-          </div>
-        )}
+          )}
 
-        {/* Content area */}
-        {loading ? (
-          <LoadingState />
-        ) : error ? (
-          <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-6 text-center text-sm text-destructive">
-            {error}
-          </div>
-        ) : (
-          <ContentSwitch
-            tab={tab}
-            isDiscovering={isDiscovering}
-            people={people}
-            connections={connections}
-            pending={pending}
-            sent={sent}
-            subTab={subTab}
-            onChanged={onChanged}
-            onUnblock={handleUnblockUser}
-          />
-        )}
+          {tab === "all" && !isDiscovering && (
+            <div className="mb-4">
+              <Card className="p-1">
+                <Tabs
+                  value={subTab}
+                  onValueChange={(v) => {
+                    setSubTab(v as SubTab);
+                    setPage(1);
+                  }}
+                >
+                  <TabsList variant="line" className="w-full">
+                    {SUB_TABS.map((st) => (
+                      <TabsTrigger key={st.id} value={st.id} className="flex-1">
+                        {st.label}
+                      </TabsTrigger>
+                    ))}
+                  </TabsList>
+                </Tabs>
+              </Card>
+            </div>
+          )}
 
-        {/* Pagination */}
-        {meta && totalPages > 1 && !loading && (
-          <div className="mt-6 flex items-center justify-center gap-3">
-            <Button
-              variant="secondary"
-              size="sm"
-              disabled={page <= 1}
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-            >
-              Prev
-            </Button>
-            <span className="text-sm text-muted-foreground">
-              Page {page} of {totalPages}
-            </span>
-            <Button
-              variant="secondary"
-              size="sm"
-              disabled={page >= totalPages}
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            >
-              Next
-            </Button>
-          </div>
-        )}
+          {loading ? (
+            <LoadingState />
+          ) : error ? (
+            <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-6 text-center text-sm text-destructive">
+              {error}
+            </div>
+          ) : (
+            <ContentSwitch
+              tab={tab}
+              isDiscovering={isDiscovering}
+              people={people}
+              connections={connections}
+              pending={pending}
+              sent={sent}
+              subTab={subTab}
+              onChanged={handleChanged}
+              onUnblock={handleUnblockUser}
+            />
+          )}
+
+          {meta && totalPages > 1 && !loading && (
+            <div className="mt-6 flex items-center justify-center gap-3">
+              <Button
+                variant="secondary"
+                size="sm"
+                disabled={page <= 1}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+              >
+                Prev
+              </Button>
+              <span className="text-sm text-muted-foreground">
+                Page {page} of {totalPages}
+              </span>
+              <Button
+                variant="secondary"
+                size="sm"
+                disabled={page >= totalPages}
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              >
+                Next
+              </Button>
+            </div>
+          )}
+        </motion.div>
       </main>
 
-      {/* Right sidebar */}
       <aside className="hidden lg:block">
         <div className="sticky top-20">
-          <ConnectionsRightPanel
+          <MyNetworkRightPanel
             overview={overview}
             suggestions={suggestions}
             popularSkills={popularSkills}
             onSkillSelect={handleSkillSelect}
             activeSkills={activeSkills}
-            onChanged={onChanged}
+            onChanged={handleChanged}
           />
         </div>
       </aside>
     </div>
   );
 }
-
-// ── Content switch ─────────────────────────────────────────────────────────────
 
 function ContentSwitch({
   tab,
@@ -539,8 +577,7 @@ function ContentSwitch({
   onUnblock: (userId: string) => void;
 }) {
   if (tab === "pending") {
-    if (pending.length === 0)
-      return <EmptyState kind="pending" />;
+    if (pending.length === 0) return <EmptyState kind="pending" />;
     return (
       <PeopleGrid>
         {pending.map((c) => (
@@ -593,13 +630,12 @@ function ContentSwitch({
     );
   }
 
-  // tab === "all"
   if (isDiscovering) {
     if (people.length === 0) return <EmptyState kind="search" />;
     return (
       <PeopleGrid>
         {people.map((p) => {
-          const rel: Relationship =
+          const rel =
             p.connectionStatus === "CONNECTED"
               ? "connected"
               : p.connectionStatus === "PENDING_INCOMING"
@@ -607,7 +643,7 @@ function ContentSwitch({
                 : p.connectionStatus === "PENDING_OUTGOING"
                   ? "pending_outgoing"
                   : "none";
-          const dir: "incoming" | "outgoing" | "none" =
+          const dir =
             p.connectionStatus === "PENDING_INCOMING"
               ? "incoming"
               : p.connectionStatus === "PENDING_OUTGOING"
@@ -631,9 +667,21 @@ function ContentSwitch({
 
   if (connections.length === 0) {
     if (subTab === "favorites")
-      return <EmptyState kind="all" title="No favorites yet" desc="Star your close connections to find them here." />;
+      return (
+        <EmptyState
+          kind="all"
+          title="No favorites yet"
+          desc="Star your close connections to find them here."
+        />
+      );
     if (subTab !== "all")
-      return <EmptyState kind="all" title="No connections here" desc="No connections match this filter yet." />;
+      return (
+        <EmptyState
+          kind="all"
+          title="No connections here"
+          desc="No connections match this filter yet."
+        />
+      );
     return <EmptyState kind="all" />;
   }
 
@@ -652,8 +700,6 @@ function ContentSwitch({
     </PeopleGrid>
   );
 }
-
-// ── Shared sub-components ──────────────────────────────────────────────────────
 
 function LoadingState() {
   return (
@@ -698,3 +744,5 @@ function EmptyState({
     </div>
   );
 }
+
+

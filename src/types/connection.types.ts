@@ -73,6 +73,7 @@ export interface ConnectionWithUser {
   status: ConnectionStatus;
   isFavorite: boolean;
   note?: string | null;
+  connectedAt?: string | null;
   createdAt: string;
   updatedAt: string;
   otherUser: ConnectionOtherUser;

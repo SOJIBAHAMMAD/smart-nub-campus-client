@@ -199,3 +199,27 @@ export async function unblockUserAction(
     return { success: false, message };
   }
 }
+
+export async function getActiveUsersAction(
+  limit = 8,
+): Promise<ApiResponse> {
+  try {
+    const data = await connectionService.getActiveUsers(limit);
+    return { success: true, message: "Active users fetched.", data };
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to fetch active users.";
+    return { success: false, message };
+  }
+}
+
+export async function getProfileCompletenessAction(): Promise<ApiResponse> {
+  try {
+    const data = await connectionService.getProfileCompleteness();
+    return { success: true, message: "Profile completeness fetched.", data };
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to fetch profile completeness.";
+    return { success: false, message };
+  }
+}

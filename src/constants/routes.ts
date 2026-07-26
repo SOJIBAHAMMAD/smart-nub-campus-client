@@ -14,7 +14,7 @@ const ROUTES = {
   DISCUSSIONS: "/discussions",
   QA: "/qa",
   AI: "/ai",
-  CONNECTIONS: "/connections",
+  MY_NETWORK: "/my-network",
   MESSAGES: "/messages",
   NOTIFICATIONS: "/notifications",
   SETTINGS: "/settings",

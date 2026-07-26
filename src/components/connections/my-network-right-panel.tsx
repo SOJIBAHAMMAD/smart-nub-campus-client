@@ -1,12 +1,14 @@
 "use client";
 
-import { ConnectionOverview } from "./connection-overview";
+import { NetworkStrength } from "./network-strength";
+import { ActiveUsers } from "./active-users";
 import { SuggestedPeople } from "./suggested-people";
 import { PopularSkills } from "./popular-skills";
+import { Separator } from "@/components/ui/separator";
 import type { PeopleCardUser } from "./people-card";
 import type { ConnectionOverview as Overview } from "@/types";
 
-interface ConnectionsRightPanelProps {
+interface MyNetworkRightPanelProps {
   overview: Overview;
   suggestions: PeopleCardUser[];
   popularSkills: { id: string; name: string; slug: string; count?: number }[];
@@ -15,21 +17,23 @@ interface ConnectionsRightPanelProps {
   onChanged?: () => void;
 }
 
-/**
- * Right sidebar for the Connections page: network overview, suggested people,
- * and popular skills for discovery.
- */
-export function ConnectionsRightPanel({
+export function MyNetworkRightPanel({
   overview,
   suggestions,
   popularSkills,
   onSkillSelect,
   activeSkills = [],
   onChanged,
-}: ConnectionsRightPanelProps) {
+}: MyNetworkRightPanelProps) {
   return (
     <div className="space-y-6">
-      <ConnectionOverview overview={overview} />
+      <NetworkStrength overview={overview} />
+
+      <Separator />
+
+      <ActiveUsers onChanged={onChanged} />
+
+      <Separator />
 
       <div>
         <h3 className="mb-3 text-sm font-semibold text-foreground">
@@ -37,6 +41,8 @@ export function ConnectionsRightPanel({
         </h3>
         <SuggestedPeople people={suggestions} onChanged={onChanged} />
       </div>
+
+      <Separator />
 
       <div>
         <h3 className="mb-3 text-sm font-semibold text-foreground">

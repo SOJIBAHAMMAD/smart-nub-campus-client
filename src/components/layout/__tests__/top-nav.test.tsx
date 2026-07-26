@@ -19,7 +19,7 @@ describe("TopNav", () => {
     const nav = screen.getByRole("navigation", { name: "Main navigation" });
     const links = within(nav).getAllByRole("link");
     expect(links).toHaveLength(8);
-    const labels = ["Home", "Resources", "Teams", "Discussions", "Q&A", "AI Assistant", "Connections", "Messages"];
+    const labels = ["Home", "Resources", "Teams", "Discussions", "Q&A", "AI Assistant", "My Network", "Messages"];
     for (const label of labels) {
       expect(within(nav).getByText(label)).toBeInTheDocument();
     }

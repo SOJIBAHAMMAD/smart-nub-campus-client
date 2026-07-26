@@ -174,4 +174,36 @@ export const connectionService = {
       invalidatesTags: [...CONNECTION_MUTATION_TAGS],
     });
   },
+
+  /** Get recently active users. */
+  async getActiveUsers(limit = 8): Promise<{
+    id: string;
+    name: string;
+    image: string | null;
+    department: string | null;
+    currentSemester: number | null;
+    lastActiveAt: string | null;
+  }[]> {
+    const response = await serverApi.get<{
+      id: string;
+      name: string;
+      image: string | null;
+      department: string | null;
+      currentSemester: number | null;
+      lastActiveAt: string | null;
+    }[]>(`/connections/active?limit=${limit}`, { tags: [TAGS.CONNECTIONS] });
+    return response.data ?? [];
+  },
+
+  /** Get profile completeness for the current user. */
+  async getProfileCompleteness(): Promise<{
+    percentage: number;
+    missingFields: string[];
+  }> {
+    const response = await serverApi.get<{
+      percentage: number;
+      missingFields: string[];
+    }>("/connections/profile-completeness", { tags: [TAGS.CONNECTIONS] });
+    return response.data ?? { percentage: 0, missingFields: [] };
+  },
 };

@@ -26,6 +26,7 @@ import {
   ConnectionStatusBadge,
   type Relationship,
 } from "./connection-status-badge";
+import { ConnectionNoteDialog } from "./connection-note-dialog";
 import {
   sendConnectionRequestAction,
   acceptConnectionAction,
@@ -96,8 +97,7 @@ export function PeopleCard({
   const [status, setStatus] = useState<Relationship>(relationship);
   const [busy, setBusy] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [noteOpen, setNoteOpen] = useState(false);
-  const [connectNote, setConnectNote] = useState("");
+  const [dialogOpen, setDialogOpen] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -157,8 +157,7 @@ export function PeopleCard({
       const res = await sendConnectionRequestAction(user.id, reqNote);
       if (res.success) {
         setStatus("pending_outgoing");
-        setNoteOpen(false);
-        setConnectNote("");
+        setDialogOpen(false);
       }
       return res;
     });
@@ -264,29 +263,14 @@ export function PeopleCard({
 
         <div className="flex flex-wrap items-center gap-2 pt-1">
           {status === "none" && (
-            <>
-              <Button
-                size="sm"
-                onClick={() =>
-                  handleConnect(
-                    noteOpen ? connectNote.trim() || undefined : undefined,
-                  )
-                }
-                disabled={busy === "connect"}
-              >
-                <UserPlus className="size-3.5" />
-                {noteOpen && connectNote.trim() ? "Send Request" : "Connect"}
-              </Button>
-              <Button
-                size="sm"
-                variant={noteOpen ? "secondary" : "ghost"}
-                onClick={() => setNoteOpen((v) => !v)}
-                title="Add a note to your request"
-              >
-                <MessageSquare className="size-3.5" />
-                Note
-              </Button>
-            </>
+            <Button
+              size="sm"
+              onClick={() => setDialogOpen(true)}
+              disabled={busy === "connect"}
+            >
+              <UserPlus className="size-3.5" />
+              Connect
+            </Button>
           )}
 
           {status === "pending_incoming" && connectionId && (
@@ -373,17 +357,6 @@ export function PeopleCard({
             </button>
           )}
 
-          {noteOpen && status === "none" && (
-            <textarea
-              value={connectNote}
-              onChange={(e) => setConnectNote(e.target.value)}
-              maxLength={500}
-              rows={2}
-              placeholder={`Add a note for ${user.name}…`}
-              className="w-full resize-none rounded-lg border border-input bg-transparent px-2.5 py-2 text-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-            />
-          )}
-
           {menuOpen && (
             <div className="absolute right-3 top-12 z-10 w-40 overflow-hidden rounded-lg border bg-popover p-1 shadow-lg ring-1 ring-foreground/10">
               {status === "none" && (
@@ -414,6 +387,14 @@ export function PeopleCard({
           )}
         </div>
       </CardContent>
+
+      <ConnectionNoteDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        user={user}
+        onSend={handleConnect}
+        busy={busy === "connect"}
+      />
     </Card>
   );
 }
