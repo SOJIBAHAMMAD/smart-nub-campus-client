@@ -23,6 +23,12 @@ import { toast } from "sonner";
 import type { ProfileUser } from "@/types/profile.types";
 import { DEPARTMENT_LABELS, type Department } from "@/lib/constants";
 
+function ordinal(n: number): string {
+  const s = ["th", "st", "nd", "rd"];
+  const v = n % 100;
+  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+}
+
 interface ProfileHeroProps {
   profileData: ProfileUser;
   isOwnProfile: boolean;
@@ -216,7 +222,7 @@ export function ProfileHero({
           <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
             {profile?.currentSemester && (
               <span className="flex items-center gap-1">
-                Semester {profile.currentSemester}
+                Semester {ordinal(profile.currentSemester)}
               </span>
             )}
             {profile?.batchYear && <span>Batch {profile.batchYear}</span>}

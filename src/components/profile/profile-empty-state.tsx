@@ -8,6 +8,7 @@ import {
   FileText,
   Link2,
   GraduationCap,
+  BookOpen,
   Sparkles,
   ArrowRight,
   X,
@@ -77,6 +78,13 @@ export function ProfileEmptyState({
         completed: !!(s?.studentId && s?.department),
         icon: <GraduationCap className="size-4" />,
         href: "/settings/profile",
+      },
+      {
+        label: "Set current semester",
+        description: "Let others know where you are",
+        completed: !!p?.currentSemester,
+        icon: <BookOpen className="size-4" />,
+        scrollTo: "section-academic",
       },
     ];
   }, [profileData]);

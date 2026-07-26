@@ -151,7 +151,11 @@ export function ProfileClient({ profileData, currentUserId }: ProfileClientProps
         {/* Right Column */}
         <div className="space-y-4">
           {/* Academic Info */}
-          <ProfileAcademicCard profileData={displayData} />
+          <ProfileAcademicCard
+            profileData={displayData}
+            isOwnProfile={showAsOther}
+            onProfileUpdate={handleProfileUpdate}
+          />
 
           {/* Links */}
           <ProfileLinksCard
