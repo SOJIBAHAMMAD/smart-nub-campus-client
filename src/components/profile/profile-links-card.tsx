@@ -5,7 +5,11 @@ import { ExternalLink, Globe, Link2, Pencil, Check, X } from "lucide-react";
 import { GithubIcon, LinkedinIcon } from "@/components/ui/brand-icons";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group";
 import { updateProfile } from "@/actions/profile.actions";
 import { toast } from "sonner";
 import type { ProfileUser } from "@/types/profile.types";
@@ -16,63 +20,94 @@ interface ProfileLinksCardProps {
   onProfileUpdate: () => void;
 }
 
-interface SocialLink {
+interface SocialLinkConfig {
   key: "githubUrl" | "linkedinUrl" | "portfolioUrl" | "websiteUrl";
   label: string;
   icon: React.ReactNode;
-  value: string | null;
+  baseUrl: string;
+  prefixDisplay: string;
+  placeholder: string;
   color?: string;
+}
+
+const SOCIAL_CONFIG: SocialLinkConfig[] = [
+  {
+    key: "githubUrl",
+    label: "GitHub",
+    icon: <GithubIcon className="size-4" />,
+    baseUrl: "https://github.com/",
+    prefixDisplay: "github.com/",
+    placeholder: "username",
+    color: "hover:text-[#333] dark:hover:text-[#f0f6fc]",
+  },
+  {
+    key: "linkedinUrl",
+    label: "LinkedIn",
+    icon: <LinkedinIcon className="size-4" />,
+    baseUrl: "https://linkedin.com/in/",
+    prefixDisplay: "linkedin.com/in/",
+    placeholder: "username",
+    color: "hover:text-[#0077B5]",
+  },
+  {
+    key: "portfolioUrl",
+    label: "Portfolio",
+    icon: <Link2 className="size-4" />,
+    baseUrl: "https://",
+    prefixDisplay: "https://",
+    placeholder: "yoursite.com",
+  },
+  {
+    key: "websiteUrl",
+    label: "Website",
+    icon: <Globe className="size-4" />,
+    baseUrl: "https://",
+    prefixDisplay: "https://",
+    placeholder: "yoursite.com",
+  },
+];
+
+function extractUsername(fullUrl: string | null, baseUrl: string): string {
+  if (!fullUrl) return "";
+  if (fullUrl.startsWith(baseUrl)) return fullUrl.slice(baseUrl.length);
+  return fullUrl;
+}
+
+function buildUrl(username: string, baseUrl: string): string | undefined {
+  const trimmed = username.trim();
+  if (!trimmed) return undefined;
+  return baseUrl + trimmed;
 }
 
 export function ProfileLinksCard({ profileData, isOwnProfile, onProfileUpdate }: ProfileLinksCardProps) {
   const [isEditing, setIsEditing] = useState(false);
-  const [editValues, setEditValues] = useState({
-    githubUrl: profileData.profile?.githubUrl ?? "",
-    linkedinUrl: profileData.profile?.linkedinUrl ?? "",
-    portfolioUrl: profileData.profile?.portfolioUrl ?? "",
-    websiteUrl: profileData.profile?.websiteUrl ?? "",
-  });
+  const [usernames, setUsernames] = useState<Record<string, string>>({});
   const [isPending, startTransition] = useTransition();
 
-  const links: SocialLink[] = [
-    {
-      key: "githubUrl",
-      label: "GitHub",
-      icon: <GithubIcon className="size-4" />,
-      value: profileData.profile?.githubUrl ?? null,
-      color: "hover:text-[#333] dark:hover:text-[#f0f6fc]",
-    },
-    {
-      key: "linkedinUrl",
-      label: "LinkedIn",
-      icon: <LinkedinIcon className="size-4" />,
-      value: profileData.profile?.linkedinUrl ?? null,
-      color: "hover:text-[#0077B5]",
-    },
-    {
-      key: "portfolioUrl",
-      label: "Portfolio",
-      icon: <Link2 className="size-4" />,
-      value: profileData.profile?.portfolioUrl ?? null,
-    },
-    {
-      key: "websiteUrl",
-      label: "Website",
-      icon: <Globe className="size-4" />,
-      value: profileData.profile?.websiteUrl ?? null,
-    },
-  ];
+  const profileLinks = SOCIAL_CONFIG.map((config) => ({
+    ...config,
+    value: (profileData.profile?.[config.key] as string | null) ?? null,
+  }));
 
-  const hasAnyLinks = links.some((l) => l.value);
+  const hasAnyLinks = profileLinks.some((l) => l.value);
+
+  const startEditing = () => {
+    const initial: Record<string, string> = {};
+    for (const config of SOCIAL_CONFIG) {
+      const fullUrl = profileData.profile?.[config.key] as string | null;
+      initial[config.key] = extractUsername(fullUrl, config.baseUrl);
+    }
+    setUsernames(initial);
+    setIsEditing(true);
+  };
 
   const handleSave = () => {
     startTransition(async () => {
-      const result = await updateProfile({
-        githubUrl: editValues.githubUrl || undefined,
-        linkedinUrl: editValues.linkedinUrl || undefined,
-        portfolioUrl: editValues.portfolioUrl || undefined,
-        websiteUrl: editValues.websiteUrl || undefined,
-      });
+      const payload: Record<string, string | undefined> = {};
+      for (const config of SOCIAL_CONFIG) {
+        payload[config.key] = buildUrl(usernames[config.key] ?? "", config.baseUrl);
+      }
+      const result = await updateProfile(payload);
       if (result.success) {
         setIsEditing(false);
         onProfileUpdate();
@@ -83,13 +118,8 @@ export function ProfileLinksCard({ profileData, isOwnProfile, onProfileUpdate }:
   };
 
   const handleCancel = () => {
-    setEditValues({
-      githubUrl: profileData.profile?.githubUrl ?? "",
-      linkedinUrl: profileData.profile?.linkedinUrl ?? "",
-      portfolioUrl: profileData.profile?.portfolioUrl ?? "",
-      websiteUrl: profileData.profile?.websiteUrl ?? "",
-    });
     setIsEditing(false);
+    setUsernames({});
   };
 
   return (
@@ -99,7 +129,7 @@ export function ProfileLinksCard({ profileData, isOwnProfile, onProfileUpdate }:
           Links
         </CardTitle>
         {isOwnProfile && !isEditing && (
-          <Button variant="ghost" size="icon" className="size-7" onClick={() => setIsEditing(true)}>
+          <Button variant="ghost" size="icon" className="size-7" onClick={startEditing}>
             <Pencil className="size-3.5" />
           </Button>
         )}
@@ -117,24 +147,29 @@ export function ProfileLinksCard({ profileData, isOwnProfile, onProfileUpdate }:
       <CardContent>
         {isEditing ? (
           <div className="space-y-2">
-            {links.map((link) => (
-              <div key={link.key} className="flex items-center gap-2">
-                <span className="w-20 shrink-0 text-xs text-muted-foreground">{link.label}</span>
-                <Input
-                  value={editValues[link.key]}
-                  onChange={(e) =>
-                    setEditValues((prev) => ({ ...prev, [link.key]: e.target.value }))
-                  }
-                  placeholder={`Your ${link.label} URL`}
-                  className="h-8 text-xs"
-                  disabled={isPending}
-                />
+            {SOCIAL_CONFIG.map((config) => (
+              <div key={config.key} className="space-y-1">
+                <span className="text-xs text-muted-foreground">{config.label}</span>
+                <InputGroup className="h-8">
+                  <InputGroupAddon align="inline-start" className="text-xs">
+                    {config.prefixDisplay}
+                  </InputGroupAddon>
+                  <InputGroupInput
+                    value={usernames[config.key] ?? ""}
+                    onChange={(e) =>
+                      setUsernames((prev) => ({ ...prev, [config.key]: e.target.value }))
+                    }
+                    placeholder={config.placeholder}
+                    className="text-xs"
+                    disabled={isPending}
+                  />
+                </InputGroup>
               </div>
             ))}
           </div>
         ) : hasAnyLinks ? (
           <div className="space-y-1.5">
-            {links
+            {profileLinks
               .filter((l) => l.value)
               .map((link) => (
                 <a
