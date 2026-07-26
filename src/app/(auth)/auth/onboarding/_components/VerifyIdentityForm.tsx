@@ -3,7 +3,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { TextField } from "@/components/forms/fields/text-field";
-import { DateField } from "@/components/forms/date-field";
+import { BirthDateField } from "@/components/forms/birth-date-field";
 import { FileUploadField } from "@/components/forms/file-upload-field";
 import { Button } from "@/components/ui/button";
 import {
@@ -29,7 +29,13 @@ export function VerifyIdentityForm({
       name: defaultValue?.name ?? "",
       email: defaultValue?.email ?? "",
       dateOfBirth: defaultValue?.dateOfBirth
-        ? new Date(defaultValue.dateOfBirth).toISOString().split("T")[0]
+        ? (() => {
+            const d = new Date(defaultValue.dateOfBirth);
+            const yyyy = d.getFullYear();
+            const mm = String(d.getMonth() + 1).padStart(2, "0");
+            const dd = String(d.getDate()).padStart(2, "0");
+            return `${yyyy}-${mm}-${dd}`;
+          })()
         : "",
       studentId: defaultValue?.studentId ?? "",
       idCardImage: defaultValue?.idCardImage ?? "",
@@ -64,7 +70,7 @@ export function VerifyIdentityForm({
           autoComplete="email"
           disabled={isSubmitting}
         />
-        <DateField
+        <BirthDateField
           control={control}
           name="dateOfBirth"
           label={
@@ -72,6 +78,7 @@ export function VerifyIdentityForm({
               Date of Birth <span className="text-destructive">*</span>
             </>
           }
+          disabled={isSubmitting}
         />
         <TextField
           control={control}
