@@ -4,20 +4,46 @@
  */
 export const DEPARTMENTS = [
   "CSE",
+  "ECSE",
   "EEE",
-  "ECE",
-  "ME",
-  "CE",
-  "IPE",
+  "EEEE",
   "BBA",
-  "ARCH",
-  "PHARMA",
+  "MBA",
   "ENGLISH",
-  "ECONOMICS",
-  "ENVIRONMENTAL_SCIENCE",
+  "MAE",
+  "BANGLA",
+  "MAB",
+  "LLB",
+  "MPH",
+  "BPH",
+  "ME",
+  "CIVIL",
+  "BTX",
+  "EBTX",
 ] as const;
 
 export type Department = (typeof DEPARTMENTS)[number];
+
+/** Human-readable labels for department enum values. */
+export const DEPARTMENT_LABELS: Record<Department, string> = {
+  CSE: "Computer Science & Engineering",
+  ECSE: "Electronics & Computer Systems Engineering",
+  EEE: "Electrical & Electronics Engineering",
+  EEEE: "Electrical & Electronic Engineering",
+  BBA: "Bachelor of Business Administration",
+  MBA: "Master of Business Administration",
+  ENGLISH: "English",
+  MAE: "Mechanical & Aerospace Engineering",
+  BANGLA: "Bangla",
+  MAB: "Master of Business Administration (Bangla)",
+  LLB: "Bachelor of Laws",
+  MPH: "Master of Public Health",
+  BPH: "Bachelor of Public Health",
+  ME: "Mechanical Engineering",
+  CIVIL: "Civil Engineering",
+  BTX: "Biotechnology",
+  EBTX: "Electronics & Biotechnology",
+};
 
 /** Total semesters in an undergraduate program (used for the semester dropdown). */
 export const MAX_SEMESTERS = 12;

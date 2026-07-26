@@ -1,8 +1,22 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { tagService, type TagItem, type TagBasic } from "@/services/tag.service";
+import { listTags, createTag } from "@/actions/tag.actions";
 import { useDebounce } from "@/hooks/use-debounce";
+
+export interface TagItem {
+  id: string;
+  name: string;
+  slug: string;
+  totalCount: number;
+  createdAt: string;
+}
+
+export interface TagBasic {
+  id: string;
+  name: string;
+  slug: string;
+}
 
 interface UseTagsOptions {
   /** Debounce delay in ms for search. Default 200. */
@@ -10,19 +24,12 @@ interface UseTagsOptions {
 }
 
 interface UseTagsReturn {
-  /** All available tags from the server. */
   tags: TagItem[];
-  /** Tags filtered by current search query. */
   filteredTags: TagItem[];
-  /** Current search input value. */
   search: string;
-  /** Update search input. */
   setSearch: (value: string) => void;
-  /** Create a new tag. Returns the created tag. */
   createTag: (name: string) => Promise<TagBasic>;
-  /** Whether tags are still loading. */
   isLoading: boolean;
-  /** Whether a tag is being created. */
   isCreating: boolean;
 }
 
@@ -36,19 +43,17 @@ export function useTags(options: UseTagsOptions = {}): UseTagsReturn {
 
   const debouncedSearch = useDebounce(search, debounceMs);
 
-  // Fetch all tags on mount
   useEffect(() => {
     let cancelled = false;
     setIsLoading(true);
 
-    tagService
-      .listTags()
-      .then((data) => {
-        if (!cancelled) setTags(data);
+    listTags()
+      .then((result) => {
+        if (!cancelled && result.success && Array.isArray(result.data)) {
+          setTags(result.data as TagItem[]);
+        }
       })
-      .catch(() => {
-        // Empty state handled by checking tags.length
-      })
+      .catch(() => {})
       .finally(() => {
         if (!cancelled) setIsLoading(false);
       });
@@ -58,26 +63,28 @@ export function useTags(options: UseTagsOptions = {}): UseTagsReturn {
     };
   }, []);
 
-  // Client-side filtering (tags are already fetched in full)
   const filteredTags = tags.filter((tag) => {
     if (!debouncedSearch.trim()) return true;
     return tag.name.toLowerCase().includes(debouncedSearch.toLowerCase());
   });
 
-  const createTag = useCallback(
+  const createTagAction = useCallback(
     async (name: string): Promise<TagBasic> => {
       setIsCreating(true);
       try {
-        const created = await tagService.createTag(name);
-        // Add to local list optimistically
-        setTags((prev) => {
-          if (prev.some((t) => t.id === created.id)) return prev;
-          return [
-            ...prev,
-            { ...created, totalCount: 0, createdAt: new Date().toISOString() },
-          ].sort((a, b) => a.name.localeCompare(b.name));
-        });
-        return created;
+        const result = await createTag(name);
+        if (result.success && result.data) {
+          const created = result.data as TagBasic;
+          setTags((prev) => {
+            if (prev.some((t) => t.id === created.id)) return prev;
+            return [
+              ...prev,
+              { ...created, totalCount: 0, createdAt: new Date().toISOString() },
+            ].sort((a, b) => a.name.localeCompare(b.name));
+          });
+          return created;
+        }
+        throw new Error(result.message || "Failed to create tag");
       } finally {
         setIsCreating(false);
       }
@@ -90,7 +97,7 @@ export function useTags(options: UseTagsOptions = {}): UseTagsReturn {
     filteredTags,
     search,
     setSearch,
-    createTag,
+    createTag: createTagAction,
     isLoading,
     isCreating,
   };

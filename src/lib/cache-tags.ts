@@ -60,6 +60,12 @@ export const TAGS = {
 
   /** User profile detail. */
   PROFILE: "user-profile",
+
+  /** User gamification stats. */
+  PROFILE_STATS: "profile-stats",
+
+  /** User badges. */
+  PROFILE_BADGES: "profile-badges",
 } as const;
 
 /** All tags that should be invalidated when any resource is created/updated/deleted. */

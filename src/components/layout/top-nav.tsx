@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -185,21 +186,23 @@ export function TopNav({ userName, userImage, userId }: TopNavProps) {
               </DropdownMenuTrigger>
 
               <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuLabel className="font-normal">
-                  <div className="flex flex-col gap-0.5">
-                    <span className="text-sm font-medium">
-                      {userName ?? "User"}
-                    </span>
-                    {userId && (
-                      <Link
-                        href={ROUTES.USER_PROFILE(userId)}
-                        className="text-xs text-muted-foreground hover:text-foreground"
-                      >
-                        View profile
-                      </Link>
-                    )}
-                  </div>
-                </DropdownMenuLabel>
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-sm font-medium">
+                        {userName ?? "User"}
+                      </span>
+                      {userId && (
+                        <Link
+                          href={ROUTES.MY_PROFILE}
+                          className="text-xs text-muted-foreground hover:text-foreground"
+                        >
+                          View profile
+                        </Link>
+                      )}
+                    </div>
+                  </DropdownMenuLabel>
+                </DropdownMenuGroup>
 
                 <DropdownMenuSeparator />
 
@@ -308,13 +311,22 @@ export function TopNav({ userName, userImage, userId }: TopNavProps) {
                 )}
                 <div>
                   <p className="text-sm font-medium">{userName ?? "User"}</p>
-                  <Link
-                    href={ROUTES.SETTINGS}
-                    className="text-xs text-muted-foreground hover:text-foreground"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Settings
-                  </Link>
+                  <div className="flex gap-2">
+                    <Link
+                      href={ROUTES.MY_PROFILE}
+                      className="text-xs text-muted-foreground hover:text-foreground"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      Profile
+                    </Link>
+                    <Link
+                      href={ROUTES.SETTINGS}
+                      className="text-xs text-muted-foreground hover:text-foreground"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      Settings
+                    </Link>
+                  </div>
                 </div>
               </div>
               <Button

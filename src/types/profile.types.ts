@@ -17,11 +17,48 @@ export interface UserProfile {
   updatedAt: string;
 }
 
+export interface ProfileSkill {
+  id: string;
+  name: string;
+  userSkillId: string;
+}
+
+export interface ProfileBadge {
+  id: string;
+  unlockedAt: string;
+  badge: {
+    id: string;
+    name: string;
+    description: string;
+    icon: string | null;
+    category: string;
+    tier: string;
+    points: number;
+  };
+}
+
+export interface ProfileStats {
+  totalPoints: number;
+  connectionCount: number;
+}
+
+export interface ProfileContentCounts {
+  resources: number;
+  discussions: number;
+  questions: number;
+}
+
+export interface ProfileBadgesSummary {
+  items: ProfileBadge[];
+  total: number;
+}
+
 export interface ProfileUser {
   id: string;
   name: string;
   image: string | null;
   createdAt: string;
+  gender: string | null;
   student: {
     studentId: string;
     department: string;
@@ -29,6 +66,10 @@ export interface ProfileUser {
     admissionSemester: string;
   } | null;
   profile: UserProfile | null;
+  skills?: ProfileSkill[];
+  stats?: ProfileStats;
+  badges?: ProfileBadgesSummary;
+  contentCounts?: ProfileContentCounts;
 }
 
 export interface UpdateProfilePayload {
@@ -42,4 +83,5 @@ export interface UpdateProfilePayload {
   phoneNumber?: string;
   currentSemester?: number;
   batchYear?: number;
+  image?: string;
 }

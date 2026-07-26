@@ -1,5 +1,4 @@
-import serverApi from "@/lib/server-api";
-import { TAGS } from "@/lib/cache-tags";
+import apiClient from "@/lib/api-client";
 
 export interface TagItem {
   id: string;
@@ -18,28 +17,25 @@ export interface TagBasic {
 export const tagService = {
   async listTags(search?: string): Promise<TagItem[]> {
     const query = search ? `?search=${encodeURIComponent(search)}` : "";
-    const response = await serverApi.get<TagItem[]>(
+    const response = await apiClient.get<{ success: boolean; data: TagItem[] }>(
       `/tags${query}`,
-      { tags: [TAGS.TAGS] },
     );
-    return response.data ?? [];
+    return response.data?.data ?? [];
   },
 
   async createTag(name: string): Promise<TagBasic> {
-    const response = await serverApi.post<TagBasic>(
+    const response = await apiClient.post<{ success: boolean; data: TagBasic }>(
       "/tags",
       { name },
-      { invalidatesTags: [TAGS.TAGS] },
     );
-    return response.data!;
+    return response.data?.data!;
   },
 
   async createTags(names: string[]): Promise<TagBasic[]> {
-    const response = await serverApi.post<TagBasic[]>(
+    const response = await apiClient.post<{ success: boolean; data: TagBasic[] }>(
       "/tags/batch",
       { names },
-      { invalidatesTags: [TAGS.TAGS] },
     );
-    return response.data!;
+    return response.data?.data ?? [];
   },
 };

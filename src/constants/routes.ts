@@ -18,6 +18,7 @@ const ROUTES = {
   MESSAGES: "/messages",
   NOTIFICATIONS: "/notifications",
   SETTINGS: "/settings",
+  MY_PROFILE: "/profile",
 
   // ── Info Pages ─────────────────────────────────────────────────────────────
   ABOUT: "/about",
