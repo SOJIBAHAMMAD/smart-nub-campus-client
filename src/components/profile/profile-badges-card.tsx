@@ -39,7 +39,7 @@ export function ProfileBadgesCard({ profileData }: ProfileBadgesCardProps) {
           </Badge>
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pb-5 sm:pb-6">
         <div className="space-y-2">
           {badgesSummary.items.map((userBadge: ProfileBadge) => (
             <div

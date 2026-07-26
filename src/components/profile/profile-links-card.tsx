@@ -144,7 +144,7 @@ export function ProfileLinksCard({ profileData, isOwnProfile, onProfileUpdate }:
           </div>
         )}
       </CardHeader>
-      <CardContent>
+      <CardContent className="pb-5 sm:pb-6">
         {isEditing ? (
           <div className="space-y-2">
             {SOCIAL_CONFIG.map((config) => (

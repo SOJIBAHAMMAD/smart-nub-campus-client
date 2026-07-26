@@ -81,7 +81,7 @@ export function ProfileAboutCard({
           </div>
         )}
       </CardHeader>
-      <CardContent>
+      <CardContent className="pb-5 sm:pb-6">
         {isEditing ? (
           <Textarea
             value={bioValue}

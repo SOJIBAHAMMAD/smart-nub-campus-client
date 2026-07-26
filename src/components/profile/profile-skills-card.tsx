@@ -120,7 +120,7 @@ export function ProfileSkillsCard({ profileData, isOwnProfile, onProfileUpdate }
           </button>
         )}
       </CardHeader>
-      <CardContent>
+      <CardContent className="pb-5 sm:pb-6">
         {/* Skills list */}
         {skills.length > 0 ? (
           <div className="flex flex-wrap gap-1.5">
