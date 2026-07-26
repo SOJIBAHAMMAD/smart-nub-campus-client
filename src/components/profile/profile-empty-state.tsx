@@ -93,7 +93,7 @@ export function ProfileEmptyState({
   if (percentage >= 100) return null;
 
   return (
-    <Card className="border-primary/15 bg-gradient-to-br from-primary/[0.03] to-transparent">
+    <Card className="border-primary/15 bg-linear-to-br from-primary/3 to-transparent">
       <CardContent className="p-5 sm:p-6">
         {/* Header */}
         <div className="mb-4 flex items-start justify-between">

@@ -3,7 +3,16 @@
 import { useState, useTransition, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { MapPin, Calendar, Pencil, Check, X, Camera, Loader2, Settings } from "lucide-react";
+import {
+  MapPin,
+  Calendar,
+  Pencil,
+  Check,
+  X,
+  Camera,
+  Loader2,
+  Settings,
+} from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -20,7 +29,11 @@ interface ProfileHeroProps {
   onProfileUpdate: () => void;
 }
 
-export function ProfileHero({ profileData, isOwnProfile, onProfileUpdate }: ProfileHeroProps) {
+export function ProfileHero({
+  profileData,
+  isOwnProfile,
+  onProfileUpdate,
+}: ProfileHeroProps) {
   const { name, image, student, profile } = profileData;
   const [isEditingLocation, setIsEditingLocation] = useState(false);
   const [locationValue, setLocationValue] = useState(profile?.location ?? "");
@@ -39,7 +52,8 @@ export function ProfileHero({ profileData, isOwnProfile, onProfileUpdate }: Prof
   });
 
   const departmentLabel = student
-    ? DEPARTMENT_LABELS[student.department as Department] ?? student.department
+    ? (DEPARTMENT_LABELS[student.department as Department] ??
+      student.department)
     : null;
 
   const handleSaveLocation = () => {
@@ -115,7 +129,7 @@ export function ProfileHero({ profileData, isOwnProfile, onProfileUpdate }: Prof
             unoptimized
           />
         ) : (
-          <div className="h-32 w-full bg-gradient-to-r from-primary/20 via-primary/10 to-primary/5 sm:h-48" />
+          <div className="h-32 w-full bg-linear-to-r from-primary/20 via-primary/10 to-primary/5 sm:h-48" />
         )}
 
         {/* Top-right buttons */}
@@ -178,7 +192,9 @@ export function ProfileHero({ profileData, isOwnProfile, onProfileUpdate }: Prof
         {/* Name & Info */}
         <div className="mt-3 space-y-2">
           <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold tracking-tight sm:text-2xl">{name}</h1>
+            <h1 className="text-xl font-bold tracking-tight sm:text-2xl">
+              {name}
+            </h1>
             {profileData.gender && (
               <Badge variant="secondary" className="text-xs capitalize">
                 {profileData.gender.toLowerCase().replace("_", " ")}
@@ -203,9 +219,7 @@ export function ProfileHero({ profileData, isOwnProfile, onProfileUpdate }: Prof
                 Semester {profile.currentSemester}
               </span>
             )}
-            {profile?.batchYear && (
-              <span>Batch {profile.batchYear}</span>
-            )}
+            {profile?.batchYear && <span>Batch {profile.batchYear}</span>}
 
             {/* Location — inline editable */}
             {isOwnProfile && isEditingLocation ? (
@@ -259,7 +273,11 @@ export function ProfileHero({ profileData, isOwnProfile, onProfileUpdate }: Prof
 
             <span className="flex items-center gap-1">
               <Calendar className="size-3" />
-              Joined {new Date(profileData.createdAt).toLocaleDateString("en-US", { month: "short", year: "numeric" })}
+              Joined{" "}
+              {new Date(profileData.createdAt).toLocaleDateString("en-US", {
+                month: "short",
+                year: "numeric",
+              })}
             </span>
           </div>
         </div>

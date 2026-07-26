@@ -15,7 +15,11 @@ interface ProfileAboutCardProps {
   onProfileUpdate: () => void;
 }
 
-export function ProfileAboutCard({ profileData, isOwnProfile, onProfileUpdate }: ProfileAboutCardProps) {
+export function ProfileAboutCard({
+  profileData,
+  isOwnProfile,
+  onProfileUpdate,
+}: ProfileAboutCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [bioValue, setBioValue] = useState(profileData.profile?.bio ?? "");
   const [isPending, startTransition] = useTransition();
@@ -45,16 +49,33 @@ export function ProfileAboutCard({ profileData, isOwnProfile, onProfileUpdate }:
           About
         </CardTitle>
         {isOwnProfile && !isEditing && (
-          <Button variant="ghost" size="icon" className="size-7" onClick={() => setIsEditing(true)}>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-7"
+            onClick={() => setIsEditing(true)}
+          >
             <Pencil className="size-3.5" />
           </Button>
         )}
         {isEditing && (
           <div className="flex gap-1">
-            <Button variant="ghost" size="icon" className="size-7" onClick={handleSave} disabled={isPending}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-7"
+              onClick={handleSave}
+              disabled={isPending}
+            >
               <Check className="size-3.5" />
             </Button>
-            <Button variant="ghost" size="icon" className="size-7" onClick={handleCancel} disabled={isPending}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-7"
+              onClick={handleCancel}
+              disabled={isPending}
+            >
               <X className="size-3.5" />
             </Button>
           </div>
@@ -70,7 +91,7 @@ export function ProfileAboutCard({ profileData, isOwnProfile, onProfileUpdate }:
               if (e.key === "Escape") handleCancel();
             }}
             placeholder="Tell others about yourself..."
-            className="min-h-[100px] text-sm"
+            className="min-h-25 text-sm"
             maxLength={500}
             disabled={isPending}
             autoFocus
