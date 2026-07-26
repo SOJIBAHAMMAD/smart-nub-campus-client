@@ -38,7 +38,7 @@ export function ProfileAboutCard({ profileData, isOwnProfile, onProfileUpdate }:
   };
 
   return (
-    <Card>
+    <Card id="section-bio">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="flex items-center gap-2">
           <User className="size-4" />

@@ -86,7 +86,7 @@ export function ProfileHero({ profileData, isOwnProfile, onProfileUpdate }: Prof
   };
 
   return (
-    <Card className="relative overflow-hidden">
+    <Card id="section-photo" className="relative overflow-hidden">
       {/* Hidden file inputs */}
       <input
         ref={coverInputRef}

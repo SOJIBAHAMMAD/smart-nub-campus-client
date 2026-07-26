@@ -93,7 +93,7 @@ export function ProfileLinksCard({ profileData, isOwnProfile, onProfileUpdate }:
   };
 
   return (
-    <Card>
+    <Card id="section-links">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="flex items-center gap-2">
           Links

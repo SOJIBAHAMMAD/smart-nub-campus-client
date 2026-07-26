@@ -4,7 +4,6 @@ import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { ProfileHero } from "./profile-hero";
-import { ProfileCompletionBanner } from "./profile-completion-banner";
 import { ProfileStatsBar } from "./profile-stats-bar";
 import { ProfileAboutCard } from "./profile-about-card";
 import { ProfileSkillsCard } from "./profile-skills-card";
@@ -30,13 +29,6 @@ export function ProfileClient({ profileData, currentUserId }: ProfileClientProps
   const showAsOther = previewMode ? false : isOwnProfile;
 
   const displayData = previewMode && previewData ? previewData : profileData;
-
-  const hasMinimalProfile =
-    !profileData.image &&
-    !profileData.profile?.bio &&
-    !profileData.profile?.githubUrl &&
-    !profileData.profile?.linkedinUrl &&
-    (profileData.skills?.length ?? 0) === 0;
 
   const handleProfileUpdate = useCallback(() => {
     router.refresh();
@@ -99,14 +91,6 @@ export function ProfileClient({ profileData, currentUserId }: ProfileClientProps
         </div>
       )}
 
-      {/* Completion Banner — only for own profile when incomplete and not previewing */}
-      {isOwnProfile && !previewMode && hasMinimalProfile && (
-        <ProfileCompletionBanner
-          profileData={profileData}
-          onDismiss={handleProfileUpdate}
-        />
-      )}
-
       {/* Hero */}
       <ProfileHero
         profileData={displayData}
@@ -141,10 +125,11 @@ export function ProfileClient({ profileData, currentUserId }: ProfileClientProps
           {/* Badges */}
           <ProfileBadgesCard profileData={displayData} />
 
-          {/* Empty state for new users — hidden in preview mode */}
-          {isOwnProfile && !previewMode && hasMinimalProfile && (
+          {/* Completion guide for own profile — hides itself at 100% */}
+          {isOwnProfile && !previewMode && (
             <ProfileEmptyState
-              profileData={{ id: profileData.id, name: profileData.name, image: profileData.image }}
+              profileData={profileData}
+              onDismiss={handleProfileUpdate}
             />
           )}
         </div>

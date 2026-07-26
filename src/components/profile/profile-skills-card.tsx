@@ -96,7 +96,7 @@ export function ProfileSkillsCard({ profileData, isOwnProfile, onProfileUpdate }
   };
 
   return (
-    <Card>
+    <Card id="section-skills">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="flex items-center gap-2">
           Skills
