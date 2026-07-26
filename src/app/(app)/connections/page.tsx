@@ -5,10 +5,11 @@ import { Suspense } from "react";
 export const metadata: Metadata = {
   title: "Connections | Smart NUB Campus",
   description:
-    "Build your academic network — find classmates, form study groups and connect with peers at NSU.",
+    "Build your academic network — find classmates, form study groups and connect with peers at NUB.",
   openGraph: {
     title: "Connections | Smart NUB Campus",
-    description: "Build your academic network at North South University.",
+    description:
+      "Build your academic network at Northern University Bangladesh.",
     type: "website",
   },
 };
@@ -17,10 +18,7 @@ import {
   getSuggestionsAction,
 } from "@/actions/connection.actions";
 import { PageLayoutSkeleton } from "@/components/skeletons/page-layout-skeleton";
-import type {
-  ConnectionOverview,
-  SuggestedPerson,
-} from "@/types";
+import type { ConnectionOverview, SuggestedPerson } from "@/types";
 
 /** Default popular skills surfaced in the right sidebar. */
 const DEFAULT_POPULAR_SKILLS = [

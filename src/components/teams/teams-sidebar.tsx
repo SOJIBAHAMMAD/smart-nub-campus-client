@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { Plus, Users, Inbox, FolderKanban, Lightbulb } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { TagPill } from "@/components/ui/tag-pill";
 import { POPULAR_SKILLS } from "@/constants/team";
 
 export type TeamsTab = "finder" | "applications" | "teams";
@@ -65,19 +67,21 @@ export function TeamsSidebar({
       </nav>
 
       {/* ── Quick Guide ─────────────────────────────────────────── */}
-      <div className="rounded-xl border bg-card p-3 ring-1 ring-foreground/10">
-        <div className="mb-2 flex items-center gap-2">
-          <Lightbulb className="size-4 text-primary" />
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Quick Guide
-          </h3>
-        </div>
-        <p className="text-xs leading-relaxed text-muted-foreground">
-          Discover and join project teams at NUB. Browse open requests, apply with a
-          short message, or create your own team and invite members with the right
-          skills.
-        </p>
-      </div>
+      <Card>
+        <CardContent className="p-3 ring-1 ring-foreground/10">
+          <div className="mb-2 flex items-center gap-2">
+            <Lightbulb className="size-4 text-primary" />
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Quick Guide
+            </h3>
+          </div>
+          <p className="text-xs leading-relaxed text-muted-foreground">
+            Discover and join project teams at NUB. Browse open requests, apply with a
+            short message, or create your own team and invite members with the right
+            skills.
+          </p>
+        </CardContent>
+      </Card>
 
       {/* ── Popular Skills ───────────────────────────────────────── */}
       {onSkillToggle && (
@@ -100,19 +104,13 @@ export function TeamsSidebar({
               const slug = skill.toLowerCase();
               const active = selectedSkills.includes(slug);
               return (
-                <button
+                <TagPill
                   key={skill}
+                  name={skill}
+                  active={active}
                   onClick={() => onSkillToggle(slug)}
-                  aria-pressed={active}
-                  className={cn(
-                    "rounded-full px-2.5 py-1 text-xs font-medium transition-colors",
-                    active
-                      ? "bg-primary/10 text-primary ring-1 ring-primary/30"
-                      : "bg-secondary text-secondary-foreground hover:bg-primary/10 hover:text-primary",
-                  )}
-                >
-                  {skill}
-                </button>
+
+                />
               );
             })}
           </div>

@@ -4,7 +4,8 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { TrendingUp, Tag, HelpCircle, CheckCircle } from "lucide-react";
 import type { Question } from "@/types/qa.types";
-import { cn } from "@/lib/utils";
+import { Card, CardContent } from "@/components/ui/card";
+import { TagPill } from "@/components/ui/tag-pill";
 
 export interface TopContributor {
   rank: number;
@@ -51,18 +52,20 @@ export function QATrending({
   return (
     <div className="space-y-6">
       {/* ── Ask a Question CTA ───────────────────────────────── */}
-      <div className="rounded-xl border bg-card p-4 ring-1 ring-foreground/10">
-        <h3 className="text-sm font-semibold text-foreground">Ask a Question</h3>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Have a question? Get help from the NUB community.
-        </p>
-        <Link
-          href="/qa/ask"
-          className="mt-3 flex w-full items-center justify-center gap-1 rounded-xl bg-brand px-3 py-1.5 text-xs font-medium text-white transition-all hover:bg-brand/90"
-        >
-          Ask Question
-        </Link>
-      </div>
+      <Card>
+        <CardContent className="p-4 ring-1 ring-foreground/10">
+          <h3 className="text-sm font-semibold text-foreground">Ask a Question</h3>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Have a question? Get help from the NUB community.
+          </p>
+          <Link
+            href="/qa/ask"
+            className="mt-3 flex w-full items-center justify-center gap-1 rounded-xl bg-brand px-3 py-1.5 text-xs font-medium text-white transition-all hover:bg-brand/90"
+          >
+            Ask Question
+          </Link>
+        </CardContent>
+      </Card>
 
       {/* ── Top Questions (this week) ─────────────────────────── */}
       <div>
@@ -110,19 +113,13 @@ export function QATrending({
             {popularTags.map((tag) => {
               const active = selectedTags.includes(tag.slug);
               return (
-                <button
+                <TagPill
                   key={tag.id}
-                  type="button"
+                  name={tag.name}
+                  active={active}
                   onClick={() => toggleTag(tag.slug)}
-                  className={cn(
-                    "rounded-full px-2.5 py-1 text-xs font-medium transition-colors",
-                    active
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-secondary text-secondary-foreground hover:bg-primary/10 hover:text-primary",
-                  )}
-                >
-                  {tag.name}
-                </button>
+
+                />
               );
             })}
           </div>

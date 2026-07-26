@@ -3,9 +3,17 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { CalendarDays, MapPin, Users, Search, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  CalendarDays,
+  MapPin,
+  Users,
+  Search,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -33,13 +41,25 @@ function formatDate(dateStr: string) {
 function getStatusBadge(status: EventStatus) {
   switch (status) {
     case "UPCOMING":
-      return <Badge variant="outline" className="border-blue-300 text-blue-700">Upcoming</Badge>;
+      return (
+        <Badge variant="outline" className="border-blue-300 text-blue-700">
+          Upcoming
+        </Badge>
+      );
     case "ONGOING":
-      return <Badge variant="outline" className="border-green-300 text-green-700">Ongoing</Badge>;
+      return (
+        <Badge variant="outline" className="border-green-300 text-green-700">
+          Ongoing
+        </Badge>
+      );
     case "COMPLETED":
       return <Badge variant="secondary">Completed</Badge>;
     case "CANCELLED":
-      return <Badge variant="outline" className="border-red-300 text-red-700">Cancelled</Badge>;
+      return (
+        <Badge variant="outline" className="border-red-300 text-red-700">
+          Cancelled
+        </Badge>
+      );
     default:
       return null;
   }
@@ -81,7 +101,8 @@ export function EventsListClient({
     const params = new URLSearchParams();
     if (initialFilters.search) params.set("search", initialFilters.search);
     if (initialFilters.status) params.set("status", initialFilters.status);
-    if (initialFilters.page > 1) params.set("page", String(initialFilters.page));
+    if (initialFilters.page > 1)
+      params.set("page", String(initialFilters.page));
 
     if (value) {
       params.set(key, value);
@@ -104,7 +125,7 @@ export function EventsListClient({
         <div>
           <h1 className="text-2xl font-bold text-foreground">Events</h1>
           <p className="text-sm text-muted-foreground">
-            Browse upcoming campus events at North South University
+            Browse upcoming campus events at Northern University Bangladesh
           </p>
         </div>
 
@@ -121,7 +142,9 @@ export function EventsListClient({
           </div>
           <Select
             value={initialFilters.status ?? "all"}
-            onValueChange={(val) => updateParams("status", val === "all" ? null : val)}
+            onValueChange={(val) =>
+              updateParams("status", val === "all" ? null : val)
+            }
           >
             <SelectTrigger className="w-[160px]">
               <SelectValue placeholder="All statuses" />
@@ -137,12 +160,14 @@ export function EventsListClient({
         </div>
 
         {events.length === 0 ? (
-          <div className="rounded-xl border bg-card p-12 text-center ring-1 ring-foreground/10">
-            <CalendarDays className="mx-auto size-12 text-muted-foreground/50" />
-            <p className="mt-4 text-sm text-muted-foreground">
-              No events found.
-            </p>
-          </div>
+          <Card>
+            <CardContent className="p-12 text-center ring-1 ring-foreground/10">
+              <CalendarDays className="mx-auto size-12 text-muted-foreground/50" />
+              <p className="mt-4 text-sm text-muted-foreground">
+                No events found.
+              </p>
+            </CardContent>
+          </Card>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {events.map((event) => (
@@ -156,7 +181,10 @@ export function EventsListClient({
                     {event.title}
                   </h3>
                   {event.isFeatured && (
-                    <Badge variant="secondary" className="ml-2 shrink-0 bg-amber-100 text-amber-700">
+                    <Badge
+                      variant="secondary"
+                      className="ml-2 shrink-0 bg-amber-100 text-amber-700"
+                    >
                       Featured
                     </Badge>
                   )}
@@ -181,14 +209,20 @@ export function EventsListClient({
                   )}
                   <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                     <Users className="size-3.5" />
-                    {event._count.rsvps} RSVP{event._count.rsvps !== 1 ? "s" : ""}
+                    {event._count.rsvps} RSVP
+                    {event._count.rsvps !== 1 ? "s" : ""}
                   </div>
                 </div>
 
                 <div className="mt-3 flex items-center justify-between">
                   {getStatusBadge(event.status)}
                   {event.isRsvpd && (
-                    <Badge variant="secondary" className="bg-green-100 text-green-700">Going</Badge>
+                    <Badge
+                      variant="secondary"
+                      className="bg-green-100 text-green-700"
+                    >
+                      Going
+                    </Badge>
                   )}
                 </div>
               </Link>
@@ -206,7 +240,9 @@ export function EventsListClient({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => updateParams("page", String(Math.max(1, meta.page - 1)))}
+                onClick={() =>
+                  updateParams("page", String(Math.max(1, meta.page - 1)))
+                }
                 disabled={meta.page === 1}
               >
                 <ChevronLeft className="size-4" />
@@ -217,7 +253,12 @@ export function EventsListClient({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => updateParams("page", String(Math.min(meta.totalPages, meta.page + 1)))}
+                onClick={() =>
+                  updateParams(
+                    "page",
+                    String(Math.min(meta.totalPages, meta.page + 1)),
+                  )
+                }
                 disabled={meta.page === meta.totalPages}
               >
                 <ChevronRight className="size-4" />

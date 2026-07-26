@@ -48,7 +48,7 @@ export function useNotifications({
           message: string;
           data: NotificationListResponse;
         }>(`/notifications?page=${pageNum}&limit=${limit}`);
-        if (result.data) {
+        if (result.data?.data) {
           const { data: items, meta } = result.data.data;
           setNotifications((prev) =>
             append ? [...prev, ...(items ?? [])] : (items ?? []),
@@ -74,7 +74,7 @@ export function useNotifications({
           message: string;
           data: NotificationListResponse;
         }>(`/notifications?page=1&limit=${limit}`);
-        if (!cancelled && result.data) {
+        if (!cancelled && result.data?.data) {
           setNotifications(result.data.data.data ?? []);
           setHasMore(result.data.data.meta.page < result.data.data.meta.totalPages);
         }

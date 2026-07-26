@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AlertTriangle } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import type { Leaderboard } from "@/types/gamification.types";
 
 interface TopContributorsProps {
@@ -42,24 +43,23 @@ export function TopContributors({ contributors, error }: TopContributorsProps) {
       {!error && contributors.length > 0 && (
         <div className="space-y-2">
           {contributors.map((contributor) => (
-            <div
-              key={contributor.user?.id ?? contributor.rank}
-              className="flex items-center gap-3 rounded-lg border bg-card p-3 ring-1 ring-foreground/10"
-            >
-              {/* Rank */}
-              <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
-                {contributor.rank}
-              </span>
-              {/* Name */}
-              <div className="min-w-0 flex-1">
-                <h3 className="truncate text-sm font-medium text-foreground">
-                  {contributor.user?.name ?? "Unknown"}
-                </h3>
-                <p className="text-xs text-muted-foreground">
-                  {contributor.totalPoints} pts
-                </p>
-              </div>
-            </div>
+            <Card key={contributor.user?.id ?? contributor.rank} size="sm">
+              <CardContent className="flex items-center gap-3 py-3">
+                {/* Rank */}
+                <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+                  {contributor.rank}
+                </span>
+                {/* Name */}
+                <div className="min-w-0 flex-1">
+                  <h3 className="truncate text-sm font-medium text-foreground">
+                    {contributor.user?.name ?? "Unknown"}
+                  </h3>
+                  <p className="text-xs text-muted-foreground">
+                    {contributor.totalPoints} pts
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
           ))}
         </div>
       )}

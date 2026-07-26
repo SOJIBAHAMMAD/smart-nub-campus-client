@@ -4,6 +4,7 @@
 
 import { HelpCircle, Clock, Wrench } from "lucide-react";
 import type { AIStudyStats } from "@/types/ai.types";
+import { Card, CardContent } from "@/components/ui/card";
 
 interface StudyStatsProps {
   stats: AIStudyStats | null;
@@ -46,7 +47,8 @@ export function StudyStats({ stats }: StudyStatsProps) {
   ];
 
   return (
-    <div className="rounded-xl border bg-card p-4 ring-1 ring-foreground/5">
+    <Card>
+      <CardContent className="p-4">
       <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
         Study Stats
       </h3>
@@ -65,6 +67,7 @@ export function StudyStats({ stats }: StudyStatsProps) {
           </div>
         ))}
       </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }

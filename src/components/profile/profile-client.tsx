@@ -17,7 +17,7 @@ export function ProfileClient({ profileData }: ProfileClientProps) {
   return (
     <div className="mx-auto max-w-4xl space-y-6 p-4 sm:p-6">
       {/* Cover + Avatar Area */}
-      <div className="relative overflow-hidden rounded-xl border bg-card ring-1 ring-foreground/10">
+      <Card className="relative overflow-hidden">
         {profile?.coverImage ? (
           <Image
             src={profile.coverImage}
@@ -82,7 +82,7 @@ export function ProfileClient({ profileData }: ProfileClientProps) {
             )}
           </div>
         </div>
-      </div>
+      </Card>
 
       {/* Content Grid */}
       <div className="grid gap-6 lg:grid-cols-[1fr_300px]">

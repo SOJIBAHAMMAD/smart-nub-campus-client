@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import {
-  ChevronUp,
   Download,
   Bookmark,
   Flag,
@@ -11,6 +10,9 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { TagPill } from "@/components/ui/tag-pill";
+import { VoteControls } from "@/components/ui/vote-controls";
 import { CommentSection } from "@/components/resources/comment-section";
 import { FileIcon, getFileColor, formatFileSize, formatRelativeTime } from "@/components/resources/file-type-utils";
 import { voteResource, bookmarkResource, reportResource, recordResourceDownload, listResources } from "@/actions/resource.actions";
@@ -18,6 +20,7 @@ import type { Resource } from "@/types/resource.types";
 import Image from "next/image";
 
 import { toast } from "sonner";
+import { authClient } from "@/lib/auth-client";
 
 /** Report reason labels for the dropdown. */
 const REPORT_REASONS = [
@@ -41,15 +44,34 @@ interface ResourceDetailProps {
  * report modal, tags, author info, comments, and related resources.
  */
 export function ResourceDetail({ resource: initialResource }: ResourceDetailProps) {
+  const { data: session } = authClient.useSession();
+  const currentUserId = session?.user?.id ?? null;
+
   const [resource, setResource] = useState(initialResource);
-  const [upvoted, setUpvoted] = useState(false);
-  const [bookmarked, setBookmarked] = useState(false);
+  const [upvoted, setUpvoted] = useState(initialResource.userVote === "UP");
+  const [bookmarked, setBookmarked] = useState(initialResource.isBookmarked ?? false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportReason, setReportReason] = useState("");
   const [reportDescription, setReportDescription] = useState("");
   const [submittingReport, setSubmittingReport] = useState(false);
   const [relatedResources, setRelatedResources] = useState<Resource[]>([]);
   const [downloading, setDownloading] = useState(false);
+
+  /** Handle Escape key to close report modal. */
+  const handleEscape = useCallback((e: KeyboardEvent) => {
+    if (e.key === "Escape") {
+      setShowReportModal(false);
+      setReportReason("");
+      setReportDescription("");
+    }
+  }, []);
+
+  useEffect(() => {
+    if (showReportModal) {
+      document.addEventListener("keydown", handleEscape);
+      return () => document.removeEventListener("keydown", handleEscape);
+    }
+  }, [showReportModal, handleEscape]);
 
   const fileColor = getFileColor(resource.fileType);
 
@@ -206,14 +228,12 @@ export function ResourceDetail({ resource: initialResource }: ResourceDetailProp
 
       {/* ── Action Buttons ────────────────────────────────────────── */}
       <div className="flex flex-wrap items-center gap-3">
-        <Button
-          variant={upvoted ? "default" : "outline"}
-          size="sm"
-          onClick={handleUpvote}
-        >
-          <ChevronUp className="size-4" />
-          {resource.upvoteCount}
-        </Button>
+        <VoteControls
+          upvotes={resource.upvoteCount}
+          activeVote={upvoted ? "UP" : null}
+          onVote={() => handleUpvote()}
+          orientation="horizontal"
+        />
 
         <Button variant="outline" size="sm" onClick={handleDownload} disabled={downloading}>
           <Download className="size-4" />
@@ -241,7 +261,8 @@ export function ResourceDetail({ resource: initialResource }: ResourceDetailProp
       </div>
 
       {/* ── Resource Info ─────────────────────────────────────────── */}
-      <div className="rounded-xl border bg-card p-5 ring-1 ring-foreground/10 space-y-4">
+      <Card>
+        <CardContent className="p-5 space-y-4">
         {resource.description && (
           <div>
             <h3 className="text-sm font-semibold text-foreground">Description</h3>
@@ -298,21 +319,22 @@ export function ResourceDetail({ resource: initialResource }: ResourceDetailProp
             <span className="text-sm text-muted-foreground">Tags</span>
             <div className="mt-1.5 flex flex-wrap gap-1.5">
               {resource.resourceTags.map((rt) => (
-                <Link
+                <TagPill
                   key={rt.id}
+                  name={rt.tag?.name ?? "tag"}
                   href={`/resources?tags=${encodeURIComponent(rt.tag?.slug ?? "")}`}
-                  className="rounded-full bg-secondary px-2.5 py-0.5 text-xs text-secondary-foreground transition-colors hover:bg-primary/10 hover:text-primary"
-                >
-                  {rt.tag?.name}
-                </Link>
+                  size="sm"
+                />
               ))}
             </div>
           </div>
         )}
-      </div>
+      </CardContent>
+      </Card>
 
       {/* ── File Preview / Download ───────────────────────────────── */}
-      <div className="rounded-xl border bg-card p-5 ring-1 ring-foreground/10">
+      <Card>
+        <CardContent className="p-5">
         <h3 className="mb-3 text-sm font-semibold text-foreground">File</h3>
         {resource.fileType.includes("image") ? (
           <Image
@@ -340,10 +362,11 @@ export function ResourceDetail({ resource: initialResource }: ResourceDetailProp
             </Button>
           </div>
         )}
-      </div>
+      </CardContent>
+      </Card>
 
       {/* ── Comments Section ──────────────────────────────────────── */}
-      <CommentSection resourceId={resource.id} />
+      <CommentSection resourceId={resource.id} currentUserId={currentUserId} />
 
       {/* ── Related Resources ─────────────────────────────────────── */}
       {relatedResources.length > 0 && (
@@ -378,7 +401,16 @@ export function ResourceDetail({ resource: initialResource }: ResourceDetailProp
 
       {/* ── Report Modal ──────────────────────────────────────────── */}
       {showReportModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowReportModal(false);
+              setReportReason("");
+              setReportDescription("");
+            }
+          }}
+        >
           <div className="mx-4 w-full max-w-md rounded-xl border bg-card p-6 shadow-xl ring-1 ring-foreground/10">
             <h3 className="text-lg font-semibold text-foreground">Report Resource</h3>
             <p className="mt-1 text-sm text-muted-foreground">
@@ -402,6 +434,7 @@ export function ResourceDetail({ resource: initialResource }: ResourceDetailProp
               value={reportDescription}
               onChange={(e) => setReportDescription(e.target.value)}
               placeholder="Optional: Add more details..."
+              maxLength={2000}
               rows={3}
               className="mt-3 w-full resize-none rounded-md border bg-transparent px-2.5 py-1.5 text-sm outline-none ring-1 ring-foreground/10 placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/50"
             />
@@ -426,8 +459,8 @@ export function ResourceDetail({ resource: initialResource }: ResourceDetailProp
               </Button>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+          </div>
+        )}
+      </div>
   );
 }

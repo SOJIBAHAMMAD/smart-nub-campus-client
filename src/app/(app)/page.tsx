@@ -13,22 +13,28 @@ import { eventService } from "@/services/event.service";
 export const metadata: Metadata = {
   title: "Home | Smart NUB Campus",
   description:
-    "Smart NUB Campus dashboard — collaborate, learn, share resources and grow together at North South University.",
+    "Smart NUB Campus dashboard — collaborate, learn, share resources and grow together at Northern University Bangladesh.",
   openGraph: {
     title: "Smart NUB Campus",
     description:
-      "The exclusive academic platform for North South University students.",
+      "The exclusive academic platform for Northern University Bangladesh students.",
     type: "website",
   },
 };
 
 async function TrendingSection() {
-  const result = await resourceService.listResources({ sort: "popular", limit: 3 });
+  const result = await resourceService.listResources({
+    sort: "popular",
+    limit: 3,
+  });
   return <TrendingResources resources={result.data ?? []} />;
 }
 
 async function EventsSection() {
-  const result = await eventService.listEvents({ status: "UPCOMING", limit: 3 });
+  const result = await eventService.listEvents({
+    status: "UPCOMING",
+    limit: 3,
+  });
   return <UpcomingEvents events={result.data ?? []} />;
 }
 
@@ -48,10 +54,14 @@ export default function HomePage() {
             <TrendingSection />
           </Suspense>
           <div className="space-y-8">
-            <Suspense fallback={<Skeleton className="h-48 w-full rounded-xl" />}>
+            <Suspense
+              fallback={<Skeleton className="h-48 w-full rounded-xl" />}
+            >
               <EventsSection />
             </Suspense>
-            <Suspense fallback={<Skeleton className="h-40 w-full rounded-xl" />}>
+            <Suspense
+              fallback={<Skeleton className="h-40 w-full rounded-xl" />}
+            >
               <ContributorsSection />
             </Suspense>
           </div>

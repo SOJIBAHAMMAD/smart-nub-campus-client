@@ -52,6 +52,9 @@ export const TAGS = {
   /** Connections list + suggestions + overview. */
   CONNECTIONS: "connections",
 
+  /** Shared tag pool (cross-module). */
+  TAGS: "tags",
+
   /** Connection requests (pending/sent). */
   CONNECTION_REQUESTS: "connection-requests",
 

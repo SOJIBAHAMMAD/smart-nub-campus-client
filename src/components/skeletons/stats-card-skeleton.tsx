@@ -6,7 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
  */
 export function StatsCardSkeleton() {
   return (
-    <div className="rounded-xl border bg-card p-6 shadow-sm ring-1 ring-foreground/10" aria-hidden="true">
+    <div className="rounded-xl border border-border/60 bg-card p-6 shadow-sm" aria-hidden="true">
       <div className="flex items-center justify-between">
         <div className="space-y-2">
           <Skeleton className="h-4 w-20" />

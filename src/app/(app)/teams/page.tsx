@@ -5,19 +5,16 @@ import { listTeamRequests } from "@/actions/team.actions";
 export const metadata: Metadata = {
   title: "Teams | Smart NUB Campus",
   description:
-    "Find teammates, join projects and collaborate on academic work at North South University.",
+    "Find teammates, join projects and collaborate on academic work at Northern University Bangladesh.",
   openGraph: {
     title: "Teams | Smart NUB Campus",
-    description: "Find teammates and collaborate at NSU.",
+    description: "Find teammates and collaborate at NUB.",
     type: "website",
   },
 };
 import { TeamsClient } from "@/components/teams/teams-client";
 import { PageLayoutSkeleton } from "@/components/skeletons/page-layout-skeleton";
-import type {
-  TeamRequest,
-  TeamRequestListResponse,
-} from "@/types/team.types";
+import type { TeamRequest, TeamRequestListResponse } from "@/types/team.types";
 import type { PaginationMeta } from "@/types/resource.types";
 
 /**

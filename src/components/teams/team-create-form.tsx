@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, X, Check, Search, Loader2, AlertCircle } from "lucide-react";
+import { Plus, Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { TagInput, type TagInputTag } from "@/components/ui/tag-input";
 import { createTeamRequest } from "@/actions/team.actions";
 import type { Tag } from "@/types/resource.types";
 import { TEAM_CATEGORIES } from "@/constants/team";
@@ -22,7 +23,7 @@ interface TeamCreateFormProps {
  * Skills are selected from existing tags (searchable multi-select). Submit validates
  * and redirects to the new team detail page.
  */
-export function TeamCreateForm({ tags }: TeamCreateFormProps) {
+export function TeamCreateForm({ tags: _tags }: TeamCreateFormProps) {
   const router = useRouter();
 
   const [title, setTitle] = useState("");
@@ -31,26 +32,9 @@ export function TeamCreateForm({ tags }: TeamCreateFormProps) {
   const [membersNeeded, setMembersNeeded] = useState(1);
   const [deadline, setDeadline] = useState("");
   const [category, setCategory] = useState("");
-  const [skillSearch, setSkillSearch] = useState("");
-  const [selectedSkillIds, setSelectedSkillIds] = useState<string[]>([]);
-  const [showSkillDropdown, setShowSkillDropdown] = useState(false);
+  const [selectedSkillIds, setSelectedSkillIds] = useState<TagInputTag[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  // Filter tags by search input (client side)
-  const filteredTags = useMemo(() => {
-    const q = skillSearch.trim().toLowerCase();
-    if (!q) return tags;
-    return tags.filter((t) => t.name.toLowerCase().includes(q));
-  }, [tags, skillSearch]);
-
-  const selectedTags = tags.filter((t) => selectedSkillIds.includes(t.id));
-
-  function toggleSkill(id: string) {
-    setSelectedSkillIds((prev) =>
-      prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id],
-    );
-  }
 
   async function handleSubmit() {
     setError(null);
@@ -101,7 +85,7 @@ export function TeamCreateForm({ tags }: TeamCreateFormProps) {
         projectName: projectName.trim() || undefined,
         category: category || undefined,
         deadline: deadlineISO,
-        skillTagIds: selectedSkillIds,
+        skillTagIds: selectedSkillIds.map((t) => t.id),
       });
 
       if (result.success && result.data) {
@@ -226,73 +210,15 @@ export function TeamCreateForm({ tags }: TeamCreateFormProps) {
       </div>
 
       {/* Required Skills */}
-      <div className="space-y-1.5">
-        <Label>
-          Required Skills <span className="text-destructive">*</span>
-        </Label>
-        <div className="flex flex-wrap gap-1.5">
-          {selectedTags.map((tag) => (
-            <span
-              key={tag.id}
-              className="flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs text-primary"
-            >
-              {tag.name}
-              <button
-                type="button"
-                onClick={() => toggleSkill(tag.id)}
-                className="rounded-full p-0.5 hover:bg-muted"
-                disabled={submitting}
-              >
-                <X className="size-2.5" />
-              </button>
-            </span>
-          ))}
-        </div>
-        <div className="relative">
-          <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={skillSearch}
-              onChange={(e) => setSkillSearch(e.target.value)}
-              onFocus={() => setShowSkillDropdown(true)}
-              onBlur={() => setTimeout(() => setShowSkillDropdown(false), 150)}
-              placeholder="Search skills..."
-              className="h-9 pl-9"
-              disabled={submitting}
-            />
-          </div>
-          {showSkillDropdown && (
-            <div className="absolute z-10 mt-1 max-h-48 w-full overflow-y-auto rounded-md border bg-card p-1 shadow-lg ring-1 ring-foreground/10">
-              {filteredTags.length > 0 ? (
-                filteredTags.map((tag) => {
-                  const active = selectedSkillIds.includes(tag.id);
-                  return (
-                    <button
-                      key={tag.id}
-                      type="button"
-                      onMouseDown={(e) => {
-                        e.preventDefault();
-                        toggleSkill(tag.id);
-                      }}
-                      className="flex w-full items-center justify-between rounded-md px-2.5 py-1.5 text-sm transition-colors hover:bg-muted"
-                    >
-                      <span className="truncate">{tag.name}</span>
-                      {active && <Check className="size-3.5 text-primary" />}
-                    </button>
-                  );
-                })
-              ) : (
-                <p className="px-2.5 py-1.5 text-xs text-muted-foreground">
-                  No matching skills.
-                </p>
-              )}
-            </div>
-          )}
-        </div>
-        <p className="text-[10px] text-muted-foreground">
-          Select at least one skill. {selectedSkillIds.length} selected.
-        </p>
-      </div>
+      <TagInput
+        value={selectedSkillIds}
+        onChange={setSelectedSkillIds}
+        maxTags={10}
+        minTags={1}
+        required
+        placeholder="Search or create skills..."
+        label="Required Skills"
+      />
 
       {/* Error */}
       {error && (

@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 export function ResourceCardSkeleton({ variant = "grid" }: { variant?: "grid" | "list" }) {
   if (variant === "list") {
     return (
-      <div className="flex items-center gap-3 rounded-xl border bg-card p-3 ring-1 ring-foreground/10" aria-hidden="true">
+      <div className="flex items-center gap-3 rounded-xl border border-border/60 bg-card p-3" aria-hidden="true">
         <Skeleton className="size-10 shrink-0 rounded-lg" />
         <div className="min-w-0 flex-1 space-y-1.5">
           <Skeleton className="h-4 w-3/4" />
@@ -22,7 +22,7 @@ export function ResourceCardSkeleton({ variant = "grid" }: { variant?: "grid" | 
   }
 
   return (
-    <div className="flex flex-col rounded-xl border bg-card p-4 ring-1 ring-foreground/10" aria-hidden="true">
+    <div className="flex flex-col rounded-xl border border-border/60 bg-card p-4" aria-hidden="true">
       <div className="flex items-start gap-3">
         <Skeleton className="size-10 shrink-0 rounded-lg" />
         <div className="min-w-0 flex-1 space-y-2">

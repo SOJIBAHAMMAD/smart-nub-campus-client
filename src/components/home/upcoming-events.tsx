@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { CalendarDays, AlertTriangle } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import type { Event } from "@/types/event.types";
 
 interface UpcomingEventsProps {
@@ -51,23 +52,23 @@ export function UpcomingEvents({ events, error }: UpcomingEventsProps) {
       {!error && events.length > 0 && (
         <div className="space-y-2">
           {events.map((event) => (
-            <Link
-              key={event.id}
-              href={`/events/${event.id}`}
-              className="flex items-center gap-3 rounded-lg border bg-card p-3 ring-1 ring-foreground/10 transition-all hover:shadow-md"
-            >
-              <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-                <CalendarDays className="size-4 text-primary" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <h3 className="truncate text-sm font-medium text-foreground">
-                  {event.title}
-                </h3>
-                <p className="text-xs text-muted-foreground">
-                  {formatDate(event.eventDate)}
-                </p>
-              </div>
-            </Link>
+            <Card key={event.id} interactive>
+              <Link href={`/events/${event.id}`} className="contents">
+                <CardContent className="flex items-center gap-3 py-3">
+                  <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                    <CalendarDays className="size-4 text-primary" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="truncate text-sm font-medium text-foreground">
+                      {event.title}
+                    </h3>
+                    <p className="text-xs text-muted-foreground">
+                      {formatDate(event.eventDate)}
+                    </p>
+                  </div>
+                </CardContent>
+              </Link>
+            </Card>
           ))}
         </div>
       )}

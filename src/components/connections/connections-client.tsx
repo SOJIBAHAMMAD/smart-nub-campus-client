@@ -18,6 +18,7 @@ import type { Relationship } from "./connection-status-badge";
 import { PeopleCard, type PeopleCardUser } from "./people-card";
 import { PeopleGrid } from "./people-grid";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import type {
   ConnectionOverview,
@@ -415,7 +416,7 @@ export function ConnectionsClient({
 
         {/* Sub-tabs (only on the "all" tab) */}
         {tab === "all" && (
-          <div className="mb-4 flex flex-wrap gap-1 rounded-xl border bg-card p-1 ring-1 ring-foreground/10">
+          <Card className="mb-4 flex flex-wrap gap-1 p-1">
             {SUB_TABS.map((st) => (
               <button
                 key={st.id}
@@ -433,7 +434,7 @@ export function ConnectionsClient({
                 {st.label}
               </button>
             ))}
-          </div>
+          </Card>
         )}
 
         {/* Search bar */}

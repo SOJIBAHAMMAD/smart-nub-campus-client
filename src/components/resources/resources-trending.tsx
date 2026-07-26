@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { TrendingUp, Tag, Users, FileText, ChevronRight, Check } from "lucide-react";
+import { TrendingUp, Tag, Users, FileText, ChevronRight } from "lucide-react";
+import { TagPill } from "@/components/ui/tag-pill";
 import type { Resource } from "@/types/resource.types";
+import { Card, CardContent } from "@/components/ui/card";
 import Image from "next/image";
-
-import { cn } from "@/lib/utils";
 
 interface LeaderboardEntry {
   rank: number;
@@ -86,19 +86,13 @@ export function ResourcesTrending({
               trendingTags.map((tag) => {
                 const active = selectedTags.includes(tag.slug);
                 return (
-                  <button
+                  <TagPill
                     key={tag.id}
+                    name={tag.name}
+                    active={active}
                     onClick={() => onTagToggle(tag.slug)}
-                    className={cn(
-                      "flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium transition-colors",
-                      active
-                        ? "bg-primary/10 text-primary ring-1 ring-primary/30"
-                        : "bg-secondary text-secondary-foreground hover:bg-primary/10 hover:text-primary"
-                    )}
-                  >
-                    {tag.name}
-                    {active && <Check className="size-3" />}
-                  </button>
+
+                  />
                 );
               })
             ) : (
@@ -151,22 +145,24 @@ export function ResourcesTrending({
       </div>
 
       {/* ── Request Resource ──────────────────────────────────────── */}
-      <div className="rounded-xl border bg-card p-4 ring-1 ring-foreground/10">
-        <div className="flex items-center gap-2">
-          <FileText className="size-4 text-primary" />
-          <h3 className="text-sm font-semibold text-foreground">Need something?</h3>
-        </div>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Can&apos;t find what you need? Request it from the community.
-        </p>
-        <Link
-          href="/resources/upload"
-          className="mt-3 flex w-full items-center justify-center gap-1 rounded-xl border border-success bg-success/2 px-2.5 py-1.5 text-xs font-medium text-success/90 transition-colors hover:bg-success/5"
-        >
-          Request Resource
-          <ChevronRight className="size-3.5" />
-        </Link>
-      </div>
+      <Card>
+        <CardContent className="p-4 ring-1 ring-foreground/10">
+          <div className="flex items-center gap-2">
+            <FileText className="size-4 text-primary" />
+            <h3 className="text-sm font-semibold text-foreground">Need something?</h3>
+          </div>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Can&apos;t find what you need? Request it from the community.
+          </p>
+          <Link
+            href="/resources/upload"
+            className="mt-3 flex w-full items-center justify-center gap-1 rounded-xl border border-success bg-success/2 px-2.5 py-1.5 text-xs font-medium text-success/90 transition-colors hover:bg-success/5"
+          >
+            Request Resource
+            <ChevronRight className="size-3.5" />
+          </Link>
+        </CardContent>
+      </Card>
     </div>
   );
 }

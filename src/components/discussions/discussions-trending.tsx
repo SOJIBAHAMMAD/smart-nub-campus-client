@@ -5,7 +5,8 @@ import Image from "next/image";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { TrendingUp, Tag, Users } from "lucide-react";
 import type { Discussion } from "@/types/discussion.types";
-import { cn } from "@/lib/utils";
+import { Card, CardContent } from "@/components/ui/card";
+import { TagPill } from "@/components/ui/tag-pill";
 
 export interface TopContributor {
   rank: number;
@@ -97,19 +98,13 @@ export function DiscussionsTrending({
             {popularTags.map((tag) => {
               const active = selectedTags.includes(tag.slug);
               return (
-                <button
+                <TagPill
                   key={tag.id}
-                  type="button"
+                  name={tag.name}
+                  active={active}
                   onClick={() => toggleTag(tag.slug)}
-                  className={cn(
-                    "rounded-full px-2.5 py-1 text-xs font-medium transition-colors",
-                    active
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-secondary text-secondary-foreground hover:bg-primary/10 hover:text-primary",
-                  )}
-                >
-                  {tag.name}
-                </button>
+
+                />
               );
             })}
           </div>
@@ -165,18 +160,20 @@ export function DiscussionsTrending({
       </div>
 
       {/* ── Have a topic? CTA ──────────────────────────────────── */}
-      <div className="rounded-xl border bg-card p-4 ring-1 ring-foreground/10">
-        <h3 className="text-sm font-semibold text-foreground">Have a topic?</h3>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Start a discussion and get the community talking.
-        </p>
-        <Link
-          href="/discussions/create"
-          className="mt-3 flex w-full items-center justify-center gap-1 rounded-xl border border-success bg-success/2 px-2.5 py-1.5 text-xs font-medium text-success/90 transition-colors hover:bg-success/5"
-        >
-          Start Discussion
-        </Link>
-      </div>
+      <Card>
+        <CardContent className="p-4 ring-1 ring-foreground/10">
+          <h3 className="text-sm font-semibold text-foreground">Have a topic?</h3>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Start a discussion and get the community talking.
+          </p>
+          <Link
+            href="/discussions/create"
+            className="mt-3 flex w-full items-center justify-center gap-1 rounded-xl border border-success bg-success/2 px-2.5 py-1.5 text-xs font-medium text-success/90 transition-colors hover:bg-success/5"
+          >
+            Start Discussion
+          </Link>
+        </CardContent>
+      </Card>
     </div>
   );
 }

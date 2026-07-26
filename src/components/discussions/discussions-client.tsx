@@ -12,6 +12,7 @@ import { DiscussionsTrending } from "@/components/discussions/discussions-trendi
 import { DiscussionCard } from "@/components/discussions/discussion-card";
 import { DiscussionFilters, type SortOption } from "@/components/discussions/discussion-filters";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import {
   listDiscussions,
@@ -385,13 +386,15 @@ export function DiscussionsClient({
             ))}
           </div>
         ) : discussions.length === 0 ? (
-          <div className="rounded-xl border bg-card p-12 text-center ring-1 ring-foreground/10">
-            <AlertCircle className="mx-auto size-10 text-muted-foreground/40" />
-            <p className="mt-3 text-sm font-medium text-foreground">No discussions found</p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Try adjusting your search or filters, or start a new discussion.
-            </p>
-          </div>
+          <Card>
+            <CardContent className="p-12 text-center ring-1 ring-foreground/10">
+              <AlertCircle className="mx-auto size-10 text-muted-foreground/40" />
+              <p className="mt-3 text-sm font-medium text-foreground">No discussions found</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Try adjusting your search or filters, or start a new discussion.
+              </p>
+            </CardContent>
+          </Card>
         ) : (
           <div className="space-y-3">
             {discussions.map((discussion) => (

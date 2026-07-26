@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import {
   ChevronLeft,
-  ChevronUp,
   Bookmark,
   Share2,
   Pin,
@@ -17,10 +16,12 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { TagPill } from "@/components/ui/tag-pill";
+import { VoteControls } from "@/components/ui/vote-controls";
+import { AuthorInfo } from "@/components/ui/author-info";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import Image from "next/image";
-import { formatRelativeTime } from "@/components/resources/file-type-utils";
 import { ReplyCard } from "@/components/discussions/reply-card";
 import { ReplyForm } from "@/components/discussions/reply-form";
 import {
@@ -82,7 +83,6 @@ export function DiscussionDetail({
 
   const isAuthor = currentUserId != null && discussion.authorId === currentUserId;
   const bookmarked = discussion.isBookmarked ?? false;
-  const upvoted = discussion.userVote === "UP";
 
   // Fetch replies (parent-level) on mount.
   const loadReplies = useCallback(async () => {
@@ -141,9 +141,10 @@ export function DiscussionDetail({
   }, [replies, replySort]);
 
   const handleVote = useCallback(
-    async (currentVote: Discussion["userVote"]) => {
+    async (type: "UP" | "DOWN") => {
+      if (type !== "UP") return;
       const original = discussion;
-      const wasUp = currentVote === "UP";
+      const wasUp = original.userVote === "UP";
       setDiscussion((prev) => ({
         ...prev,
         userVote: wasUp ? null : "UP",
@@ -375,39 +376,36 @@ export function DiscussionDetail({
       </div>
 
       {/* ── Content (markdown rendered) ─────────────────────────── */}
-      <div className="rounded-xl border bg-card p-5 ring-1 ring-foreground/10">
-        <div className="prose prose-sm max-w-none dark:prose-invert">
-          {discussion.content}
-        </div>
-      </div>
+      <Card>
+        <CardContent className="p-5">
+          <div className="prose prose-sm max-w-none dark:prose-invert">
+            {discussion.content}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* ── Tags ───────────────────────────────────────────────── */}
       {discussion.discussionTags && discussion.discussionTags.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
           {discussion.discussionTags.map((dt) => (
-            <Link
+            <TagPill
               key={dt.id}
+              name={dt.tag?.name ?? "tag"}
               href={`/discussions?tag=${dt.tag?.slug ?? ""}`}
-              className="rounded-full bg-secondary px-2.5 py-0.5 text-xs text-secondary-foreground transition-colors hover:bg-primary/10 hover:text-primary"
-            >
-              {dt.tag?.name}
-            </Link>
+              size="sm"
+            />
           ))}
         </div>
       )}
 
       {/* ── Actions ─────────────────────────────────────────────── */}
       <div className="flex flex-wrap items-center gap-2">
-        <button
-          onClick={() => handleVote(discussion.userVote)}
-          className={cn(
-            "flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
-            upvoted ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground hover:bg-muted/70",
-          )}
-        >
-          <ChevronUp className="size-4" />
-          <span className="tabular-nums">{discussion.upvoteCount}</span>
-        </button>
+        <VoteControls
+          upvotes={discussion.upvoteCount}
+          activeVote={(discussion.userVote ?? null) as "UP" | "DOWN" | null}
+          onVote={handleVote}
+          orientation="horizontal"
+        />
 
         <button
           onClick={handleBookmark}
@@ -471,27 +469,11 @@ export function DiscussionDetail({
 
       {/* ── Author info + views ──────────────────────────────── */}
       <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
-        <div className="flex items-center gap-2">
-          {discussion.author?.image ? (
-            <Image
-              src={discussion.author.image}
-              alt={discussion.author.name ?? "Author"}
-              width={32}
-              height={32}
-              unoptimized
-              className="size-8 rounded-full object-cover"
-            />
-          ) : (
-            <div className="flex size-8 items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground">
-              {discussion.author?.name?.charAt(0) ?? "?"}
-            </div>
-          )}
-          <span className="text-foreground/80">
-            {discussion.author?.name ?? "Unknown"}
-          </span>
-          <span>·</span>
-          <span>{formatRelativeTime(discussion.createdAt)}</span>
-        </div>
+        <AuthorInfo
+          user={discussion.author ?? { id: "", name: "Unknown" }}
+          timestamp={discussion.createdAt}
+          size="md"
+        />
         <div className="flex items-center gap-3">
           <span className="flex items-center gap-1">
             <Eye className="size-4" />

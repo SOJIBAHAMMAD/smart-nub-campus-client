@@ -2,52 +2,45 @@
 
 import { CheckCircle } from "lucide-react";
 import type { Answer } from "@/types/qa.types";
-import { VoteButtons, type VoteState } from "@/components/qa/vote-buttons";
-import { formatRelativeTime } from "@/components/resources/file-type-utils";
+import { Card, CardContent } from "@/components/ui/card";
+import { AuthorInfo } from "@/components/ui/author-info";
+import { VoteControls } from "@/components/ui/vote-controls";
 import { cn } from "@/lib/utils";
-import Image from "next/image";
 
 interface AnswerCardProps {
   answer: Answer;
   isQuestionAuthor: boolean;
-  onVote: (answerId: string, currentVote: VoteState) => void;
+  onVote: (answerId: string, currentVote: "UP" | "DOWN" | null) => void;
   onAccept: (answerId: string) => void;
 }
 
-/**
- * Single answer card with a vote control, rendered content, author info,
- * and an accept button (visible only to the question author).
- * Accepted answers are highlighted with a ✅ badge.
- */
 export function AnswerCard({
   answer,
   isQuestionAuthor,
   onVote,
   onAccept,
 }: AnswerCardProps) {
-  const userVote = (answer.userVote ?? null) as VoteState;
+  const userVote = (answer.userVote ?? null) as "UP" | "DOWN" | null;
 
   return (
-    <div
+    <Card
       className={cn(
-        "flex gap-3 rounded-xl border bg-card p-4 ring-1 ring-foreground/10",
+        "flex-row !p-0",
         answer.isAccepted && "border-success/40 bg-success/5",
       )}
     >
-      {/* ── Vote control ──────────────────────────────────────── */}
-      <div className="flex shrink-0 flex-col items-center gap-1 pt-0.5">
-        <VoteButtons
-          voteCount={answer.upvoteCount}
-          userVote={userVote}
-          onVote={() => onVote(answer.id, userVote)}
+      <div className="flex shrink-0 flex-col items-center gap-0.5 border-r border-border/40 px-2 py-4">
+        <VoteControls
+          upvotes={answer.upvoteCount}
+          activeVote={userVote}
+          onVote={(type) => onVote(answer.id, type)}
           orientation="vertical"
         />
       </div>
 
-      {/* ── Content ───────────────────────────────────────────── */}
-      <div className="min-w-0 flex-1">
+      <CardContent className="flex min-w-0 flex-1 flex-col gap-3 py-4">
         {answer.isAccepted && (
-          <div className="mb-2 flex items-center gap-1.5 rounded-md bg-success/10 px-2.5 py-1 text-xs font-semibold text-success">
+          <div className="flex items-center gap-1.5 rounded-md bg-success/10 px-2.5 py-1 text-xs font-semibold text-success">
             <CheckCircle className="size-3.5" />
             ACCEPTED ANSWER
           </div>
@@ -57,29 +50,19 @@ export function AnswerCard({
           {answer.content}
         </div>
 
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-border/50 pt-3">
-          {/* Author */}
-          <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-            {answer.author?.image ? (
-              <Image
-                src={answer.author.image}
-                alt={answer.author.name ?? "Author"}
-                width={20}
-                height={20}
-                unoptimized
-                className="size-5 rounded-full object-cover"
-              />
-            ) : (
-              <span className="flex size-5 items-center justify-center rounded-full bg-muted text-[8px] font-medium">
-                {answer.author?.name?.charAt(0) ?? "?"}
-              </span>
-            )}
-            <span className="text-foreground/80">{answer.author?.name ?? "Unknown"}</span>
-            <span>·</span>
-            <span>{formatRelativeTime(answer.createdAt)}</span>
-          </div>
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/40 pt-3">
+          {answer.author && (
+            <AuthorInfo
+              user={{
+                id: answer.authorId,
+                name: answer.author.name ?? "Unknown",
+                image: answer.author.image,
+              }}
+              timestamp={answer.createdAt}
+              size="sm"
+            />
+          )}
 
-          {/* Accept button (question author only) */}
           {isQuestionAuthor && (
             <button
               onClick={() => onAccept(answer.id)}
@@ -95,7 +78,7 @@ export function AnswerCard({
             </button>
           )}
         </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }

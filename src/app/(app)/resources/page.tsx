@@ -5,10 +5,10 @@ import { resourceService } from "@/services/resource.service";
 export const metadata: Metadata = {
   title: "Resources | Smart NUB Campus",
   description:
-    "Browse and share study resources — notes, slides, assignments and more at North South University.",
+    "Browse and share study resources — notes, slides, assignments and more at Northern University Bangladesh.",
   openGraph: {
     title: "Resources | Smart NUB Campus",
-    description: "Browse and share study resources at NSU.",
+    description: "Browse and share study resources at NUB.",
     type: "website",
   },
 };
@@ -46,13 +46,20 @@ export default async function ResourcesPage({
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const params = await searchParams;
-  const page = typeof params.page === "string" ? parseInt(params.page, 10) || 1 : 1;
+  const page =
+    typeof params.page === "string" ? parseInt(params.page, 10) || 1 : 1;
   const search = typeof params.search === "string" ? params.search : undefined;
-  const categorySlug = typeof params.category === "string" ? params.category : undefined;
-  const courseId = typeof params.courseId === "string" ? params.courseId : undefined;
-  const tags = typeof params.tags === "string"
-    ? params.tags.split(",").map((t) => t.trim()).filter(Boolean)
-    : [];
+  const categorySlug =
+    typeof params.category === "string" ? params.category : undefined;
+  const courseId =
+    typeof params.courseId === "string" ? params.courseId : undefined;
+  const tags =
+    typeof params.tags === "string"
+      ? params.tags
+          .split(",")
+          .map((t) => t.trim())
+          .filter(Boolean)
+      : [];
   const sort = typeof params.sort === "string" ? params.sort : "newest";
   const view = typeof params.view === "string" ? params.view : "grid";
 
@@ -60,7 +67,12 @@ export default async function ResourcesPage({
   let initialMeta: PaginationMeta | null = null;
   let categories: (ResourceCategory & { _count: { resources: number } })[] = [];
   let courses: CourseWithCount[] = [];
-  let allTags: { id: string; name: string; slug: string; _count: { resourceTags: number } }[] = [];
+  let allTags: {
+    id: string;
+    name: string;
+    slug: string;
+    _count: { resourceTags: number };
+  }[] = [];
   let trending: Resource[] = [];
   let contributors: LeaderboardEntry[] = [];
 
@@ -72,33 +84,47 @@ export default async function ResourcesPage({
       resourceService.listTags(),
     ]);
 
-    categories = (categoriesResult as unknown as (ResourceCategory & { _count: { resources: number } })[]) ?? [];
+    categories =
+      (categoriesResult as unknown as (ResourceCategory & {
+        _count: { resources: number };
+      })[]) ?? [];
     courses = (coursesResult as unknown as CourseWithCount[]) ?? [];
-    allTags = (tagsResult as unknown as { id: string; name: string; slug: string; _count: { resourceTags: number } }[]) ?? [];
+    allTags =
+      (tagsResult as unknown as {
+        id: string;
+        name: string;
+        slug: string;
+        _count: { resourceTags: number };
+      }[]) ?? [];
 
     const resolvedCategoryId = categorySlug
       ? (categories.find((c) => c.slug === categorySlug)?.id ?? undefined)
       : undefined;
 
-    const [resourcesResult, trendingResult, leaderboardResult] = await Promise.all([
-      resourceService.listResources({
-        page,
-        limit: 12,
-        search,
-        categoryId: resolvedCategoryId,
-        courseId,
-        tag: tags.length > 0 ? tags : undefined,
-        sort: sort as "newest" | "popular" | "downloads",
-      }),
-      resourceService.listResources({ sort: "popular", limit: 3 }),
-      gamificationService.getLeaderboard(1, 5),
-    ]);
+    const [resourcesResult, trendingResult, leaderboardResult] =
+      await Promise.all([
+        resourceService.listResources({
+          page,
+          limit: 12,
+          search,
+          categoryId: resolvedCategoryId,
+          courseId,
+          tag: tags.length > 0 ? tags : undefined,
+          sort: sort as "newest" | "popular" | "downloads",
+        }),
+        resourceService.listResources({ sort: "popular", limit: 3 }),
+        gamificationService.getLeaderboard(1, 5),
+      ]);
 
     initialResources = resourcesResult.data ?? [];
     initialMeta = resourcesResult.meta ?? null;
     trending = trendingResult.data ?? [];
     const lb = leaderboardResult as unknown as {
-      data?: { rank: number; user: { id: string; name: string; image?: string | null } | null; totalPoints: number }[];
+      data?: {
+        rank: number;
+        user: { id: string; name: string; image?: string | null } | null;
+        totalPoints: number;
+      }[];
     };
     contributors = (lb.data ?? []).map((entry) => ({
       rank: entry.rank,

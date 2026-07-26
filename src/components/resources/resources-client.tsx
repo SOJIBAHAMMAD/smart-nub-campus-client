@@ -14,6 +14,7 @@ import { ResourcesSidebar } from "@/components/resources/resources-sidebar";
 import { ResourcesTrending } from "@/components/resources/resources-trending";
 import { ResourceCard } from "@/components/resources/resource-card";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { listResources, voteResource, bookmarkResource } from "@/actions/resource.actions";
 import type { Resource, ResourceCategory, PaginationMeta } from "@/types/resource.types";
@@ -105,12 +106,12 @@ export function ResourcesClient({
   const socketUrl = env.NEXT_PUBLIC_BACKEND_URL.replace(/\/+$/, "");
   const { socket } = useSocket({ url: socketUrl });
 
-  // When someone uploads a new resource, prepend to list
+  // When someone uploads a new resource, prepend to list (only if no active filters)
   useSocketEvent(socket, "resource:new", (data) => {
     setResources((prev) => {
       const resource = data.resource as unknown as Resource;
-      // Avoid duplicates
       if (prev.some((r) => r.id === resource.id)) return prev;
+      if (search || categorySlug || courseIdParam || tags.length > 0) return prev;
       return [resource, ...prev];
     });
   });
@@ -277,7 +278,7 @@ export function ResourcesClient({
           categories={categories}
           courses={courses}
           allTags={allTags}
-          onCourseChange={(_id) => updateParams({ category: null, tags: null })}
+          onCourseChange={(id) => updateParams({ courseId: id })}
         />
       }
       rightSidebar={
@@ -300,7 +301,7 @@ export function ResourcesClient({
           </div>
 
           {/* List / Grid view toggle */}
-          <div className="flex shrink-0 items-center gap-1 rounded-lg border bg-card p-0.5 ring-1 ring-foreground/10">
+          <Card className="shrink-0 rounded-lg p-0.5">
             <button
               onClick={() => updateParams({ view: "grid" })}
               className={cn(
@@ -327,7 +328,7 @@ export function ResourcesClient({
             >
               <List className="size-4" />
             </button>
-          </div>
+          </Card>
         </div>
 
         {/* ── Search + Filters Bar ────────────────────────────────── */}
@@ -446,13 +447,15 @@ export function ResourcesClient({
             </div>
           )
         ) : resources.length === 0 ? (
-          <div className="rounded-xl border bg-card p-12 text-center ring-1 ring-foreground/10">
-            <Search className="mx-auto size-10 text-muted-foreground/40" />
-            <p className="mt-3 text-sm font-medium text-foreground">No resources found</p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Try adjusting your search or filters.
-            </p>
-          </div>
+          <Card>
+            <CardContent className="p-12 text-center ring-1 ring-foreground/10">
+              <Search className="mx-auto size-10 text-muted-foreground/40" />
+              <p className="mt-3 text-sm font-medium text-foreground">No resources found</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Try adjusting your search or filters.
+              </p>
+            </CardContent>
+          </Card>
         ) : view === "grid" ? (
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {resources.map((resource) => (
