@@ -4,16 +4,14 @@ import { useState } from "react";
 import {
   Inbox,
   Send,
-  MailOpen,
-  Mail,
-  UserPlus,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import {
   acceptConnectionAction,
@@ -35,98 +33,126 @@ export function InvitationsSection({
   onChanged,
 }: InvitationsSectionProps) {
   const total = pending.length + sent.length;
+  const [expanded, setExpanded] = useState(false);
 
   if (total === 0) return null;
+
+  const previewUsers = pending.slice(0, 4);
+  const remainingCount = Math.max(0, pending.length - 4);
 
   return (
     <motion.div
       initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.2 }}
-      className="mb-6"
+      transition={{ duration: 0.25 }}
+      className="mb-5"
     >
-      <Card>
-        <CardHeader className="px-5 pt-5 sm:px-6 sm:pt-6">
-          <div className="flex items-center gap-2">
-            <CardTitle>Invitations</CardTitle>
-            <Badge variant="secondary" className="h-5 min-w-5 justify-center px-1.5">
-              {total}
-            </Badge>
-          </div>
-        </CardHeader>
-        <CardContent className="px-5 pb-5 sm:px-6 sm:pb-6">
-          <Tabs defaultValue="received">
-            <TabsList variant="line" className="mb-4 w-full">
-              <TabsTrigger value="received" className="flex-1">
-                <span className="flex items-center gap-1.5">
-                  <Inbox className="size-3.5" />
-                  Received
-                </span>
-                {pending.length > 0 && (
-                  <Badge variant="default" className="ml-1.5 h-4 min-w-4 justify-center px-1 text-[10px]">
-                    {pending.length}
-                  </Badge>
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="sent" className="flex-1">
-                <span className="flex items-center gap-1.5">
-                  <Send className="size-3.5" />
-                  Sent
-                </span>
-                {sent.length > 0 && (
-                  <Badge variant="secondary" className="ml-1.5 h-4 min-w-4 justify-center px-1 text-[10px]">
-                    {sent.length}
-                  </Badge>
-                )}
-              </TabsTrigger>
-            </TabsList>
+      <Card className="overflow-hidden border-primary/20 bg-primary/[0.03] border-l-2 border-l-primary/40">
+        <CardContent className="p-4">
+          <button
+            onClick={() => setExpanded((v) => !v)}
+            className="flex w-full items-center gap-3 text-left"
+          >
+            <div className="flex size-9 items-center justify-center rounded-full bg-primary/10">
+              <Inbox className="size-4 text-primary" />
+            </div>
 
-            <TabsContent value="received">
-              <AnimatePresence mode="popLayout">
-                {pending.length === 0 ? (
-                  <EmptyInvitation
-                    icon={<MailOpen className="size-6" />}
-                    title="No pending invitations"
-                    desc="You're all caught up!"
-                  />
-                ) : (
-                  <div className="space-y-2">
-                    {pending.map((c) => (
-                      <InvitationRow
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-semibold text-foreground">
+                  {pending.length > 0
+                    ? `${pending.length} pending invitation${pending.length === 1 ? "" : "s"}`
+                    : `${sent.length} sent request${sent.length === 1 ? "" : "s"}`}
+                </span>
+                {sent.length > 0 && pending.length > 0 && (
+                  <Badge variant="secondary" className="h-4 px-1.5 text-[10px]">
+                    {sent.length} sent
+                  </Badge>
+                )}
+              </div>
+
+              {pending.length > 0 && (
+                <div className="mt-1.5 flex items-center gap-2">
+                  <div className="flex -space-x-2">
+                    {previewUsers.map((c) => (
+                      <Avatar
                         key={c.id}
-                        connection={c}
-                        type="received"
-                        onChanged={onChanged}
+                        id={c.otherUser.id}
+                        name={c.otherUser.name}
+                        src={c.otherUser.image}
+                        className="size-7 ring-2 ring-background"
                       />
                     ))}
                   </div>
-                )}
-              </AnimatePresence>
-            </TabsContent>
+                  {remainingCount > 0 && (
+                    <span className="text-[11px] text-muted-foreground">
+                      +{remainingCount} more
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
 
-            <TabsContent value="sent">
-              <AnimatePresence mode="popLayout">
-                {sent.length === 0 ? (
-                  <EmptyInvitation
-                    icon={<Mail className="size-6" />}
-                    title="No sent invitations"
-                    desc="Send connection requests to get started."
-                  />
-                ) : (
-                  <div className="space-y-2">
-                    {sent.map((c) => (
-                      <InvitationRow
-                        key={c.id}
-                        connection={c}
-                        type="sent"
-                        onChanged={onChanged}
-                      />
-                    ))}
-                  </div>
-                )}
-              </AnimatePresence>
-            </TabsContent>
-          </Tabs>
+            <div className="shrink-0 text-muted-foreground">
+              {expanded ? (
+                <ChevronUp className="size-4" />
+              ) : (
+                <ChevronDown className="size-4" />
+              )}
+            </div>
+          </button>
+
+          <AnimatePresence>
+            {expanded && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="overflow-hidden"
+              >
+                <div className="mt-4 space-y-3 border-t border-border/40 pt-4">
+                  {pending.length > 0 && (
+                    <div>
+                      <p className="mb-2 flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                        <Inbox className="size-3" />
+                        Received
+                      </p>
+                      <div className="space-y-2">
+                        {pending.map((c) => (
+                          <InvitationRow
+                            key={c.id}
+                            connection={c}
+                            type="received"
+                            onChanged={onChanged}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {sent.length > 0 && (
+                    <div>
+                      <p className="mb-2 flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                        <Send className="size-3" />
+                        Sent
+                      </p>
+                      <div className="space-y-2">
+                        {sent.map((c) => (
+                          <InvitationRow
+                            key={c.id}
+                            connection={c}
+                            type="sent"
+                            onChanged={onChanged}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </CardContent>
       </Card>
     </motion.div>
@@ -161,7 +187,9 @@ function InvitationRow({
         toast.error(res.message);
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Something went wrong.");
+      toast.error(
+        err instanceof Error ? err.message : "Something went wrong.",
+      );
     } finally {
       setBusy(null);
     }
@@ -184,7 +212,7 @@ function InvitationRow({
       exit={{ opacity: 0, scale: 0.95, height: 0 }}
       transition={{ duration: 0.15 }}
     >
-      <div className="flex items-center gap-3 rounded-lg border border-border/60 bg-card/50 p-3 transition-colors hover:bg-muted/40">
+      <div className="flex items-center gap-3 rounded-lg border border-border/40 bg-card/80 p-3 transition-colors hover:bg-muted/30">
         <Avatar
           id={user.id}
           name={user.name}
@@ -196,8 +224,9 @@ function InvitationRow({
             {user.name}
           </p>
           <p className="truncate text-xs text-muted-foreground">
-            {[dept, sem ? `Sem ${sem}` : null].filter(Boolean).join(" · ") ||
-              "NUB Student"}
+            {[dept, sem ? `Sem ${sem}` : null]
+              .filter(Boolean)
+              .join(" \u00b7 ") || "NUB Student"}
           </p>
           {connection.note && (
             <p className="mt-1 truncate text-xs italic text-muted-foreground">
@@ -221,7 +250,7 @@ function InvitationRow({
                 onClick={handleReject}
                 disabled={busy !== null}
               >
-                Reject
+                Decline
               </Button>
             </>
           ) : (
@@ -237,23 +266,5 @@ function InvitationRow({
         </div>
       </div>
     </motion.div>
-  );
-}
-
-function EmptyInvitation({
-  icon,
-  title,
-  desc,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  desc: string;
-}) {
-  return (
-    <div className="flex flex-col items-center py-6 text-center">
-      <div className="mb-2 text-muted-foreground">{icon}</div>
-      <p className="text-sm font-medium text-foreground">{title}</p>
-      <p className="text-xs text-muted-foreground">{desc}</p>
-    </div>
   );
 }

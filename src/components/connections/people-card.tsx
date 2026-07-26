@@ -23,10 +23,16 @@ import {
 } from "@/components/ui/card";
 import { TagPill } from "@/components/ui/tag-pill";
 import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
+import {
   ConnectionStatusBadge,
   type Relationship,
 } from "./connection-status-badge";
 import { ConnectionNoteDialog } from "./connection-note-dialog";
+import { cn } from "@/lib/utils";
 import {
   sendConnectionRequestAction,
   acceptConnectionAction,
@@ -37,6 +43,7 @@ import {
   blockUserAction,
   unblockUserAction,
 } from "@/actions/connection.actions";
+
 export interface PeopleCardUser {
   id: string;
   name: string;
@@ -83,6 +90,24 @@ function skillName(skill: unknown): string {
   return s.tag?.name ?? s.name ?? "";
 }
 
+const DEPARTMENT_ACCENTS: Record<string, string> = {
+  CSE: "from-violet-500/10 to-violet-500/3",
+  "Computer Science & Engineering": "from-violet-500/10 to-violet-500/3",
+  EEE: "from-amber-500/10 to-amber-500/3",
+  "Electrical & Electronic Engineering": "from-amber-500/10 to-amber-500/3",
+  BBA: "from-sky-500/10 to-sky-500/3",
+  "Business Administration": "from-sky-500/10 to-sky-500/3",
+  English: "from-emerald-500/10 to-emerald-500/3",
+  "English & Modern Languages": "from-emerald-500/10 to-emerald-500/3",
+  Architecture: "from-rose-500/10 to-rose-500/3",
+  Law: "from-indigo-500/10 to-indigo-500/3",
+};
+
+function getAccentClass(dept: string | null): string {
+  if (!dept) return "";
+  return DEPARTMENT_ACCENTS[dept] ?? "from-primary/10 to-primary/3";
+}
+
 export function PeopleCard({
   user,
   relationship = "none",
@@ -98,6 +123,7 @@ export function PeopleCard({
   const [busy, setBusy] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [actionSuccess, setActionSuccess] = useState<string | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -127,10 +153,9 @@ export function PeopleCard({
       | { tag: { id: string; name: string; slug: string } }[]
       | undefined);
 
-  const mutual =
-    showMutual && user.mutualConnections
-      ? `${user.mutualConnections} mutual connection${user.mutualConnections === 1 ? "" : "s"}`
-      : "";
+  const mutual = showMutual && user.mutualConnections
+    ? user.mutualConnections
+    : 0;
 
   const run = async (
     key: string,
@@ -144,6 +169,8 @@ export function PeopleCard({
         return;
       }
       toast.success(res.message);
+      setActionSuccess(key);
+      setTimeout(() => setActionSuccess(null), 1500);
       onChanged?.();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Something went wrong.");
@@ -203,7 +230,7 @@ export function PeopleCard({
       return res;
     });
 
-  const _handleUnblock = () =>
+  const handleUnblockLocal = () =>
     run("unblock", async () => {
       const res = await unblockUserAction(user.id);
       if (res.success) setStatus("none");
@@ -211,35 +238,75 @@ export function PeopleCard({
     });
 
   const skills = (rawSkills ?? []).map(skillName).filter(Boolean);
+  const accent = getAccentClass(department);
+  const maxSkills = compact ? 2 : 3;
+  const extraSkills = Math.max(0, skills.length - maxSkills);
 
   return (
-    <Card ref={cardRef} size={compact ? "sm" : "default"}>
-      <CardHeader className="flex-row items-center gap-3 px-4 pt-4 sm:px-5 sm:pt-5">
-        <Avatar
-          id={user.id}
-          name={user.name}
-          src={user.image}
-          className={compact ? "size-9" : "size-11"}
+    <Card
+      ref={cardRef}
+      size={compact ? "sm" : "default"}
+      className={cn(
+        "relative overflow-hidden transition-all duration-200",
+        "hover:-translate-y-0.5 hover:shadow-lg",
+        compact && "hover:-translate-y-0",
+      )}
+    >
+      {accent && (
+        <div
+          className={cn(
+            "absolute inset-x-0 top-0 h-1 bg-gradient-to-r",
+            accent,
+          )}
         />
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold text-foreground">
-            {user.name}
-          </p>
-          <p className="truncate text-xs text-muted-foreground">
-            {[department, currentSemester ? `Sem ${currentSemester}` : null]
-              .filter(Boolean)
-              .join(" · ") || "NUB Student"}
-          </p>
+      )}
+
+      <CardHeader className="gap-3 px-4 pt-4 sm:px-5 sm:pt-5">
+        <div className="flex items-start gap-3">
+          <div className="relative shrink-0">
+            <Avatar
+              id={user.id}
+              name={user.name}
+              src={user.image}
+              className={compact ? "size-10" : "size-12"}
+            />
+            {status === "connected" && (
+              <span className="absolute -bottom-0.5 -right-0.5 size-3.5 rounded-full border-2 border-background bg-emerald-500" />
+            )}
+            {status === "pending_incoming" && (
+              <span className="absolute -bottom-0.5 -right-0.5 size-3.5 rounded-full border-2 border-background bg-amber-500" />
+            )}
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <p
+              className={cn(
+                "font-semibold text-foreground leading-snug",
+                compact ? "text-sm" : "text-[15px]",
+              )}
+            >
+              {user.name}
+            </p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              {[
+                department,
+                currentSemester ? `Sem ${currentSemester}` : null,
+              ]
+                .filter(Boolean)
+                .join(" \u00b7 ") || "NUB Student"}
+            </p>
+          </div>
+
+          <CardAction>
+            <ConnectionStatusBadge relationship={status} />
+          </CardAction>
         </div>
-        <CardAction>
-          <ConnectionStatusBadge relationship={status} />
-        </CardAction>
       </CardHeader>
 
       <CardContent className="space-y-3 px-4 pb-4 sm:px-5 sm:pb-5">
         {skills.length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            {skills.slice(0, compact ? 2 : 4).map((skill) => (
+          <div className="flex flex-wrap items-center gap-1.5">
+            {skills.slice(0, maxSkills).map((skill) => (
               <TagPill
                 key={skill}
                 name={skill}
@@ -248,28 +315,62 @@ export function PeopleCard({
                 showIcon={false}
               />
             ))}
+            {extraSkills > 0 && (
+              <span className="text-[10px] font-medium text-muted-foreground">
+                +{extraSkills} more
+              </span>
+            )}
           </div>
         )}
 
-        {mutual && (
-          <p className="text-xs text-muted-foreground">{mutual}</p>
+        {mutual > 0 && (
+          <div className="flex items-center gap-2">
+            <div className="flex -space-x-1.5">
+              {Array.from({ length: Math.min(mutual, 3) }).map((_, i) => (
+                <div
+                  key={i}
+                  className="size-5 rounded-full border-2 border-background bg-muted ring-1 ring-border/50"
+                  style={{ zIndex: 3 - i }}
+                />
+              ))}
+            </div>
+            <span className="text-xs text-muted-foreground">
+              {mutual} mutual connection{mutual === 1 ? "" : "s"}
+            </span>
+          </div>
         )}
 
         {note && (
-          <p className="rounded-lg bg-muted/60 px-2.5 py-1.5 text-xs italic text-muted-foreground">
-            &ldquo;{note}&rdquo;
-          </p>
+          <div className="rounded-lg border border-border/40 bg-muted/40 px-3 py-2">
+            <p className="text-xs italic text-muted-foreground line-clamp-2">
+              &ldquo;{note}&rdquo;
+            </p>
+          </div>
         )}
 
-        <div className="flex flex-wrap items-center gap-2 pt-1">
+        <div className="flex items-center gap-2 pt-1">
           {status === "none" && (
             <Button
               size="sm"
               onClick={() => setDialogOpen(true)}
               disabled={busy === "connect"}
+              className={cn(
+                "transition-all duration-200",
+                actionSuccess === "connect" &&
+                  "bg-emerald-500 hover:bg-emerald-600",
+              )}
             >
-              <UserPlus className="size-3.5" />
-              Connect
+              {actionSuccess === "connect" ? (
+                <>
+                  <Check className="size-3.5" />
+                  Sent!
+                </>
+              ) : (
+                <>
+                  <UserPlus className="size-3.5" />
+                  Connect
+                </>
+              )}
             </Button>
           )}
 
@@ -279,9 +380,23 @@ export function PeopleCard({
                 size="sm"
                 onClick={handleAccept}
                 disabled={busy === "accept"}
+                className={cn(
+                  "transition-all duration-200",
+                  actionSuccess === "accept" &&
+                    "bg-emerald-500 hover:bg-emerald-600",
+                )}
               >
-                <Check className="size-3.5" />
-                Accept
+                {actionSuccess === "accept" ? (
+                  <>
+                    <Check className="size-3.5" />
+                    Connected!
+                  </>
+                ) : (
+                  <>
+                    <Check className="size-3.5" />
+                    Accept
+                  </>
+                )}
               </Button>
               <Button
                 size="sm"
@@ -290,7 +405,7 @@ export function PeopleCard({
                 disabled={busy === "reject"}
               >
                 <X className="size-3.5" />
-                Reject
+                Decline
               </Button>
             </>
           )}
@@ -303,7 +418,7 @@ export function PeopleCard({
               disabled={busy === "cancel"}
             >
               <X className="size-3.5" />
-              Cancel Request
+              Cancel
             </Button>
           )}
 
@@ -311,7 +426,7 @@ export function PeopleCard({
             <Button
               size="sm"
               variant="secondary"
-              onClick={() => onUnblock?.()}
+              onClick={onUnblock ?? handleUnblockLocal}
               disabled={busy === "unblock"}
             >
               <Ban className="size-3.5" />
@@ -325,63 +440,86 @@ export function PeopleCard({
                 <MessageSquare className="size-3.5" />
                 Message
               </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={handleToggleFavorite}
-                disabled={busy === "fav"}
-                title="Toggle favorite"
-              >
-                <Star className="size-3.5" />
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={handleRemove}
-                disabled={busy === "remove"}
-                title="Remove connection"
-              >
-                <UserMinus className="size-3.5" />
-              </Button>
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={handleToggleFavorite}
+                      disabled={busy === "fav"}
+                      className="text-muted-foreground hover:text-amber-500"
+                    />
+                  }
+                >
+                  <Star className="size-3.5" />
+                </TooltipTrigger>
+                <TooltipContent>Toggle favorite</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={handleRemove}
+                      disabled={busy === "remove"}
+                      className="text-muted-foreground hover:text-destructive"
+                    />
+                  }
+                >
+                  <UserMinus className="size-3.5" />
+                </TooltipTrigger>
+                <TooltipContent>Remove connection</TooltipContent>
+              </Tooltip>
             </>
           )}
 
           {(status === "none" || status === "connected") && (
-            <button
-              type="button"
-              className="ml-auto rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-              onClick={() => setMenuOpen((v) => !v)}
-              aria-label="More actions"
-            >
-              <MoreVertical className="size-4" />
-            </button>
-          )}
+            <div className="relative ml-auto">
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <button
+                      type="button"
+                      className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                      onClick={() => setMenuOpen((v) => !v)}
+                    />
+                  }
+                  aria-label="More actions"
+                >
+                  <MoreVertical className="size-4" />
+                </TooltipTrigger>
+                <TooltipContent>More actions</TooltipContent>
+              </Tooltip>
 
-          {menuOpen && (
-            <div className="absolute right-3 top-12 z-10 w-40 overflow-hidden rounded-lg border bg-popover p-1 shadow-lg ring-1 ring-foreground/10">
-              {status === "none" && (
-                <button
-                  className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-destructive transition-colors hover:bg-destructive/10"
-                  onClick={() => {
-                    setMenuOpen(false);
-                    handleBlock();
-                  }}
-                >
-                  <Ban className="size-3.5" />
-                  Block
-                </button>
-              )}
-              {status === "connected" && (
-                <button
-                  className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-destructive transition-colors hover:bg-destructive/10"
-                  onClick={() => {
-                    setMenuOpen(false);
-                    handleRemove();
-                  }}
-                >
-                  <Trash2 className="size-3.5" />
-                  Remove
-                </button>
+              {menuOpen && (
+                <div className="absolute right-0 top-full z-10 w-40 overflow-hidden rounded-lg border bg-popover p-1 shadow-lg ring-1 ring-foreground/10">
+                  {status === "none" && (
+                    <button
+                      className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-destructive transition-colors hover:bg-destructive/10"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        handleBlock();
+                      }}
+                    >
+                      <Ban className="size-3.5" />
+                      Block
+                    </button>
+                  )}
+                  {status === "connected" && (
+                    <button
+                      className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-destructive transition-colors hover:bg-destructive/10"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        handleRemove();
+                      }}
+                    >
+                      <Trash2 className="size-3.5" />
+                      Remove
+                    </button>
+                  )}
+                </div>
               )}
             </div>
           )}

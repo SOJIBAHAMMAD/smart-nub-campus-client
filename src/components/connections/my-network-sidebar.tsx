@@ -14,6 +14,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -91,7 +96,7 @@ export function MyNetworkSidebar({
         value={activeTab}
         onValueChange={(v) => onTabChange(v as ConnectionTab)}
       >
-        <TabsList className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
           {TABS.map((t) => {
             const count =
               t.id === "pending"
@@ -102,20 +107,21 @@ export function MyNetworkSidebar({
                     ? counts.blocked
                     : counts.all;
             return (
-              <TabsTrigger key={t.id} value={t.id} className="flex-1">
-                <span className="flex items-center gap-1.5">
-                  {t.icon}
-                  {t.label}
-                </span>
-                {count > 0 && (
-                  <Badge
-                    variant={t.id === "pending" ? "default" : "secondary"}
-                    className="ml-1 h-4 min-w-4 justify-center px-1 text-[10px]"
-                  >
-                    {count}
-                  </Badge>
-                )}
-              </TabsTrigger>
+              <Tooltip key={t.id}>
+                <TooltipTrigger
+                  render={
+                    <TabsTrigger value={t.id} className="relative px-0">
+                      {t.icon}
+                      {count > 0 && (
+                        <span className="absolute -top-1 -right-1 flex size-3.5 items-center justify-center rounded-full bg-primary text-[8px] font-bold text-primary-foreground">
+                          {count > 9 ? "9+" : count}
+                        </span>
+                      )}
+                    </TabsTrigger>
+                  }
+                />
+                <TooltipContent side="bottom">{t.label}</TooltipContent>
+              </Tooltip>
             );
           })}
         </TabsList>

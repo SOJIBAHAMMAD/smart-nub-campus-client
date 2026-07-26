@@ -183,6 +183,7 @@ export const connectionService = {
     department: string | null;
     currentSemester: number | null;
     lastActiveAt: string | null;
+    connectionStatus: "NONE" | "CONNECTED" | "PENDING_OUTGOING" | "PENDING_INCOMING";
   }[]> {
     const response = await serverApi.get<{
       id: string;
@@ -191,6 +192,7 @@ export const connectionService = {
       department: string | null;
       currentSemester: number | null;
       lastActiveAt: string | null;
+      connectionStatus: "NONE" | "CONNECTED" | "PENDING_OUTGOING" | "PENDING_INCOMING";
     }[]>(`/connections/active?limit=${limit}`, { tags: [TAGS.CONNECTIONS] });
     return response.data ?? [];
   },
