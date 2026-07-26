@@ -22,7 +22,11 @@ interface UseNotificationsReturn {
   loadMore: () => Promise<void>;
   refresh: () => Promise<void>;
   markAsRead: (id: string) => Promise<void>;
+  markAsUnread: (id: string) => Promise<void>;
   markAllAsRead: () => Promise<void>;
+  deleteNotification: (id: string) => Promise<void>;
+  bulkMarkAsRead: (ids: string[]) => Promise<void>;
+  bulkDelete: (ids: string[]) => Promise<void>;
   prependNotification: (notification: Notification) => void;
 }
 
@@ -114,6 +118,19 @@ export function useNotifications({
     }
   }, []);
 
+  const markAsUnread = useCallback(async (id: string) => {
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, isRead: false } : n)),
+    );
+    try {
+      await apiClient.patch(`/notifications/${id}/read`, { isRead: false });
+    } catch {
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)),
+      );
+    }
+  }, []);
+
   const markAllAsRead = useCallback(async () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
     try {
@@ -124,6 +141,43 @@ export function useNotifications({
       );
     }
   }, []);
+
+  const deleteNotification = useCallback(async (id: string) => {
+    const deleted = notifications.find((n) => n.id === id);
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
+    try {
+      await apiClient.del(`/notifications/${id}`);
+    } catch {
+      if (deleted) {
+        setNotifications((prev) => [deleted, ...prev]);
+      }
+    }
+  }, [notifications]);
+
+  const bulkMarkAsRead = useCallback(async (ids: string[]) => {
+    const idSet = new Set(ids);
+    setNotifications((prev) =>
+      prev.map((n) => (idSet.has(n.id) ? { ...n, isRead: true } : n)),
+    );
+    try {
+      await apiClient.patch("/notifications/bulk/read", { ids });
+    } catch {
+      setNotifications((prev) =>
+        prev.map((n) => (idSet.has(n.id) ? { ...n, isRead: false } : n)),
+      );
+    }
+  }, []);
+
+  const bulkDelete = useCallback(async (ids: string[]) => {
+    const idSet = new Set(ids);
+    const deleted = notifications.filter((n) => idSet.has(n.id));
+    setNotifications((prev) => prev.filter((n) => !idSet.has(n.id)));
+    try {
+      await apiClient.del("/notifications/bulk", { ids });
+    } catch {
+      setNotifications((prev) => [...deleted, ...prev]);
+    }
+  }, [notifications]);
 
   const prependNotification = useCallback((notification: Notification) => {
     setNotifications((prev) => [notification, ...prev]);
@@ -137,7 +191,11 @@ export function useNotifications({
     loadMore,
     refresh,
     markAsRead,
+    markAsUnread,
     markAllAsRead,
+    deleteNotification,
+    bulkMarkAsRead,
+    bulkDelete,
     prependNotification,
   };
 }

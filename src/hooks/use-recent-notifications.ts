@@ -16,7 +16,9 @@ interface UseRecentNotificationsReturn {
   isLoading: boolean;
   refresh: () => Promise<void>;
   markAsRead: (id: string) => Promise<void>;
+  markAsUnread: (id: string) => Promise<void>;
   markAllAsRead: () => Promise<void>;
+  deleteNotification: (id: string) => Promise<void>;
   prependNotification: (notification: Notification) => void;
 }
 
@@ -31,6 +33,14 @@ export function useRecentNotifications({
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(autoFetch);
   const { socket } = useSocket();
+
+  const prependNotification = useCallback((notification: Notification) => {
+    setNotifications((prev) => {
+      // Deduplicate by id
+      if (prev.some((n) => n.id === notification.id)) return prev;
+      return [notification, ...prev].slice(0, 10); // Keep max 10 in memory
+    });
+  }, []);
 
   // Listen for real-time notifications and prepend them
   useSocketEvent(socket, "notification:new", (data) => {
@@ -85,6 +95,19 @@ export function useRecentNotifications({
     }
   }, []);
 
+  const markAsUnread = useCallback(async (id: string) => {
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, isRead: false } : n)),
+    );
+    try {
+      await apiClient.patch(`/notifications/${id}/read`, { isRead: false });
+    } catch {
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)),
+      );
+    }
+  }, []);
+
   const markAllAsRead = useCallback(async () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
     try {
@@ -96,20 +119,26 @@ export function useRecentNotifications({
     }
   }, []);
 
-  const prependNotification = useCallback((notification: Notification) => {
-    setNotifications((prev) => {
-      // Deduplicate by id
-      if (prev.some((n) => n.id === notification.id)) return prev;
-      return [notification, ...prev].slice(0, 10); // Keep max 10 in memory
-    });
-  }, []);
+  const deleteNotification = useCallback(async (id: string) => {
+    const deleted = notifications.find((n) => n.id === id);
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
+    try {
+      await apiClient.del(`/notifications/${id}`);
+    } catch {
+      if (deleted) {
+        setNotifications((prev) => [deleted, ...prev]);
+      }
+    }
+  }, [notifications]);
 
   return {
     notifications,
     isLoading,
     refresh,
     markAsRead,
+    markAsUnread,
     markAllAsRead,
+    deleteNotification,
     prependNotification,
   };
 }

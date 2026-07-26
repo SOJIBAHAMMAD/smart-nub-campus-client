@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { NotificationsClient } from "@/components/notifications/notifications-client";
+import { NotificationPageSkeleton } from "@/components/notifications/notification-skeleton";
 
 export const metadata: Metadata = {
   title: "Notifications | Smart NUB Campus",
@@ -15,18 +16,7 @@ export const metadata: Metadata = {
 
 export default function NotificationsPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="mx-auto max-w-2xl px-4 py-6">
-          <div className="h-8 w-48 animate-pulse rounded bg-muted" />
-          <div className="mt-6 space-y-3">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="h-16 animate-pulse rounded-lg bg-muted" />
-            ))}
-          </div>
-        </div>
-      }
-    >
+    <Suspense fallback={<NotificationPageSkeleton />}>
       <NotificationsClient />
     </Suspense>
   );

@@ -62,7 +62,11 @@ export const apiClient = {
       method: "PATCH",
       body: JSON.stringify(body),
     }),
-  del: <T>(endpoint: string) => apiFetch<T>(endpoint, { method: "DELETE" }),
+  del: <T>(endpoint: string, body?: unknown) =>
+    apiFetch<T>(endpoint, {
+      method: "DELETE",
+      ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+    }),
   postForm: <T>(endpoint: string, formData: FormData) =>
     apiFetch<T>(endpoint, { method: "POST", body: formData }),
 };
