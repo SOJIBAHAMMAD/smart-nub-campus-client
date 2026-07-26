@@ -3,12 +3,14 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ShieldCheck, Loader2 } from "lucide-react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import { TextField } from "@/components/forms/fields/text-field";
 import { PasswordField } from "@/components/forms/fields/password-field";
 import AuthInfo from "../_components/AuthInfo";
@@ -44,6 +46,7 @@ function LoginFormContent() {
     defaultValues: {
       identifier: "",
       password: "",
+      remember: false,
     },
   });
 
@@ -62,6 +65,7 @@ function LoginFormContent() {
       const response = await authClient.signIn.email({
         email,
         password: data.password,
+        rememberMe: data.remember,
       });
 
       if (response.error) {
@@ -190,15 +194,40 @@ function LoginFormContent() {
                     </>
                   }
                   placeholder="Enter your student ID or email"
+                  autoComplete="username"
+                  inputMode="email"
                   disabled={isPending}
                 />
 
                 <PasswordField
                   control={control}
                   name="password"
-                  label="Password *"
+                  label={
+                    <>
+                      Password <span className="text-destructive">*</span>
+                    </>
+                  }
+                  autoComplete="current-password"
                   disabled={isPending}
                 />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Controller
+                  control={control}
+                  name="remember"
+                  render={({ field }) => (
+                    <Checkbox
+                      id="remember"
+                      checked={field.value}
+                      onCheckedChange={(checked) => field.onChange(checked === true)}
+                      disabled={isPending}
+                    />
+                  )}
+                />
+                <Label htmlFor="remember" className="text-sm font-normal text-muted-foreground cursor-pointer">
+                  Remember me
+                </Label>
               </div>
 
               <Button type="submit" className="w-full" disabled={isPending}>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TextField } from "@/components/forms/fields/text-field";
@@ -50,6 +51,19 @@ export function VerifyEmailForm({
   });
 
   const router = useRouter();
+  const autoSubmitRef = useRef(false);
+
+  // Auto-submit when all 6 digits are entered
+  useEffect(() => {
+    if (mode !== "otp" || isPending || !otpValue || otpValue.length !== 6) {
+      autoSubmitRef.current = false;
+      return;
+    }
+    if (!autoSubmitRef.current) {
+      autoSubmitRef.current = true;
+      otpForm.handleSubmit((data) => handleVerifyOTP(data, onSuccess))();
+    }
+  }, [mode, isPending, otpValue, otpForm, handleVerifyOTP, onSuccess]);
 
   if (mode === "loading") {
     return (

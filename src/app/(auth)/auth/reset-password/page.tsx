@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { TextField } from "@/components/forms/fields/text-field";
 import { OTPField } from "@/components/forms/fields/otp-field";
 import { PasswordField } from "@/components/forms/fields/password-field";
+import { PasswordRequirements } from "@/components/forms/password-requirements";
 import AuthInfo from "../_components/AuthInfo";
 import { resetPasswordByIdentifier } from "@/actions/auth.action";
 import {
@@ -33,7 +34,7 @@ function ResetPasswordFormContent() {
   const prefilledIdentifier = params.get("identifier") ?? "";
   const isSubmitting = isPending || state.success;
 
-  const { control, handleSubmit } = useForm<ResetPasswordFormValues>({
+  const { control, handleSubmit, watch } = useForm<ResetPasswordFormValues>({
     resolver: zodResolver(resetPasswordSchema),
     defaultValues: {
       identifier: prefilledIdentifier,
@@ -42,6 +43,8 @@ function ResetPasswordFormContent() {
       confirmPassword: "",
     },
   });
+
+  const passwordValue = watch("password") ?? "";
 
   const onSubmit = async (data: ResetPasswordFormValues) => {
     setIsPending(true);
@@ -110,6 +113,7 @@ function ResetPasswordFormContent() {
                     </>
                   }
                   placeholder="Enter your email or student ID"
+                  autoComplete="username"
                   disabled={true}
                 />
 
@@ -129,15 +133,29 @@ function ResetPasswordFormContent() {
                 <PasswordField
                   control={control}
                   name="password"
-                  label="New Password *"
+                  label={
+                    <>
+                      New Password <span className="text-destructive">*</span>
+                    </>
+                  }
+                  autoComplete="new-password"
+                  placeholder="Enter new password"
                   showStrength
                   disabled={isSubmitting}
                 />
+                <PasswordRequirements password={passwordValue} />
 
                 <PasswordField
                   control={control}
                   name="confirmPassword"
-                  label="Confirm Password *"
+                  label={
+                    <>
+                      Confirm Password{" "}
+                      <span className="text-destructive">*</span>
+                    </>
+                  }
+                  autoComplete="new-password"
+                  placeholder="Confirm your new password"
                   disabled={isSubmitting}
                 />
               </div>

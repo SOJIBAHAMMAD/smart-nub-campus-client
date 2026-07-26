@@ -125,12 +125,9 @@ export function OnboardingFlow({
       <div className="flex items-center justify-center py-20">
         <div className="flex flex-col items-center gap-4">
           <p className="text-sm text-destructive">{error}</p>
-          <button
-            onClick={handleRetry}
-            className="text-sm text-brand underline hover:no-underline"
-          >
+          <Button variant="outline" onClick={handleRetry}>
             Try again
-          </button>
+          </Button>
         </div>
       </div>
     );

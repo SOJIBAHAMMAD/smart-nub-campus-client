@@ -3,10 +3,12 @@
 import { useState, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PasswordField } from "@/components/forms/fields/password-field";
+import { PasswordRequirements } from "@/components/forms/password-requirements";
 import { SelectField } from "@/components/forms/fields/select-field";
 import { FileUploadField } from "@/components/forms/file-upload-field";
 import { createAccount } from "@/actions/account.action";
@@ -47,7 +49,7 @@ export function CreateAccountForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const studentIdInfo = parseStudentId(defaultStudentId);
 
-  const { control, handleSubmit, setValue } = useForm<CreateAccountFormValues>({
+  const { control, handleSubmit, setValue, watch } = useForm<CreateAccountFormValues>({
     resolver: zodResolver(createAccountSchema),
     defaultValues: {
       gender: undefined,
@@ -78,54 +80,52 @@ export function CreateAccountForm({
     [setCurrentStep, setVerificationRequest],
   );
 
+  const passwordValue = watch("password") ?? "";
+
   const handlePublicIdChange = useCallback((publicId: string | null) => {
     setValue("imagePublicId", publicId ?? "");
   }, [setValue]);
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      {/* Student ID - Read only */}
-      <div className="space-y-2">
-        <Label>Student ID</Label>
-        <Input value={defaultStudentId} disabled className="bg-muted/50" />
+      {/* Verified Information Summary */}
+      <div className="rounded-xl border border-success/20 bg-success/5 p-4">
+        <div className="mb-3 flex items-center gap-2 text-sm font-medium text-success">
+          <CheckCircle className="size-4" />
+          <span>Verified Information</span>
+        </div>
+        <dl className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
+          <div>
+            <dt className="text-muted-foreground">Student ID</dt>
+            <dd className="font-medium">{defaultStudentId}</dd>
+          </div>
+          <div>
+            <dt className="text-muted-foreground">Full Name</dt>
+            <dd className="font-medium">{defaultName}</dd>
+          </div>
+          <div>
+            <dt className="text-muted-foreground">Department</dt>
+            <dd className="font-medium">
+              {studentIdInfo.data?.department.fullName}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-muted-foreground">Admission Year</dt>
+            <dd className="font-medium">
+              {studentIdInfo.data?.admissionYear}
+            </dd>
+          </div>
+          <div className="sm:col-span-2">
+            <dt className="text-muted-foreground">Email</dt>
+            <dd className="font-medium">{defaultEmail}</dd>
+          </div>
+        </dl>
       </div>
 
-      {/* Full Name - Read only */}
-      <div className="space-y-2">
-        <Label>Full Name</Label>
-        <Input value={defaultName} disabled className="bg-muted/50" />
-      </div>
-
-      {/* Department - Read only */}
-      <div className="space-y-2">
-        <Label>Department</Label>
-        <Input
-          value={studentIdInfo.data?.department.fullName}
-          disabled
-          className="bg-muted/50"
-        />
-      </div>
-
-      {/* Admission Year - Read only */}
-      <div className="space-y-2">
-        <Label>Admission Year</Label>
-        <Input
-          value={studentIdInfo.data?.admissionYear}
-          disabled
-          className="bg-muted/50"
-        />
-      </div>
-
-      {/* Email - Read only */}
-      <div className="space-y-2">
-        <Label>Email</Label>
-        <Input
-          value={defaultEmail}
-          type="email"
-          disabled
-          className="bg-muted/50"
-        />
-      </div>
+      {/* Hidden fields to preserve values for form submission */}
+      <Input type="hidden" value={defaultStudentId} />
+      <Input type="hidden" value={defaultName} />
+      <Input type="hidden" value={defaultEmail} />
 
       {/* Gender - Required */}
       <div className="space-y-2">
@@ -162,11 +162,18 @@ export function CreateAccountForm({
       <PasswordField
         control={control}
         name="password"
-        label="Password *"
+        label={
+          <>
+            Password <span className="text-destructive">*</span>
+          </>
+        }
         description="Password must be at least 8 characters with uppercase, lowercase, and numbers."
+        autoComplete="new-password"
+        placeholder="Create a password"
         showStrength
         disabled={isSubmitting}
       />
+      <PasswordRequirements password={passwordValue} />
 
       {error && (
         <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">

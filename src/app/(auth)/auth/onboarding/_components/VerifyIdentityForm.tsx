@@ -61,6 +61,7 @@ export function VerifyIdentityForm({
             </>
           }
           placeholder="Enter your email address"
+          autoComplete="email"
           disabled={isSubmitting}
         />
         <DateField

@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { TextField } from "@/components/forms/fields/text-field";
 import AuthInfo from "../_components/AuthInfo";
 import { requestPasswordResetByIdentifier } from "@/actions/auth.action";
+import { maskEmail } from "@/hooks/use-email-verification";
 import {
   forgotPasswordSchema,
   type ForgotPasswordFormValues,
@@ -110,7 +111,12 @@ export default function ForgotPasswordPage() {
             <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-6">
               {state.success && state.message && (
                 <div className="rounded-lg border border-green-500/50 bg-green-500/10 p-3 text-sm text-green-600 dark:text-green-400 font-medium">
-                  {state.message}
+                  <p>
+                    We sent a verification code to{" "}
+                    <span className="font-semibold">
+                      {maskEmail(state.identifier ?? "")}
+                    </span>
+                  </p>
                   {countdown > 0 && (
                     <span className="block mt-1 text-xs opacity-75">
                       Redirecting to reset password in {countdown}s...
@@ -136,6 +142,8 @@ export default function ForgotPasswordPage() {
                     </>
                   }
                   placeholder="Enter your email or student ID"
+                  autoComplete="username"
+                  inputMode="email"
                   disabled={isSubmitting}
                 />
               </div>
