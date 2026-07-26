@@ -33,11 +33,11 @@ import {
   Sparkles,
 } from "lucide-react";
 import { useTheme } from "next-themes";
-import { useUnreadCount } from "@/hooks/use-unread-count";
 import ROUTES from "@/constants/routes";
 import { AcademicCapIcon } from "../ui/icons/academic-cap";
 import Image from "next/image";
 import { authClient } from "@/lib/auth-client";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 
 // ── Navigation items ─────────────────────────────────────────────────────────
 
@@ -73,7 +73,6 @@ export function TopNav({ userName, userImage, userId }: TopNavProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { theme, setTheme } = useTheme();
-  const { count: unreadCount } = useUnreadCount();
   const [searchQuery, setSearchQuery] = useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   // Guard against SSR/client theme mismatch — next-themes only knows the
@@ -163,16 +162,7 @@ export function TopNav({ userName, userImage, userId }: TopNavProps) {
           </Button>
 
           {/* ── Notifications ───────────────────────────────────────────── */}
-          <Link href={ROUTES.NOTIFICATIONS} aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ""}`}>
-            <Button variant="ghost" size="icon" className="relative size-8">
-              <Bell className="size-4" />
-              {unreadCount > 0 && (
-                <span className="absolute -right-0.5 -top-0.5 flex size-4 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-white">
-                  {unreadCount > 99 ? "99+" : unreadCount}
-                </span>
-              )}
-            </Button>
-          </Link>
+          <NotificationBell />
 
           {/* ── User avatar / dropdown (desktop) ────────────────────────── */}
           <div className="hidden md:block">

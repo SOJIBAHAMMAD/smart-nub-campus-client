@@ -28,11 +28,14 @@ export type MessageType = "text" | "image" | "file" | "system";
 export interface Notification {
   id: string;
   userId: string;
+  senderId?: string | null;
+  sender?: { id: string; name: string; image?: string | null } | null;
   type: string;
   title: string;
   message: string;
   link?: string | null;
   isRead: boolean;
+  metadata?: Record<string, unknown> | null;
   createdAt: string;
 }
 

@@ -3,8 +3,7 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Avatar } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import type { Notification, NotificationCategory, NOTIFICATION_CATEGORY_MAP } from "@/types/notification.types";
+import type { Notification } from "@/types/notification.types";
 import {
   Bell,
   CheckCircle,
@@ -62,28 +61,6 @@ const COLOR_MAP: Record<Notification["type"], string> = {
   SYSTEM: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400",
 };
 
-const CATEGORY_LABELS: Record<NotificationCategory, string> = {
-  messages: "Message",
-  connections: "Connection",
-  teams: "Team",
-  resources: "Resource",
-  qa: "Q&A",
-  discussions: "Discussion",
-  events: "Event",
-  system: "System",
-};
-
-const CATEGORY_BADGE_COLORS: Record<NotificationCategory, string> = {
-  messages: "bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300",
-  connections: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300",
-  teams: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300",
-  resources: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300",
-  qa: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
-  discussions: "bg-cyan-100 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-300",
-  events: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300",
-  system: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
-};
-
 function formatRelativeTime(dateString: string): string {
   const now = Date.now();
   const then = new Date(dateString).getTime();
@@ -99,56 +76,36 @@ function formatRelativeTime(dateString: string): string {
   return new Date(dateString).toLocaleDateString();
 }
 
-function getCategoryFromType(type: Notification["type"]): NotificationCategory {
-  const map: Record<Notification["type"], NotificationCategory> = {
-    MESSAGE: "messages",
-    MESSAGE_REQUEST: "messages",
-    CONNECTION_REQUEST: "connections",
-    CONNECTION_ACCEPTED: "connections",
-    TEAM_APPLICATION: "teams",
-    TEAM_APPLICATION_ACCEPTED: "teams",
-    TEAM_APPLICATION_REJECTED: "teams",
-    RESOURCE_UPVOTE: "resources",
-    RESOURCE_DOWNVOTE: "resources",
-    RESOURCE_COMMENT: "resources",
-    RESOURCE_REPORT_REVIEWED: "resources",
-    QUESTION_ANSWER: "qa",
-    QUESTION_ACCEPTED: "qa",
-    DISCUSSION_REPLY: "discussions",
-    DISCUSSION_MENTION: "discussions",
-    EVENT_REMINDER: "events",
-    BADGE_UNLOCKED: "system",
-    SYSTEM: "system",
-  };
-  return map[type] ?? "system";
-}
-
-interface NotificationItemProps {
+interface NotificationDropdownItemProps {
   notification: Notification;
   onMarkAsRead: (id: string) => void;
+  onClose: () => void;
 }
 
-export function NotificationItem({ notification, onMarkAsRead }: NotificationItemProps) {
+export function NotificationDropdownItem({
+  notification,
+  onMarkAsRead,
+  onClose,
+}: NotificationDropdownItemProps) {
   const Icon = ICON_MAP[notification.type] || Inbox;
   const colorClass = COLOR_MAP[notification.type] || "bg-gray-100 text-gray-600";
-  const category = getCategoryFromType(notification.type);
-  const categoryLabel = CATEGORY_LABELS[category];
-  const categoryBadgeColor = CATEGORY_BADGE_COLORS[category];
+
+  const handleClick = () => {
+    if (!notification.isRead) {
+      onMarkAsRead(notification.id);
+    }
+    onClose();
+  };
 
   const content = (
     <div
       className={cn(
-        "flex items-start gap-3 rounded-lg border px-4 py-3 transition-colors",
+        "flex items-start gap-2.5 px-3 py-2.5 transition-colors cursor-pointer",
         notification.isRead
-          ? "border-transparent bg-background"
-          : "border-blue-200 bg-blue-50/50 dark:border-blue-800 dark:bg-blue-950/20",
-        notification.link && "cursor-pointer hover:bg-muted/50",
+          ? "hover:bg-muted/50"
+          : "bg-blue-50/50 hover:bg-blue-50 dark:bg-blue-950/20 dark:hover:bg-blue-950/30",
       )}
-      onClick={() => {
-        if (!notification.isRead) {
-          onMarkAsRead(notification.id);
-        }
-      }}
+      onClick={handleClick}
     >
       {/* Sender avatar or type icon */}
       {notification.sender ? (
@@ -156,49 +113,48 @@ export function NotificationItem({ notification, onMarkAsRead }: NotificationIte
           id={notification.sender.id}
           name={notification.sender.name}
           src={notification.sender.image}
-          className="size-9"
+          className="size-8"
         />
       ) : (
-        <div className={cn("flex size-9 shrink-0 items-center justify-center rounded-full", colorClass)}>
-          <Icon className="size-4" />
+        <div
+          className={cn(
+            "flex size-8 shrink-0 items-center justify-center rounded-full",
+            colorClass,
+          )}
+        >
+          <Icon className="size-3.5" />
         </div>
       )}
 
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <p className={cn("text-sm", !notification.isRead && "font-medium")}>
-            {notification.title}
-          </p>
-          <Badge
-            variant="secondary"
-            className={cn(
-              "hidden h-5 px-1.5 text-[10px] font-medium sm:inline-flex",
-              categoryBadgeColor,
-            )}
-          >
-            {categoryLabel}
-          </Badge>
-        </div>
-        <p className="mt-0.5 text-sm text-muted-foreground line-clamp-2">
+        <p
+          className={cn(
+            "text-sm leading-snug line-clamp-1",
+            !notification.isRead && "font-medium",
+          )}
+        >
+          {notification.title}
+        </p>
+        <p className="mt-0.5 text-xs text-muted-foreground line-clamp-1">
           {notification.message}
         </p>
-        {notification.metadata && typeof notification.metadata === "object" && "entityTitle" in notification.metadata && (
-          <p className="mt-1 text-xs text-muted-foreground truncate">
-            {(notification.metadata as { entityTitle: string }).entityTitle}
-          </p>
-        )}
-        <p className="mt-1 text-xs text-muted-foreground">
+        <p className="mt-1 text-[11px] text-muted-foreground">
           {formatRelativeTime(notification.createdAt)}
         </p>
       </div>
+
       {!notification.isRead && (
-        <span className="mt-1 size-2 shrink-0 rounded-full bg-blue-500" />
+        <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-blue-500" />
       )}
     </div>
   );
 
   if (notification.link) {
-    return <Link href={notification.link} className="block">{content}</Link>;
+    return (
+      <Link href={notification.link} className="block" onClick={onClose}>
+        {content}
+      </Link>
+    );
   }
 
   return content;

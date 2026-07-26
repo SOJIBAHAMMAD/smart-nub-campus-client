@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { updateNotificationSettingsAction } from "@/actions/settings.actions";
 import type { UserNotificationSettings } from "@/types";
@@ -48,9 +49,6 @@ const NOTIFICATION_CHANNELS = [
   },
 ] as const;
 
-/**
- * Notification settings with in-app and email toggle switches per channel.
- */
 export function NotificationSettings({ settings }: NotificationSettingsProps) {
   const [localSettings, setLocalSettings] = useState(settings);
 
@@ -68,7 +66,6 @@ export function NotificationSettings({ settings }: NotificationSettingsProps) {
         toast.success("Notification setting updated.");
       } else {
         toast.error(result.message);
-        // Revert on failure
         setLocalSettings((prev) => ({ ...prev, [field]: !newValue }));
       }
     } catch {
@@ -108,15 +105,17 @@ export function NotificationSettings({ settings }: NotificationSettingsProps) {
                   <p className="text-xs text-muted-foreground">{description}</p>
                 </div>
                 <div className="flex justify-center">
-                  <ToggleSwitch
+                  <Switch
+                    size="sm"
                     checked={localSettings[inAppKey] as boolean}
-                    onChange={() => handleToggle(inAppKey)}
+                    onCheckedChange={() => handleToggle(inAppKey)}
                   />
                 </div>
                 <div className="flex justify-center">
-                  <ToggleSwitch
+                  <Switch
+                    size="sm"
                     checked={localSettings[emailKey] as boolean}
-                    onChange={() => handleToggle(emailKey)}
+                    onCheckedChange={() => handleToggle(emailKey)}
                   />
                 </div>
               </div>
@@ -125,35 +124,5 @@ export function NotificationSettings({ settings }: NotificationSettingsProps) {
         </div>
       </CardContent>
     </Card>
-  );
-}
-
-/** Simple toggle switch component. */
-function ToggleSwitch({
-  checked,
-  onChange,
-  disabled,
-}: {
-  checked: boolean;
-  onChange: () => void;
-  disabled?: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      disabled={disabled}
-      onClick={onChange}
-      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 ${
-        checked ? "bg-primary" : "bg-input"
-      }`}
-    >
-      <span
-        className={`pointer-events-none block h-4 w-4 rounded-full bg-background shadow-lg ring-0 transition-transform ${
-          checked ? "translate-x-4" : "translate-x-0.5"
-        }`}
-      />
-    </button>
   );
 }
