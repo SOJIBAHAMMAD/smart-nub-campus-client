@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { ProfileHero } from "./profile-hero";
@@ -24,6 +24,14 @@ export function ProfileClient({ profileData, currentUserId }: ProfileClientProps
   const [previewMode, setPreviewMode] = useState(false);
   const [previewData, setPreviewData] = useState<ProfileUser | null>(null);
   const [isLoadingPreview, setIsLoadingPreview] = useState(false);
+  const [dismissedEmptyState, setDismissedEmptyState] = useState(false);
+
+  useEffect(() => {
+    const key = `profile-empty-state-dismissed-${profileData.id}`;
+    if (localStorage.getItem(key) === "true") {
+      setDismissedEmptyState(true);
+    }
+  }, [profileData.id]);
 
   const isOwnProfile = currentUserId === profileData.id;
   const showAsOther = previewMode ? false : isOwnProfile;
@@ -33,6 +41,12 @@ export function ProfileClient({ profileData, currentUserId }: ProfileClientProps
   const handleProfileUpdate = useCallback(() => {
     router.refresh();
   }, [router]);
+
+  const handleDismissEmptyState = useCallback(() => {
+    const key = `profile-empty-state-dismissed-${profileData.id}`;
+    localStorage.setItem(key, "true");
+    setDismissedEmptyState(true);
+  }, [profileData.id]);
 
   const togglePreview = useCallback(async () => {
     if (previewMode) {
@@ -126,10 +140,10 @@ export function ProfileClient({ profileData, currentUserId }: ProfileClientProps
           <ProfileBadgesCard profileData={displayData} />
 
           {/* Completion guide for own profile — hides itself at 100% */}
-          {isOwnProfile && !previewMode && (
+          {isOwnProfile && !previewMode && !dismissedEmptyState && (
             <ProfileEmptyState
               profileData={profileData}
-              onDismiss={handleProfileUpdate}
+              onDismiss={handleDismissEmptyState}
             />
           )}
         </div>
