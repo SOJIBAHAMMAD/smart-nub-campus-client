@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
   UserPlus,
@@ -33,6 +34,8 @@ import {
 } from "./connection-status-badge";
 import { ConnectionNoteDialog } from "./connection-note-dialog";
 import { cn } from "@/lib/utils";
+import ROUTES from "@/constants/routes";
+import { messageClientService } from "@/services/message.client.service";
 import {
   sendConnectionRequestAction,
   acceptConnectionAction,
@@ -125,6 +128,8 @@ export function PeopleCard({
   const [dialogOpen, setDialogOpen] = useState(false);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
+  const [messagePending, startMessageTransition] = useTransition();
+  const router = useRouter();
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -236,6 +241,21 @@ export function PeopleCard({
       if (res.success) setStatus("none");
       return res;
     });
+
+  const handleMessage = () => {
+    startMessageTransition(async () => {
+      try {
+        const conversation = await messageClientService.createConversation({
+          participantId: user.id,
+        });
+        router.push(ROUTES.CONVERSATION(conversation.id));
+      } catch (err) {
+        toast.error(
+          err instanceof Error ? err.message : "Failed to start conversation.",
+        );
+      }
+    });
+  };
 
   const skills = (rawSkills ?? []).map(skillName).filter(Boolean);
   const accent = getAccentClass(department);
@@ -436,9 +456,14 @@ export function PeopleCard({
 
           {status === "connected" && (
             <>
-              <Button size="sm" variant="secondary">
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={handleMessage}
+                disabled={messagePending}
+              >
                 <MessageSquare className="size-3.5" />
-                Message
+                {messagePending ? "Opening..." : "Message"}
               </Button>
               <Tooltip>
                 <TooltipTrigger

@@ -53,14 +53,14 @@ export default function RootLayout({
           href="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/devicon.min.css"
         />
       </head>
-      <body>
+      <body className="h-full overflow-hidden">
         <ThemeProvider
           attribute="class"
           defaultTheme="light"
           enableSystem={false}
           disableTransitionOnChange
         >
-          <main>{children}</main>
+          <main className="h-full">{children}</main>
           <Toaster richColors={true} />
         </ThemeProvider>
       </body>

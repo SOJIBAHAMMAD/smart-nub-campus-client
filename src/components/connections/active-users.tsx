@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { UserPlus, MessageSquare, Clock, ArrowUpRight } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -10,8 +12,9 @@ import {
   sendConnectionRequestAction,
   getActiveUsersAction,
 } from "@/actions/connection.actions";
+import { messageClientService } from "@/services/message.client.service";
+import ROUTES from "@/constants/routes";
 import { toast } from "sonner";
-import Link from "next/link";
 
 interface ActiveUsersProps {
   onChanged?: () => void;
@@ -32,6 +35,8 @@ export function ActiveUsers({ onChanged }: ActiveUsersProps) {
   const [users, setUsers] = useState<ActiveUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState<string | null>(null);
+  const [messagePending, startMessageTransition] = useTransition();
+  const router = useRouter();
 
   useEffect(() => {
     void (async () => {
@@ -75,6 +80,27 @@ export function ActiveUsers({ onChanged }: ActiveUsersProps) {
       }
     },
     [onChanged],
+  );
+
+  const handleMessage = useCallback(
+    (userId: string) => {
+      startMessageTransition(async () => {
+        try {
+          const conversation =
+            await messageClientService.createConversation({
+              participantId: userId,
+            });
+          router.push(ROUTES.CONVERSATION(conversation.id));
+        } catch (err) {
+          toast.error(
+            err instanceof Error
+              ? err.message
+              : "Failed to start conversation.",
+          );
+        }
+      });
+    },
+    [router],
   );
 
   if (loading) {
@@ -132,7 +158,8 @@ export function ActiveUsers({ onChanged }: ActiveUsersProps) {
             <Button
               size="xs"
               variant="ghost"
-              render={<Link href="/messages" />}
+              onClick={() => handleMessage(user.id)}
+              disabled={messagePending}
               className="text-muted-foreground hover:text-primary"
             >
               <MessageSquare className="size-3.5" />

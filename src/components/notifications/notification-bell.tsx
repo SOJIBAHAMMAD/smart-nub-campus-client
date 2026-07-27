@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Bell, CheckCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,6 +20,11 @@ import ROUTES from "@/constants/routes";
 
 export function NotificationBell() {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+  const activeConversationId = useMemo(() => {
+    const match = pathname.match(/^\/messages\/([^/?]+)/);
+    return match?.[1] ?? null;
+  }, [pathname]);
   const {
     notifications,
     isLoading,
@@ -31,7 +37,7 @@ export function NotificationBell() {
     count: unreadCount,
     decrement,
     refresh: refreshCount,
-  } = useUnreadCount();
+  } = useUnreadCount({ activeConversationId });
 
   const handleMarkAsRead = useCallback(
     (id: string) => {

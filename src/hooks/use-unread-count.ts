@@ -9,6 +9,8 @@ import type { Notification } from "@/lib/types/socket-events";
 interface UseUnreadCountOptions {
   /** Whether to automatically fetch the count on mount. Defaults to true. */
   autoFetch?: boolean;
+  /** The currently active conversation ID. Notifications for this conversation will not increment the count. */
+  activeConversationId?: string | null;
 }
 
 interface UseUnreadCountReturn {
@@ -43,12 +45,17 @@ interface UseUnreadCountReturn {
  */
 export function useUnreadCount({
   autoFetch = true,
+  activeConversationId,
 }: UseUnreadCountOptions = {}): UseUnreadCountReturn {
   const [count, setCount] = useState(0);
   const [isLoading, setIsLoading] = useState(autoFetch);
   const { socket } = useSocket();
 
-  useSocketEvent(socket, "notification:new", (_notification: Notification) => {
+  useSocketEvent(socket, "notification:new", (notification: Notification) => {
+    if (activeConversationId && notification.link) {
+      const match = notification.link.match(/\/messages\/([^/?]+)/);
+      if (match?.[1] === activeConversationId) return;
+    }
     setCount((prev) => prev + 1);
   });
 

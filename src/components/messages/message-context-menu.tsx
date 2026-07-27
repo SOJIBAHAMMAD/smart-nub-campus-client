@@ -50,7 +50,7 @@ export function MessageContextMenu({
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger render={children as React.ReactElement} />
+      <DropdownMenuTrigger render={children as React.ReactElement} nativeButton={false} />
       <DropdownMenuContent align="end" className="w-48">
         <DropdownMenuItem onClick={() => onReply(message)}>
           <Reply className="size-4" />
