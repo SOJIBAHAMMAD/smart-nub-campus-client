@@ -147,13 +147,6 @@ interface ResourcesClientProps {
     image?: string | null;
     totalPoints: number;
   }[];
-  initialFilters: {
-    search: string;
-    category: string | null;
-    tags: string[];
-    sort: string;
-    view: ViewMode;
-  };
 }
 
 export function ResourcesClient({
@@ -164,7 +157,6 @@ export function ResourcesClient({
   allTags,
   trendingResources,
   contributors,
-  initialFilters: _initialFilters,
 }: ResourcesClientProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -266,7 +258,7 @@ export function ResourcesClient({
         if (search) params.search = search;
         if (categoryId) params.categoryId = categoryId;
         if (courseIdParam) params.courseId = courseIdParam;
-        if (tags.length > 0) params.tags = tags;
+        if (tags.length > 0) params.tag = tags.join(",");
         if (sort) params.sort = sort;
         if (activeTab === "bookmarks" || activeTab === "uploads") {
           params.tab = activeTab;
@@ -309,25 +301,41 @@ export function ResourcesClient({
 
   // ── Optimistic vote toggle ─────────────────────────────────────
   const handleVote = useCallback(
-    async (resourceId: string, currentVote: Resource["userVote"]) => {
+    async (resourceId: string, type: "UP" | "DOWN") => {
+      const currentVote =
+        resources.find((r) => r.id === resourceId)?.userVote ?? null;
       const wasUp = currentVote === "UP";
       const wasDown = currentVote === "DOWN";
 
-      // Optimistically set to upvote
+      let optimisticUp = 0;
+      let optimisticDown = 0;
+      let optimisticVote: "UP" | "DOWN" | null = type;
+
+      if (type === "UP") {
+        optimisticUp = wasUp ? -1 : wasDown ? 1 : 1;
+        optimisticDown = wasDown ? -1 : 0;
+      } else {
+        optimisticUp = wasUp ? -1 : 0;
+        optimisticDown = wasDown ? -1 : wasUp ? 1 : 1;
+      }
+
+      if (wasUp && type === "UP") optimisticVote = null;
+      if (wasDown && type === "DOWN") optimisticVote = null;
+
       setResources((prev) =>
         prev.map((r) => {
           if (r.id !== resourceId) return r;
           return {
             ...r,
-            userVote: "UP" as const,
-            upvoteCount: r.upvoteCount + (wasUp ? -1 : wasDown ? 1 : 1),
-            downvoteCount: r.downvoteCount + (wasDown ? -1 : 0),
+            userVote: optimisticVote,
+            upvoteCount: r.upvoteCount + optimisticUp,
+            downvoteCount: r.downvoteCount + optimisticDown,
           };
         }),
       );
 
       try {
-        const result = await voteResource(resourceId, "UP");
+        const result = await voteResource(resourceId, type);
         if (result.success && result.data) {
           const data = result.data as {
             upvoteCount: number;
@@ -341,29 +349,27 @@ export function ResourcesClient({
                     ...r,
                     upvoteCount: data.upvoteCount,
                     downvoteCount: data.downvoteCount,
-                    userVote: data.action === "removed" ? null : "UP",
+                    userVote: data.action === "removed" ? null : type,
                   }
                 : r,
             ),
           );
         }
       } catch {
-        // Revert on failure
         setResources((prev) =>
-          prev.map((r) =>
-            r.id === resourceId
-              ? {
-                  ...r,
-                  userVote: currentVote,
-                  upvoteCount: r.upvoteCount + (wasUp ? 1 : -1),
-                  downvoteCount: r.downvoteCount + (wasDown ? -1 : 0),
-                }
-              : r,
-          ),
+          prev.map((r) => {
+            if (r.id !== resourceId) return r;
+            return {
+              ...r,
+              userVote: currentVote,
+              upvoteCount: r.upvoteCount - optimisticUp,
+              downvoteCount: r.downvoteCount - optimisticDown,
+            };
+          }),
         );
       }
     },
-    [],
+    [resources],
   );
 
   // ── Optimistic bookmark toggle ─────────────────────────────────

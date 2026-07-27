@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 interface ResourceCardProps {
   resource: Resource;
   variant?: "grid" | "list";
-  onVote?: (resourceId: string, currentVote: Resource["userVote"]) => void;
+  onVote?: (resourceId: string, type: "UP" | "DOWN") => void;
   onBookmark?: (resourceId: string, currentBookmarked: boolean) => void;
 }
 

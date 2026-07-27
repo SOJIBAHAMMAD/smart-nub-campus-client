@@ -72,6 +72,7 @@ export const resourceService = {
   async updateResource(id: string, data: Partial<{
     title: string;
     description: string;
+    categoryId: string;
     tags: string[];
   }>): Promise<Resource> {
     const response = await serverApi.patch<Resource>(`/resources/${id}`, data, {

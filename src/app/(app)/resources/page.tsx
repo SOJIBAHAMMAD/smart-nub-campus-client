@@ -146,13 +146,6 @@ export default async function ResourcesPage({
         allTags={allTags}
         trendingResources={trending}
         contributors={contributors}
-        initialFilters={{
-          search: search ?? "",
-          category: categorySlug ?? null,
-          tags,
-          sort,
-          view: view === "list" ? "list" : "grid",
-        }}
       />
     </Suspense>
   );

@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Download, Bookmark, Flag, Eye } from "lucide-react";
+import { Download, Bookmark, Flag, Eye, Share2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Breadcrumb,
@@ -53,6 +53,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 
 const REPORT_REASONS = [
   { value: "SPAM", label: "Spam" },
@@ -88,21 +89,6 @@ export function ResourceDetail({
   const [submittingReport, setSubmittingReport] = useState(false);
   const [relatedResources, setRelatedResources] = useState<Resource[]>([]);
   const [downloading, setDownloading] = useState(false);
-
-  const handleEscape = useCallback((e: KeyboardEvent) => {
-    if (e.key === "Escape") {
-      setShowReportModal(false);
-      setReportReason("");
-      setReportDescription("");
-    }
-  }, []);
-
-  useEffect(() => {
-    if (showReportModal) {
-      document.addEventListener("keydown", handleEscape);
-      return () => document.removeEventListener("keydown", handleEscape);
-    }
-  }, [showReportModal, handleEscape]);
 
   const fileColor = getFileColor(resource.fileType);
 
@@ -163,6 +149,15 @@ export function ResourceDetail({
       }
     } catch {
       toast.error("Failed to toggle bookmark.");
+    }
+  }
+
+  async function handleShare() {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      toast.success("Link copied to clipboard!");
+    } catch {
+      toast.error("Failed to copy link.");
     }
   }
 
@@ -333,18 +328,47 @@ export function ResourceDetail({
           <Flag className="size-4" />
           <span className="hidden sm:inline">Report</span>
         </Button>
+
+        <Button variant="ghost" size="sm" onClick={handleShare} className="text-muted-foreground">
+          <Share2 className="size-4" />
+          <span className="hidden sm:inline">Share</span>
+        </Button>
+
+        {currentUserId && currentUserId === resource.uploaderId && (
+          <Button variant="ghost" size="sm" render={<Link href={`/resources/${resource.id}/edit`} />}>
+            <Pencil className="size-4" />
+            <span className="hidden sm:inline">Edit</span>
+          </Button>
+        )}
       </div>
 
       {/* Description (rich text) */}
       {resource.description && (
         <div
-          className="prose-sm max-w-none text-foreground/90 leading-relaxed
-            [&_p]:my-2 [&_strong]:font-semibold [&_em]:italic [&_code]:rounded [&_code]:bg-muted [&_code]:px-1 [&_code]:py-0.5 [&_code]:text-xs [&_code]:font-mono
-            [&_a]:text-primary [&_a]:underline [&_a]:underline-offset-2 [&_a:hover]:text-primary/80
-            [&_ul]:my-2 [&_ul]:ms-4 [&_ul]:list-disc [&_ol]:my-2 [&_ol]:ms-4 [&_ol]:list-decimal
-            [&_li]:my-0.5 [&_blockquote]:border-l-2 [&_blockquote]:border-primary/30 [&_blockquote]:ps-3 [&_blockquote]:italic [&_blockquote]:text-muted-foreground"
-          dangerouslySetInnerHTML={{ __html: resource.description }}
-        />
+          className="rounded-xl border bg-card p-5 ring-1 ring-foreground/5"
+        >
+          <h3 className="mb-3 text-sm font-semibold text-foreground">Description</h3>
+          <div
+            className={cn(
+              "text-foreground text-sm leading-relaxed",
+              "[&>h1]:mt-6 [&>h1]:mb-3 [&>h1]:text-3xl [&>h1]:font-bold max-sm:[&>h1]:text-2xl",
+              "[&>h2]:mt-5 [&>h2]:mb-2 [&>h2]:text-2xl [&>h2]:font-semibold max-sm:[&>h2]:text-xl",
+              "[&>h3]:mt-4 [&>h3]:mb-2 [&>h3]:text-xl [&>h3]:font-semibold max-sm:[&>h3]:text-lg",
+              "[&>p]:my-3 [&>p]:text-base [&>p]:leading-7 [&>p:first-child]:mt-0 [&>p:last-child]:mb-0",
+              "[&>ul]:my-3 [&>ul]:ms-6 [&>ul]:list-disc",
+              "[&>ol]:my-3 [&>ol]:ms-6 [&>ol]:list-decimal",
+              "[&>li]:my-1 [&>li_p]:my-0",
+              "[&>code]:rounded [&>code]:bg-muted [&>code]:px-1.5 [&>code]:py-0.5 [&>code]:font-mono [&>code]:text-sm",
+              "[&>pre]:my-3 [&>pre]:overflow-x-auto [&>pre]:rounded-lg [&>pre]:border [&>pre]:border-border [&>pre]:bg-muted [&>pre]:p-4 max-sm:[&>pre]:text-xs",
+              "[&>pre>code]:bg-transparent [&>pre>code]:p-0 [&>pre>code]:text-sm [&>pre>code]:leading-relaxed",
+              "[&>blockquote]:my-3 [&>blockquote]:border-s-4 [&>blockquote]:border-primary [&>blockquote]:ps-4 [&>blockquote]:italic [&>blockquote]:text-muted-foreground",
+              "[&>hr]:my-6 [&>hr]:border-t [&>hr]:border-border",
+              "[&>mark]:rounded-sm [&>mark]:bg-warm/40 [&>mark]:px-0.5 [&>mark]:text-warm-foreground",
+              "[&_a]:text-primary [&>_a]:underline [&>_a]:underline-offset-2 [&>_a]:hover:text-primary/80",
+            )}
+            dangerouslySetInnerHTML={{ __html: resource.description }}
+          />
+        </div>
       )}
 
       {/* Info card */}

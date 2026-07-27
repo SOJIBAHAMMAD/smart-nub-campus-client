@@ -155,7 +155,7 @@ export function CommentSection({ resourceId, currentUserId = null }: CommentSect
                 ...c,
                 upvoteCount: data.upvoteCount,
                 downvoteCount: data.downvoteCount,
-                userCommentVote: data.action === "removed" ? null : type,
+                userVote: data.action === "removed" ? null : type,
               };
             }
             if (c.replies) {

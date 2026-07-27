@@ -20,21 +20,106 @@ import { Button } from "@/components/ui/button";
 /** Loading skeleton for the resource detail page. */
 function ResourceDetailSkeleton() {
   return (
-    <div className="mx-auto max-w-4xl space-y-6 px-4 py-6 sm:px-6">
-      <div className="h-4 w-32 animate-pulse rounded bg-muted" />
-      <div className="flex items-start gap-4">
-        <div className="size-14 animate-pulse rounded-xl bg-muted" />
+    <div className="mx-auto max-w-5xl space-y-6 px-4 py-6 sm:px-6 lg:space-y-8">
+      {/* Breadcrumb */}
+      <div className="h-4 w-40 animate-pulse rounded bg-muted" />
+
+      {/* Resource Header */}
+      <div className="flex items-start gap-3 sm:gap-4">
+        <div className="size-12 shrink-0 animate-pulse rounded-xl bg-muted sm:size-14" />
         <div className="flex-1 space-y-2">
-          <div className="h-6 w-3/4 animate-pulse rounded bg-muted" />
+          <div className="flex items-center gap-2">
+            <div className="h-6 w-3/4 animate-pulse rounded bg-muted" />
+            <div className="h-5 w-16 animate-pulse rounded-full bg-muted" />
+          </div>
           <div className="h-4 w-1/2 animate-pulse rounded bg-muted" />
         </div>
       </div>
-      <div className="flex gap-3">
-        <div className="h-9 w-20 animate-pulse rounded-lg bg-muted" />
-        <div className="h-9 w-32 animate-pulse rounded-lg bg-muted" />
+
+      {/* Action Buttons */}
+      <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-0.5">
+          <div className="size-7 animate-pulse rounded bg-muted" />
+          <div className="min-w-7 h-5 animate-pulse rounded bg-muted" />
+          <div className="size-7 animate-pulse rounded bg-muted" />
+        </div>
+        <div className="h-9 w-28 animate-pulse rounded-lg bg-muted" />
         <div className="h-9 w-24 animate-pulse rounded-lg bg-muted" />
+        <div className="h-9 w-20 animate-pulse rounded-lg bg-muted" />
       </div>
-      <div className="h-48 animate-pulse rounded-xl bg-muted" />
+
+      {/* Description */}
+      <div className="space-y-2">
+        <div className="h-4 w-full animate-pulse rounded bg-muted" />
+        <div className="h-4 w-5/6 animate-pulse rounded bg-muted" />
+        <div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
+      </div>
+
+      {/* Info Card */}
+      <div className="rounded-xl border bg-card p-4 ring-1 ring-foreground/5 sm:p-5">
+        <div className="grid grid-cols-2 gap-4 text-sm sm:grid-cols-4">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="space-y-2">
+              <div className="h-3 w-16 animate-pulse rounded bg-muted" />
+              <div className="h-4 w-24 animate-pulse rounded bg-muted" />
+            </div>
+          ))}
+        </div>
+        <div className="mt-4 space-y-2">
+          <div className="h-3 w-10 animate-pulse rounded bg-muted" />
+          <div className="flex gap-1.5">
+            <div className="h-6 w-16 animate-pulse rounded-full bg-muted" />
+            <div className="h-6 w-20 animate-pulse rounded-full bg-muted" />
+          </div>
+        </div>
+      </div>
+
+      {/* File Preview */}
+      <div className="rounded-xl border bg-card p-4 ring-1 ring-foreground/5 sm:p-5">
+        <div className="mb-3 h-4 w-10 animate-pulse rounded bg-muted" />
+        <div className="flex items-center gap-3 rounded-lg bg-muted/30 p-3 ring-1 ring-foreground/5 sm:gap-4 sm:p-4">
+          <div className="size-10 shrink-0 animate-pulse rounded-lg bg-muted sm:size-12" />
+          <div className="flex-1 space-y-2">
+            <div className="h-4 w-2/3 animate-pulse rounded bg-muted" />
+            <div className="h-3 w-1/3 animate-pulse rounded bg-muted" />
+          </div>
+          <div className="h-9 w-24 animate-pulse rounded-lg bg-muted" />
+        </div>
+      </div>
+
+      {/* Comments */}
+      <div className="space-y-3">
+        <div className="h-5 w-32 animate-pulse rounded bg-muted" />
+        <div className="h-9 w-full animate-pulse rounded-lg bg-muted" />
+        {[...Array(2)].map((_, i) => (
+          <div key={i} className="flex gap-3">
+            <div className="size-8 shrink-0 animate-pulse rounded-full bg-muted" />
+            <div className="flex-1 space-y-2">
+              <div className="h-3 w-24 animate-pulse rounded bg-muted" />
+              <div className="h-4 w-full animate-pulse rounded bg-muted" />
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Related Resources */}
+      <div className="space-y-3">
+        <div className="h-5 w-40 animate-pulse rounded bg-muted" />
+        <div className="grid gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-3">
+          {[...Array(3)].map((_, i) => (
+            <div
+              key={i}
+              className="flex items-start gap-3 rounded-xl border p-3 ring-1 ring-foreground/5"
+            >
+              <div className="size-8 shrink-0 animate-pulse rounded-lg bg-muted" />
+              <div className="flex-1 space-y-2">
+                <div className="h-4 w-full animate-pulse rounded bg-muted" />
+                <div className="h-3 w-1/2 animate-pulse rounded bg-muted" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
