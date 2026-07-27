@@ -53,7 +53,7 @@ export default function RootLayout({
           href="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/devicon.min.css"
         />
       </head>
-      <body className="h-full overflow-hidden">
+      <body className="h-full">
         <ThemeProvider
           attribute="class"
           defaultTheme="light"

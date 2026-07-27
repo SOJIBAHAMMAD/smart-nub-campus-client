@@ -14,6 +14,22 @@ export const TEAM_CATEGORIES = [
 
 export type TeamCategory = (typeof TEAM_CATEGORIES)[number];
 
+/** Difficulty level options. */
+export const DIFFICULTY_OPTIONS = [
+  { value: "BEGINNER", label: "Beginner", icon: "🌱" },
+  { value: "INTERMEDIATE", label: "Intermediate", icon: "🌿" },
+  { value: "ADVANCED", label: "Advanced", icon: "🌳" },
+  { value: "EXPERT", label: "Expert", icon: "🏔️" },
+] as const;
+
+/** Meeting preference options. */
+export const MEETING_PREFERENCE_OPTIONS = [
+  { value: "ONLINE", label: "Online", icon: "💻" },
+  { value: "IN_PERSON", label: "In-Person", icon: "🤝" },
+  { value: "HYBRID", label: "Hybrid", icon: "🔄" },
+  { value: "FLEXIBLE", label: "Flexible", icon: "✨" },
+] as const;
+
 /** Popular skills shown in the left sidebar (used for quick filtering). */
 export const POPULAR_SKILLS = [
   "React",
@@ -67,5 +83,51 @@ export const APPLICATION_STATUS_BADGE: Record<
   WITHDRAWN: {
     label: "WITHDRAWN",
     className: "bg-muted text-muted-foreground ring-1 ring-foreground/10",
+  },
+};
+
+/** Difficulty badge color classes. */
+export const DIFFICULTY_BADGE: Record<
+  "BEGINNER" | "INTERMEDIATE" | "ADVANCED" | "EXPERT",
+  { label: string; className: string }
+> = {
+  BEGINNER: {
+    label: "Beginner",
+    className: "bg-green-500/10 text-green-600 ring-1 ring-green-500/30",
+  },
+  INTERMEDIATE: {
+    label: "Intermediate",
+    className: "bg-blue-500/10 text-blue-600 ring-1 ring-blue-500/30",
+  },
+  ADVANCED: {
+    label: "Advanced",
+    className: "bg-orange-500/10 text-orange-600 ring-1 ring-orange-500/30",
+  },
+  EXPERT: {
+    label: "Expert",
+    className: "bg-purple-500/10 text-purple-600 ring-1 ring-purple-500/30",
+  },
+};
+
+/** Meeting preference badge color classes. */
+export const MEETING_PREFERENCE_BADGE: Record<
+  "ONLINE" | "IN_PERSON" | "HYBRID" | "FLEXIBLE",
+  { label: string; className: string }
+> = {
+  ONLINE: {
+    label: "Online",
+    className: "bg-cyan-500/10 text-cyan-600 ring-1 ring-cyan-500/30",
+  },
+  IN_PERSON: {
+    label: "In-Person",
+    className: "bg-amber-500/10 text-amber-600 ring-1 ring-amber-500/30",
+  },
+  HYBRID: {
+    label: "Hybrid",
+    className: "bg-indigo-500/10 text-indigo-600 ring-1 ring-indigo-500/30",
+  },
+  FLEXIBLE: {
+    label: "Flexible",
+    className: "bg-gray-500/10 text-gray-600 ring-1 ring-gray-500/30",
   },
 };

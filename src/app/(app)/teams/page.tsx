@@ -42,8 +42,8 @@ export default async function TeamsPage() {
       const data = suggestedResult.data as TeamRequestListResponse;
       suggested = data.data ?? [];
     }
-  } catch {
-    // Client component handles empty state gracefully
+  } catch (err) {
+    console.error("[TeamsPage] Failed to fetch teams:", err);
   }
 
   return (

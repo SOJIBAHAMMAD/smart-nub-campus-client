@@ -8,6 +8,8 @@ import type {
   TeamRequestStatus,
   ListTeamRequestsParams,
   TeamRequestListResponse,
+  TeamCategoryCount,
+  TeamPopularSkill,
 } from "@/types/team.types";
 import type { Tag } from "@/types/resource.types";
 
@@ -19,6 +21,9 @@ export const teamService = {
     projectName?: string;
     deadline?: string;
     category?: string;
+    difficulty?: string;
+    meetingPreference?: string;
+    contactInfo?: string;
     skillTagIds: string[];
   }): Promise<TeamRequest> {
     const response = await serverApi.post<TeamRequest>("/teams", data, {
@@ -61,6 +66,9 @@ export const teamService = {
       deadline?: string;
       lookingForCount?: number;
       status?: TeamRequestStatus;
+      difficulty?: string;
+      meetingPreference?: string;
+      contactInfo?: string;
       skillTagIds?: string[];
     },
   ): Promise<TeamRequest> {
@@ -124,5 +132,50 @@ export const teamService = {
     await serverApi.del(`/teams/${teamRequestId}/members/${memberId}`, {
       invalidatesTags: [...TEAM_MUTATION_TAGS],
     });
+  },
+
+  async toggleBookmark(teamRequestId: string): Promise<{ bookmarked: boolean }> {
+    const response = await serverApi.post<{ bookmarked: boolean }>(
+      `/teams/${teamRequestId}/bookmark`,
+      {},
+      { invalidatesTags: [...TEAM_MUTATION_TAGS] },
+    );
+    return response.data!;
+  },
+
+  async getMyTeams(): Promise<TeamRequest[]> {
+    const response = await serverApi.get<TeamRequest[]>("/teams/my-teams", {
+      tags: [TAGS.TEAMS_LIST],
+    });
+    return response.data!;
+  },
+
+  async getMyApplications(): Promise<TeamApplication[]> {
+    const response = await serverApi.get<TeamApplication[]>("/teams/my-applications", {
+      tags: [TAGS.TEAMS_LIST],
+    });
+    return response.data!;
+  },
+
+  async getCategoryCounts(): Promise<TeamCategoryCount[]> {
+    const response = await serverApi.get<TeamCategoryCount[]>("/teams/categories/counts", {
+      tags: [TAGS.TEAMS_LIST],
+    });
+    return response.data!;
+  },
+
+  async getPopularSkills(): Promise<TeamPopularSkill[]> {
+    const response = await serverApi.get<TeamPopularSkill[]>("/teams/skills/popular", {
+      tags: [TAGS.TEAMS_LIST],
+    });
+    return response.data!;
+  },
+
+  async getTeamApplications(teamRequestId: string): Promise<TeamApplication[]> {
+    const response = await serverApi.get<TeamApplication[]>(
+      `/teams/${teamRequestId}/applications`,
+      { tags: [TAGS.TEAM_DETAIL] },
+    );
+    return response.data!;
   },
 };

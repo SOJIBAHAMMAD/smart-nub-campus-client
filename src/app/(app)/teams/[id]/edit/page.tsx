@@ -1,22 +1,15 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import Link from "next/link";
-import { ArrowLeft, AlertCircle } from "lucide-react";
 import { getTeamRequest } from "@/actions/team.actions";
-import { TeamDetailWrapper } from "@/components/teams/team-detail-wrapper";
-import { Button } from "@/components/ui/button";
+import { EditTeamWrapper } from "@/components/teams/edit-team-wrapper";
 import type { TeamRequest } from "@/types/team.types";
 
 export const metadata: Metadata = {
-  title: "Team Details | Smart NUB Campus",
-  description: "View team details and apply to join at Smart NUB Campus.",
+  title: "Edit Team | Smart NUB Campus",
+  description: "Edit your team request on Smart NUB Campus.",
 };
 
-/**
- * Team detail page — Server Component.
- * Fetches team data server-side and passes to client wrapper for interactivity.
- */
-export default async function TeamDetailPage({
+export default async function EditTeamPage({
   params,
 }: {
   params: Promise<{ id: string }>;
@@ -39,5 +32,5 @@ export default async function TeamDetailPage({
     notFound();
   }
 
-  return <TeamDetailWrapper team={team} />;
+  return <EditTeamWrapper team={team} />;
 }

@@ -1,62 +1,84 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Loader2 } from "lucide-react";
+import { Save, Loader2, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { TagInput, type TagInputTag } from "@/components/ui/tag-input";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
-import { createTeamRequest } from "@/actions/team.actions";
-import { createTeamRequestSchema } from "@/schemas/team.schema";
+import { updateTeamRequest } from "@/actions/team.actions";
+import { updateTeamRequestSchema } from "@/schemas/team.schema";
 import type { Tag } from "@/types/resource.types";
+import type { TeamRequest } from "@/types/team.types";
 import { TEAM_CATEGORIES, DIFFICULTY_OPTIONS, MEETING_PREFERENCE_OPTIONS } from "@/constants/team";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useUnsavedGuard } from "@/components/ui/unsaved-guard";
+import Link from "next/link";
 
-interface TeamCreateFormProps {
-  tags: Tag[];
+interface TeamEditFormProps {
+  team: TeamRequest;
+  tags?: Tag[];
+  onSuccess?: () => void;
 }
 
 type FormErrors = Partial<Record<string, string>>;
 
-export function TeamCreateForm({ tags: _tags }: TeamCreateFormProps) {
+export function TeamEditForm({ team, tags: _tags, onSuccess }: TeamEditFormProps) {
   const router = useRouter();
 
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [projectName, setProjectName] = useState("");
-  const [membersNeeded, setMembersNeeded] = useState(1);
-  const [deadline, setDeadline] = useState("");
-  const [category, setCategory] = useState("");
-  const [difficulty, setDifficulty] = useState<string>("");
-  const [meetingPreference, setMeetingPreference] = useState<string>("FLEXIBLE");
-  const [contactInfo, setContactInfo] = useState("");
-  const [selectedSkillIds, setSelectedSkillIds] = useState<TagInputTag[]>([]);
+  const [title, setTitle] = useState(team.title);
+  const [description, setDescription] = useState(team.description);
+  const [projectName, setProjectName] = useState(team.projectName ?? "");
+  const [membersNeeded, setMembersNeeded] = useState(team.lookingForCount);
+  const [deadline, setDeadline] = useState(
+    team.deadline ? new Date(team.deadline).toISOString().split("T")[0] : "",
+  );
+  const [category, setCategory] = useState(team.category ?? "");
+  const [difficulty, setDifficulty] = useState<string>(team.difficulty ?? "");
+  const [meetingPreference, setMeetingPreference] = useState<string>(team.meetingPreference ?? "FLEXIBLE");
+  const [contactInfo, setContactInfo] = useState(team.contactInfo ?? "");
+
+  const [selectedSkillIds, setSelectedSkillIds] = useState<TagInputTag[]>(
+    team.teamRequestSkills?.map((s) => ({
+      id: s.tagId,
+      name: s.tag?.name ?? s.tagId,
+      slug: s.tag?.slug ?? s.tagId,
+    })) ?? [],
+  );
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
 
-  const isDirty =
-    title !== "" ||
-    description !== "" ||
-    projectName !== "" ||
-    membersNeeded !== 1 ||
-    deadline !== "" ||
-    category !== "" ||
-    difficulty !== "" ||
-    meetingPreference !== "FLEXIBLE" ||
-    contactInfo !== "" ||
-    selectedSkillIds.length > 0;
+  const hasChanges = JSON.stringify({
+    title, description, projectName, membersNeeded, deadline,
+    category, difficulty, meetingPreference, contactInfo,
+    skillIds: selectedSkillIds.map((t) => t.id),
+  }) !== JSON.stringify({
+    title: team.title,
+    description: team.description,
+    projectName: team.projectName ?? "",
+    membersNeeded: team.lookingForCount,
+    deadline: team.deadline ? new Date(team.deadline).toISOString().split("T")[0] : "",
+    category: team.category ?? "",
+    difficulty: team.difficulty ?? "",
+    meetingPreference: team.meetingPreference ?? "FLEXIBLE",
+    contactInfo: team.contactInfo ?? "",
+    skillIds: team.teamRequestSkills?.map((s) => s.tagId) ?? [],
+  });
 
-  useUnsavedGuard({ when: isDirty });
+  useUnsavedGuard({
+    when: hasChanges && !submitting,
+    title: "Discard unsaved changes?",
+    description: "You have unsaved changes that will be lost if you leave.",
+  });
 
   const validateField = useCallback(
     (field: string, value: unknown) => {
       try {
-        createTeamRequestSchema.shape[field as keyof typeof createTeamRequestSchema.shape]?.parse(value);
+        updateTeamRequestSchema.shape[field as keyof typeof updateTeamRequestSchema.shape]?.parse(value);
         setErrors((prev) => {
           const next = { ...prev };
           delete next[field];
@@ -90,6 +112,7 @@ export function TeamCreateForm({ tags: _tags }: TeamCreateFormProps) {
       difficulty: difficulty || undefined,
       meetingPreference: meetingPreference || undefined,
       contactInfo: contactInfo.trim() || undefined,
+
       skillTagIds: selectedSkillIds.map((t) => t.id),
     };
   }
@@ -98,7 +121,7 @@ export function TeamCreateForm({ tags: _tags }: TeamCreateFormProps) {
     setErrors({});
 
     const values = getFieldValues();
-    const parsed = createTeamRequestSchema.safeParse(values);
+    const parsed = updateTeamRequestSchema.safeParse(values);
 
     if (!parsed.success) {
       const fieldErrors: FormErrors = {};
@@ -117,18 +140,20 @@ export function TeamCreateForm({ tags: _tags }: TeamCreateFormProps) {
 
     setSubmitting(true);
     try {
-      const result = await createTeamRequest(values);
+      const result = await updateTeamRequest(team.id, values);
 
-      if (result.success && result.data) {
-        const team = result.data as { id?: string };
-        toast.success("Team request created!");
-        router.push(team.id ? `/teams/${team.id}` : "/teams");
+      if (result.success) {
+        toast.success("Team request updated!");
+        onSuccess?.();
+        if (!onSuccess) {
+          router.push(`/teams/${team.id}`);
+        }
       } else {
-        setErrors({ form: result.message || "Failed to create team request." });
+        setErrors({ form: result.message || "Failed to update team request." });
       }
     } catch (err) {
       setErrors({
-        form: err instanceof Error ? err.message : "Failed to create team request.",
+        form: err instanceof Error ? err.message : "Failed to update team request.",
       });
     } finally {
       setSubmitting(false);
@@ -142,10 +167,19 @@ export function TeamCreateForm({ tags: _tags }: TeamCreateFormProps) {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
+      {/* Breadcrumb */}
+      <nav className="flex items-center gap-1 text-sm text-muted-foreground">
+        <Link href="/teams" className="hover:text-foreground transition-colors">
+          Teams
+        </Link>
+        <ChevronRight className="size-3.5" />
+        <span className="text-foreground font-medium">Edit Team</span>
+      </nav>
+
       <div>
-        <h1 className="text-2xl font-bold text-foreground">Create Team Request</h1>
+        <h1 className="text-2xl font-bold text-foreground">Edit Team Request</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Find the right people for your project.
+          Update your team request details.
         </p>
       </div>
 
@@ -154,7 +188,6 @@ export function TeamCreateForm({ tags: _tags }: TeamCreateFormProps) {
         <Label htmlFor="title">
           Title <span className="text-destructive">*</span>
         </Label>
-        <p className="text-[11px] text-muted-foreground">Choose a descriptive title for your team request</p>
         <Input
           id="title"
           value={title}
@@ -176,7 +209,6 @@ export function TeamCreateForm({ tags: _tags }: TeamCreateFormProps) {
         <Label>
           Description <span className="text-destructive">*</span>
         </Label>
-        <p className="text-[11px] text-muted-foreground">Explain what you&apos;re looking for in detail (min 10 characters)</p>
         <RichTextEditor
           value={description}
           onChange={setDescription}
@@ -196,17 +228,14 @@ export function TeamCreateForm({ tags: _tags }: TeamCreateFormProps) {
           maxLength={200}
           disabled={submitting}
         />
-        <div className="flex items-center justify-between">
-          <p className="text-[11px] text-muted-foreground">Optional: name of the project or course</p>
-          <p className="ml-auto text-[10px] text-muted-foreground">{projectName.length}/200</p>
-        </div>
       </div>
+
+      {/* Members + Deadline */}
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-1.5">
           <Label htmlFor="membersNeeded">
             Max Team Size <span className="text-destructive">*</span>
           </Label>
-          <p className="text-[11px] text-muted-foreground">How many team members do you need? (max 20)</p>
           <Input
             id="membersNeeded"
             type="number"
@@ -225,7 +254,6 @@ export function TeamCreateForm({ tags: _tags }: TeamCreateFormProps) {
 
         <div className="space-y-1.5">
           <Label htmlFor="deadline">Deadline</Label>
-          <p className="text-[11px] text-muted-foreground">Optional: set a deadline to create urgency</p>
           <Input
             id="deadline"
             type="date"
@@ -259,7 +287,6 @@ export function TeamCreateForm({ tags: _tags }: TeamCreateFormProps) {
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-1.5">
           <Label>Difficulty Level</Label>
-          <p className="text-[11px] text-muted-foreground">Help applicants understand the skill level required</p>
           <div className="flex flex-wrap gap-1.5">
             {DIFFICULTY_OPTIONS.map((opt) => (
               <button
@@ -283,7 +310,6 @@ export function TeamCreateForm({ tags: _tags }: TeamCreateFormProps) {
 
         <div className="space-y-1.5">
           <Label>Meeting Preference</Label>
-          <p className="text-[11px] text-muted-foreground">How will the team collaborate?</p>
           <div className="flex flex-wrap gap-1.5">
             {MEETING_PREFERENCE_OPTIONS.map((opt) => (
               <button
@@ -309,7 +335,6 @@ export function TeamCreateForm({ tags: _tags }: TeamCreateFormProps) {
       {/* Contact Info */}
       <div className="space-y-1.5">
         <Label htmlFor="contactInfo">Contact Information</Label>
-        <p className="text-[11px] text-muted-foreground">How can applicants reach you? (Discord, WhatsApp, etc.)</p>
         <Input
           id="contactInfo"
           value={contactInfo}
@@ -318,22 +343,18 @@ export function TeamCreateForm({ tags: _tags }: TeamCreateFormProps) {
           maxLength={500}
           disabled={submitting}
         />
-        <p className="ml-auto text-[10px] text-muted-foreground">{contactInfo.length}/500</p>
       </div>
 
       {/* Skills */}
-      <div className="space-y-1.5">
-        <p className="text-[11px] text-muted-foreground">Add relevant skills to help teammates find you</p>
-        <TagInput
-          value={selectedSkillIds}
-          onChange={setSelectedSkillIds}
-          maxTags={10}
-          minTags={1}
-          required
-          placeholder="Search for skills..."
-          label="Required Skills"
-        />
-      </div>
+      <TagInput
+        value={selectedSkillIds}
+        onChange={setSelectedSkillIds}
+        maxTags={10}
+        minTags={1}
+        required
+        placeholder="Search for skills..."
+        label="Required Skills"
+      />
 
       {/* Global error */}
       {errors.form && (
@@ -346,7 +367,7 @@ export function TeamCreateForm({ tags: _tags }: TeamCreateFormProps) {
       <div className="flex items-center justify-end gap-2">
         <Button
           variant="ghost"
-          onClick={() => router.push("/teams")}
+          onClick={() => router.push(`/teams/${team.id}`)}
           disabled={submitting}
         >
           Cancel
@@ -355,12 +376,12 @@ export function TeamCreateForm({ tags: _tags }: TeamCreateFormProps) {
           {submitting ? (
             <>
               <Loader2 className="size-4 animate-spin" />
-              Creating...
+              Saving...
             </>
           ) : (
             <>
-              <Plus className="size-4" />
-              Create Request
+              <Save className="size-4" />
+              Save Changes
             </>
           )}
         </Button>

@@ -2,10 +2,7 @@
 
 import * as React from "react";
 
-import {
-  ConfirmProvider,
-  useConfirm,
-} from "@/components/confirm";
+import { ConfirmProvider, useConfirm } from "@/components/ui/confirm";
 
 export type UnsavedGuardOptions = {
   /** Whether there are unsaved changes to guard. */

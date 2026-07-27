@@ -38,6 +38,9 @@ export async function createTeamRequest(data: {
   projectName?: string;
   deadline?: string;
   category?: string;
+  difficulty?: string;
+  meetingPreference?: string;
+  contactInfo?: string;
   skillTagIds: string[];
 }): Promise<ApiResponse> {
   try {
@@ -59,6 +62,9 @@ export async function updateTeamRequest(id: string, data: {
   deadline?: string;
   lookingForCount?: number;
   status?: TeamRequestStatus;
+  difficulty?: string;
+  meetingPreference?: string;
+  contactInfo?: string;
   skillTagIds?: string[];
 }): Promise<ApiResponse> {
   try {
@@ -164,6 +170,78 @@ export async function removeTeamMember(teamRequestId: string, memberId: string):
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to remove member.";
+    return { success: false, message };
+  }
+}
+
+/** Toggle bookmark for a team request. */
+export async function toggleTeamBookmark(teamRequestId: string): Promise<ApiResponse> {
+  try {
+    const data = await teamService.toggleBookmark(teamRequestId);
+    return { success: true, message: data.bookmarked ? "Team bookmarked." : "Bookmark removed.", data };
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to toggle bookmark.";
+    return { success: false, message };
+  }
+}
+
+/** Get teams created by current user. */
+export async function getMyTeams(): Promise<ApiResponse> {
+  try {
+    const data = await teamService.getMyTeams();
+    return { success: true, message: "My teams fetched.", data };
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to fetch my teams.";
+    return { success: false, message };
+  }
+}
+
+/** Get applications made by current user. */
+export async function getMyApplications(): Promise<ApiResponse> {
+  try {
+    const data = await teamService.getMyApplications();
+    return { success: true, message: "My applications fetched.", data };
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to fetch my applications.";
+    return { success: false, message };
+  }
+}
+
+/** Get category counts for sidebar. */
+export async function getCategoryCounts(): Promise<ApiResponse> {
+  try {
+    const data = await teamService.getCategoryCounts();
+    return { success: true, message: "Category counts fetched.", data };
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to fetch category counts.";
+    return { success: false, message };
+  }
+}
+
+/** Get popular skills for sidebar. */
+export async function getPopularSkills(): Promise<ApiResponse> {
+  try {
+    const data = await teamService.getPopularSkills();
+    return { success: true, message: "Popular skills fetched.", data };
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to fetch popular skills.";
+    return { success: false, message };
+  }
+}
+
+/** Get applications for a team (creator only). */
+export async function getTeamApplications(teamRequestId: string): Promise<ApiResponse> {
+  try {
+    const data = await teamService.getTeamApplications(teamRequestId);
+    return { success: true, message: "Team applications fetched.", data };
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to fetch team applications.";
     return { success: false, message };
   }
 }

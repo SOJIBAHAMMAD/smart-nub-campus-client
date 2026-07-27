@@ -48,7 +48,7 @@ export default function AuthLayout({
         </div>
       </header>
 
-      <main className="flex-1 min-h-[calc(100vh-120px)] sm:min-h-[calc(100vh-180px)]">
+      <main className="flex-1 min-h-[calc(100vh-120px)] sm:min-h-[calc(100vh-180px)] scroll-auto">
         {children}
       </main>
       <footer className="w-full max-w-3xl mx-auto flex justify-between items-center text-xs text-muted-foreground flex-col sm:flex-row gap-3 sm:gap-4 px-1 sm:px-0">

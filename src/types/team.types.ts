@@ -11,6 +11,18 @@ import type { UserReferenceWithEmail } from "./common.types";
 export type TeamCreator = UserReferenceWithEmail;
 export type TeamApplicant = UserReferenceWithEmail;
 
+// ── Enums ────────────────────────────────────────────────────────────────────
+
+export type TeamRequestStatus = "OPEN" | "FILLED" | "CLOSED";
+
+export type ApplicationStatus = "PENDING" | "ACCEPTED" | "REJECTED" | "WITHDRAWN";
+
+export type TeamMemberRole = "LEADER" | "MEMBER";
+
+export type Difficulty = "BEGINNER" | "INTERMEDIATE" | "ADVANCED" | "EXPERT";
+
+export type MeetingPreference = "ONLINE" | "IN_PERSON" | "HYBRID" | "FLEXIBLE";
+
 // ── Core models ──────────────────────────────────────────────────────────────
 
 export interface TeamRequest {
@@ -25,6 +37,13 @@ export interface TeamRequest {
   creatorId: string;
   creator?: TeamCreator;
   category?: string | null;
+  difficulty?: Difficulty | null;
+  meetingPreference: MeetingPreference;
+  contactInfo?: string | null;
+  viewCount: number;
+  bookmarkCount: number;
+  isBookmarked?: boolean;
+  hasApplied?: boolean;
   teamRequestSkills?: TeamRequestSkill[];
   teamApplications?: TeamApplication[];
   teamMembers?: TeamMember[];
@@ -48,6 +67,7 @@ export interface TeamApplication {
   teamRequestId: string;
   applicantId: string;
   applicant?: TeamApplicant;
+  teamRequest?: TeamRequest;
   message?: string | null;
   status: ApplicationStatus;
   reviewedAt?: string | null;
@@ -64,13 +84,23 @@ export interface TeamMember {
   joinedAt: string;
 }
 
-// ── Enums ────────────────────────────────────────────────────────────────────
+export interface TeamBookmark {
+  id: string;
+  teamRequestId: string;
+  userId: string;
+  createdAt: string;
+}
 
-export type TeamRequestStatus = "OPEN" | "FILLED" | "CLOSED";
+export interface TeamCategoryCount {
+  category: string;
+  count: number;
+}
 
-export type ApplicationStatus = "PENDING" | "ACCEPTED" | "REJECTED" | "WITHDRAWN";
-
-export type TeamMemberRole = "LEADER" | "MEMBER";
+export interface TeamPopularSkill {
+  tagId: string;
+  name: string;
+  count: number;
+}
 
 // ── API query / list types ───────────────────────────────────────────────────
 
@@ -79,12 +109,16 @@ export interface ListTeamRequestsParams {
   limit?: number;
   status?: TeamRequestStatus;
   category?: string;
+  difficulty?: Difficulty;
+  meetingPreference?: MeetingPreference;
   /** Skill tag slug. */
   skill?: string;
   search?: string;
-  sort?: "newest" | "oldest" | "popular";
+  sort?: "newest" | "deadline" | "applications";
   /** When true, excludes the current user's own requests. */
   excludeOwn?: boolean;
+  /** When true, only returns bookmarked teams. */
+  bookmarked?: boolean;
 }
 
 export interface TeamRequestListResponse {
