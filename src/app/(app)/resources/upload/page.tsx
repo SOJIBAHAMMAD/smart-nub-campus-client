@@ -1,8 +1,15 @@
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 import { resourceService } from "@/services/resource.service";
 import { ResourceUploadForm } from "@/components/resources/resource-upload-form";
 import type { ResourceCourse, ResourceCategory } from "@/types/resource.types";
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 
 /**
  * Resource upload page — Server Component.
@@ -25,16 +32,25 @@ export default async function ResourceUploadPage() {
 
   return (
     <div className="min-h-screen">
-      <div className="mx-auto max-w-360 px-4 py-6 sm:px-6">
-        <Link
-          href="/resources"
-          className="mb-4 inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-        >
-          <ArrowLeft className="size-4" />
-          Back to Resources
-        </Link>
+      <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6">
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink
+                render={<Link href="/resources" />}
+                className="inline-flex items-center gap-1.5 font-medium transition-colors hover:text-primary"
+              >
+                Resources
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>Upload Resource</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
 
-        <div className="mb-6">
+        <div className="mb-6 mt-4">
           <h1 className="text-2xl font-bold text-foreground">
             Upload Resource
           </h1>

@@ -40,7 +40,7 @@ export function ResourceCard({ resource, variant = "grid", onVote, onBookmark }:
                 upvotes={resource.upvoteCount}
                 downvotes={resource.downvoteCount ?? 0}
                 activeVote={resource.userVote ?? null}
-                onVote={(type) => onVote?.(resource.id, resource.userVote)}
+                onVote={(type) => onVote?.(resource.id, type)}
                 orientation="vertical"
                 size="sm"
               />
@@ -143,7 +143,7 @@ export function ResourceCard({ resource, variant = "grid", onVote, onBookmark }:
                       upvotes={resource.upvoteCount}
                       downvotes={resource.downvoteCount ?? 0}
                       activeVote={resource.userVote ?? null}
-                      onVote={(type) => onVote?.(resource.id, resource.userVote)}
+                      onVote={(type) => onVote?.(resource.id, type)}
                       orientation="horizontal"
                       size="sm"
                     />
@@ -202,7 +202,7 @@ export function ResourceCard({ resource, variant = "grid", onVote, onBookmark }:
                 upvotes={resource.upvoteCount}
                 downvotes={resource.downvoteCount ?? 0}
                 activeVote={resource.userVote ?? null}
-                onVote={(type) => onVote?.(resource.id, resource.userVote)}
+                onVote={(type) => onVote?.(resource.id, type)}
                 orientation="horizontal"
                 size="sm"
               />

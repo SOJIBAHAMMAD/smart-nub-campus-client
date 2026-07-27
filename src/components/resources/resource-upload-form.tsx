@@ -1,12 +1,20 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Upload, X, FileText, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
+import {
+  Upload,
+  X,
+  FileText,
+  CheckCircle,
+  AlertCircle,
+  Loader2,
+  Check,
+  ChevronDown,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TagInput, type TagInputTag } from "@/components/ui/tag-input";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { createResource } from "@/actions/resource.actions";
@@ -15,6 +23,19 @@ import type { ResourceCourse, ResourceCategory } from "@/types/resource.types";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { formatFileSize } from "@/components/resources/file-type-utils";
+import {
+  Command,
+  CommandInput,
+  CommandList,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@/components/ui/popover";
 
 /** Accepted file types for resource upload. */
 const ACCEPTED_TYPES = [
@@ -32,23 +53,28 @@ const ACCEPTED_TYPES = [
   "image/jpg",
 ];
 
-const ACCEPTED_EXTENSIONS = ".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.zip,.png,.jpg,.jpeg";
+const ACCEPTED_EXTENSIONS =
+  ".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.zip,.png,.jpg,.jpeg";
 
 /** Max file size: 50MB. */
 const MAX_FILE_SIZE = 50 * 1024 * 1024;
 
-type UploadStage = "idle" | "selecting" | "uploading" | "submitting" | "success" | "error";
+type UploadStage =
+  | "idle"
+  | "selecting"
+  | "uploading"
+  | "submitting"
+  | "success"
+  | "error";
 
 interface ResourceUploadFormProps {
-  /** Available courses for selection. */
   courses?: ResourceCourse[];
-  /** Available categories for selection. */
   categories?: ResourceCategory[];
 }
 
 /**
  * Upload form for resources with drag-and-drop, file preview, and multi-step flow.
- * Flow: idle → selecting → uploading (file to Cloudinary) → submitting (metadata) → success → redirect
+ * Category uses clickable pills. Course uses a searchable combobox grouped by department.
  */
 export function ResourceUploadForm({
   courses = [],
@@ -70,12 +96,52 @@ export function ResourceUploadForm({
   const [categoryId, setCategoryId] = useState("");
   const [tags, setTags] = useState<TagInputTag[]>([]);
 
+  // Course combobox
+  const [courseOpen, setCourseOpen] = useState(false);
+  const [courseSearch, setCourseSearch] = useState("");
+
+  const selectedCourse = courses.find((c) => c.id === courseId);
+  const selectedCategory = categories.find((c) => c.id === categoryId);
+
+  const courseGroups = useMemo(() => {
+    const map = new Map<string, ResourceCourse[]>();
+    for (const course of courses) {
+      const dept = course.department || "Other";
+      const arr = map.get(dept) ?? [];
+      arr.push(course);
+      map.set(dept, arr);
+    }
+    return Array.from(map.entries());
+  }, [courses]);
+
+  const filteredCourseGroups = useMemo(() => {
+    if (!courseSearch) return courseGroups;
+    const q = courseSearch.toLowerCase();
+    return courseGroups
+      .map(([dept, crs]) => [
+        dept,
+        crs.filter(
+          (c) =>
+            c.code.toLowerCase().includes(q) ||
+            c.name.toLowerCase().includes(q),
+        ),
+      ] as [string, ResourceCourse[]])
+      .filter(([, crs]) => crs.length > 0);
+  }, [courseGroups, courseSearch]);
+
   /** Validates and sets the selected file. */
   function handleFileSelect(selectedFile: File) {
     setError(null);
 
-    if (!ACCEPTED_TYPES.includes(selectedFile.type) && !selectedFile.name.match(/\.(pdf|doc|docx|ppt|pptx|xls|xlsx|zip|png|jpg|jpeg)$/i)) {
-      setError("Unsupported file type. Please upload PDF, DOC, PPT, XLS, ZIP, or image files.");
+    if (
+      !ACCEPTED_TYPES.includes(selectedFile.type) &&
+      !selectedFile.name.match(
+        /\.(pdf|doc|docx|ppt|pptx|xls|xlsx|zip|png|jpg|jpeg)$/i,
+      )
+    ) {
+      setError(
+        "Unsupported file type. Please upload PDF, DOC, PPT, XLS, ZIP, or image files.",
+      );
       return;
     }
 
@@ -87,9 +153,10 @@ export function ResourceUploadForm({
     setFile(selectedFile);
     setStage("selecting");
 
-    // Auto-fill title from filename
     if (!title) {
-      const name = selectedFile.name.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ");
+      const name = selectedFile.name
+        .replace(/\.[^/.]+$/, "")
+        .replace(/[-_]/g, " ");
       setTitle(name);
     }
   }
@@ -115,7 +182,7 @@ export function ResourceUploadForm({
     }
   }
 
-  /** Submits the form: uploads file to Cloudinary, then creates resource via API. */
+  /** Submits the form. */
   async function handleSubmit() {
     if (!file || !title.trim() || !courseId || !categoryId || tags.length === 0) {
       setError("Please fill in all required fields.");
@@ -127,11 +194,9 @@ export function ResourceUploadForm({
     setError(null);
 
     try {
-      // Step 1: Upload file to Cloudinary
       const uploadResult = await uploadService.upload(file, "resources", "raw");
       setUploadProgress(100);
 
-      // Step 2: Create resource via API
       setStage("submitting");
       const result = await createResource({
         title: title.trim(),
@@ -157,7 +222,9 @@ export function ResourceUploadForm({
       }
     } catch (err) {
       setStage("error");
-      setError(err instanceof Error ? err.message : "Upload failed. Please try again.");
+      setError(
+        err instanceof Error ? err.message : "Upload failed. Please try again.",
+      );
     }
   }
 
@@ -174,6 +241,15 @@ export function ResourceUploadForm({
     setUploadProgress(0);
   }
 
+  const isBusy = stage === "uploading" || stage === "submitting";
+  const canSubmit =
+    file &&
+    title.trim() &&
+    courseId &&
+    categoryId &&
+    tags.length > 0 &&
+    !isBusy;
+
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       {/* ── File Drop Zone ────────────────────────────────────────── */}
@@ -188,7 +264,7 @@ export function ResourceUploadForm({
           dragActive
             ? "border-primary bg-primary/5"
             : "border-border hover:border-primary/50 hover:bg-muted/30",
-          file && "border-success bg-success/5"
+          file && "border-success bg-success/5",
         )}
       >
         <input
@@ -209,7 +285,8 @@ export function ResourceUploadForm({
             <div className="text-left">
               <p className="text-sm font-medium text-foreground">{file.name}</p>
               <p className="text-xs text-muted-foreground">
-                {formatFileSize(file.size)} • {file.type.split("/").pop()?.toUpperCase() ?? "FILE"}
+                {formatFileSize(file.size)} •{" "}
+                {file.type.split("/").pop()?.toUpperCase() ?? "FILE"}
               </p>
             </div>
             <button
@@ -266,7 +343,7 @@ export function ResourceUploadForm({
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g., Data Structure Final Preparation Notes"
               maxLength={200}
-              disabled={stage === "uploading" || stage === "submitting"}
+              disabled={isBusy}
             />
             <p className="text-[10px] text-muted-foreground">{title.length}/200</p>
           </div>
@@ -278,54 +355,116 @@ export function ResourceUploadForm({
               value={description}
               onChange={setDescription}
               placeholder="Describe what's in this resource..."
-              className="text-sm min-h-[120px]"
+              className="min-h-[120px] text-sm"
             />
           </div>
 
-          {/* Course */}
-          <div className="space-y-1.5">
-            <Label>
-              Course <span className="text-destructive">*</span>
-            </Label>
-            <Select
-              value={courseId}
-              onValueChange={(v) => setCourseId(v ?? "")}
-              disabled={stage === "uploading" || stage === "submitting"}
-            >
-              <SelectTrigger className="h-9">
-                <SelectValue placeholder="Select a course" />
-              </SelectTrigger>
-              <SelectContent>
-                {courses.map((course) => (
-                  <SelectItem key={course.id} value={course.id}>
-                    {course.code} — {course.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Category */}
-          <div className="space-y-1.5">
+          {/* ── Category (pills) ──────────────────────────────────── */}
+          <div className="space-y-2">
             <Label>
               Category <span className="text-destructive">*</span>
             </Label>
-            <Select
-              value={categoryId}
-              onValueChange={(v) => setCategoryId(v ?? "")}
-              disabled={stage === "uploading" || stage === "submitting"}
-            >
-              <SelectTrigger className="h-9">
-                <SelectValue placeholder="Select a category" />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((cat) => (
-                  <SelectItem key={cat.id} value={cat.id}>
+            <p className="text-xs text-muted-foreground">
+              What type of resource is this?
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {categories.map((cat) => {
+                const active = cat.id === categoryId;
+                return (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => setCategoryId(active ? "" : cat.id)}
+                    disabled={isBusy}
+                    className={cn(
+                      "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium ring-1 ring-inset transition-all",
+                      active
+                        ? "bg-primary text-primary-foreground ring-primary"
+                        : "bg-card text-muted-foreground ring-foreground/10 hover:bg-muted hover:text-foreground",
+                      isBusy && "opacity-50",
+                    )}
+                  >
+                    {active && <Check className="size-3.5" />}
                     {cat.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* ── Course (searchable combobox) ──────────────────────── */}
+          <div className="space-y-2">
+            <Label>
+              Course <span className="text-destructive">*</span>
+            </Label>
+            <p className="text-xs text-muted-foreground">
+              Search by course code or name
+            </p>
+            <Popover open={courseOpen} onOpenChange={setCourseOpen}>
+              <PopoverTrigger
+                disabled={isBusy}
+                className={cn(
+                  "flex h-9 w-full items-center justify-between rounded-lg border bg-card px-3 py-1.5 text-sm ring-1 ring-foreground/10 transition-colors",
+                  "hover:bg-muted hover:text-foreground",
+                  isBusy && "opacity-50",
+                  !selectedCourse && "text-muted-foreground",
+                )}
+              >
+                  {selectedCourse ? (
+                    <span>
+                      <span className="font-medium">{selectedCourse.code}</span>
+                      <span className="ml-1.5 text-muted-foreground">
+                        {selectedCourse.name}
+                      </span>
+                    </span>
+                  ) : (
+                    <span>Search courses...</span>
+                  )}
+                  <ChevronDown className="size-4 shrink-0 opacity-50" />
+              </PopoverTrigger>
+              <PopoverContent
+                className="w-[var(--radix-popover-trigger-width)] p-0"
+                align="start"
+              >
+                <Command shouldFilter={false}>
+                  <CommandInput
+                    placeholder="Type to search..."
+                    value={courseSearch}
+                    onValueChange={setCourseSearch}
+                  />
+                  <CommandList>
+                    <CommandEmpty>No courses found.</CommandEmpty>
+                    {filteredCourseGroups.map(([dept, deptCourses]) => (
+                      <CommandGroup key={dept} heading={dept}>
+                        {deptCourses.map((course) => {
+                          const active = course.id === courseId;
+                          return (
+                            <CommandItem
+                              key={course.id}
+                              value={course.id}
+                              onSelect={() => {
+                                setCourseId(active ? "" : course.id);
+                                setCourseOpen(false);
+                                setCourseSearch("");
+                              }}
+                              className="cursor-pointer"
+                            >
+                              <span className="font-medium">{course.code}</span>
+                              <span className="ml-1.5 text-muted-foreground">
+                                {course.name}
+                              </span>
+                              {active && (
+                                <Check className="ml-auto size-4 text-primary" />
+                              )}
+                            </CommandItem>
+                          );
+                        })}
+                      </CommandGroup>
+                    ))}
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
           </div>
 
           {/* Tags */}
@@ -337,7 +476,7 @@ export function ResourceUploadForm({
             required
             placeholder="Type a tag and press Enter"
             label="Tags"
-            disabled={stage === "uploading" || stage === "submitting"}
+            disabled={isBusy}
           />
 
           {/* ── Error message ──────────────────────────────────────── */}
@@ -350,25 +489,10 @@ export function ResourceUploadForm({
 
           {/* ── Submit ─────────────────────────────────────────────── */}
           <div className="flex items-center justify-between">
-            <Button
-              variant="ghost"
-              onClick={resetForm}
-              disabled={stage === "uploading" || stage === "submitting"}
-            >
+            <Button variant="ghost" onClick={resetForm} disabled={isBusy}>
               Reset
             </Button>
-            <Button
-              onClick={handleSubmit}
-              disabled={
-                !file ||
-                !title.trim() ||
-                !courseId ||
-                !categoryId ||
-                tags.length === 0 ||
-                stage === "uploading" ||
-                stage === "submitting"
-              }
-            >
+            <Button onClick={handleSubmit} disabled={!canSubmit}>
               {stage === "submitting" ? (
                 <>
                   <Loader2 className="size-4 animate-spin" />

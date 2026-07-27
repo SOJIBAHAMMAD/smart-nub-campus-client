@@ -2,21 +2,39 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import {
-  Download,
-  Bookmark,
-  Flag,
-  Eye,
-  ChevronRight,
-} from "lucide-react";
+import { Download, Bookmark, Flag, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 import { TagPill } from "@/components/ui/tag-pill";
 import { VoteControls } from "@/components/ui/vote-controls";
 import { Avatar } from "@/components/ui/avatar";
 import { CommentSection } from "@/components/resources/comment-section";
-import { Empty, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
-import { FileIcon, getFileColor, formatFileSize, formatRelativeTime } from "@/components/resources/file-type-utils";
-import { voteResource, bookmarkResource, reportResource, recordResourceDownload, listResources } from "@/actions/resource.actions";
+import {
+  Empty,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
+import {
+  FileIcon,
+  getFileColor,
+  formatFileSize,
+  formatRelativeTime,
+} from "@/components/resources/file-type-utils";
+import {
+  voteResource,
+  bookmarkResource,
+  reportResource,
+  recordResourceDownload,
+  listResources,
+} from "@/actions/resource.actions";
 import type { Resource } from "@/types/resource.types";
 import Image from "next/image";
 import { toast } from "sonner";
@@ -51,13 +69,19 @@ interface ResourceDetailProps {
   resource: Resource;
 }
 
-export function ResourceDetail({ resource: initialResource }: ResourceDetailProps) {
+export function ResourceDetail({
+  resource: initialResource,
+}: ResourceDetailProps) {
   const { data: session } = authClient.useSession();
   const currentUserId = session?.user?.id ?? null;
 
   const [resource, setResource] = useState(initialResource);
-  const [userVote, setUserVote] = useState<"UP" | "DOWN" | null>(initialResource.userVote ?? null);
-  const [bookmarked, setBookmarked] = useState(initialResource.isBookmarked ?? false);
+  const [userVote, setUserVote] = useState<"UP" | "DOWN" | null>(
+    initialResource.userVote ?? null,
+  );
+  const [bookmarked, setBookmarked] = useState(
+    initialResource.isBookmarked ?? false,
+  );
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportReason, setReportReason] = useState("");
   const [reportDescription, setReportDescription] = useState("");
@@ -95,7 +119,7 @@ export function ResourceDetail({ resource: initialResource }: ResourceDetailProp
           const data = result.data as { data?: Resource[] };
           const resources = data.data ?? [];
           setRelatedResources(
-            resources.filter((r) => r.id !== resource.id).slice(0, 3)
+            resources.filter((r) => r.id !== resource.id).slice(0, 3),
           );
         }
       } catch {
@@ -104,14 +128,20 @@ export function ResourceDetail({ resource: initialResource }: ResourceDetailProp
     }
 
     fetchRelated();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [resource.courseId, resource.id]);
 
   async function handleVote(type: "UP" | "DOWN") {
     try {
       const result = await voteResource(resource.id, type);
       if (result.success && result.data) {
-        const data = result.data as { upvoteCount: number; downvoteCount: number; action: string };
+        const data = result.data as {
+          upvoteCount: number;
+          downvoteCount: number;
+          action: string;
+        };
         setResource((prev) => ({
           ...prev,
           upvoteCount: data.upvoteCount,
@@ -141,12 +171,37 @@ export function ResourceDetail({ resource: initialResource }: ResourceDetailProp
     try {
       const result = await recordResourceDownload(resource.id);
       const fileUrl =
-        (result.data as { fileUrl?: string } | undefined)?.fileUrl ?? resource.fileUrl;
+        (result.data as { fileUrl?: string } | undefined)?.fileUrl ??
+        resource.fileUrl;
 
-      const ext = (resource.fileType.split("/").pop() ?? "")
-        .replace(/[^a-z0-9]/gi, "")
-        .toLowerCase();
-      const safeTitle = resource.title.replace(/[^a-z0-9\s-]/gi, "").trim().replace(/\s+/g, "-").slice(0, 60);
+      const safeTitle = resource.title
+        .replace(/[^a-z0-9\s-]/gi, "")
+        .trim()
+        .replace(/\s+/g, "-")
+        .slice(0, 60);
+      const mime = resource.fileType || "";
+      const mimeMap: Record<string, string> = {
+        "application/pdf": "pdf",
+        "image/jpeg": "jpg",
+        "image/png": "png",
+        "image/webp": "webp",
+        "image/gif": "gif",
+        "video/mp4": "mp4",
+        "application/msword": "doc",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+          "docx",
+        "application/vnd.ms-powerpoint": "ppt",
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation":
+          "pptx",
+        "application/vnd.ms-excel": "xls",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
+          "xlsx",
+        "application/zip": "zip",
+        "text/plain": "txt",
+        "text/markdown": "md",
+        "text/csv": "csv",
+      };
+      const ext = mimeMap[mime] ?? mime.split("/").pop() ?? "";
       const filename = `${safeTitle || "resource"}${ext ? `.${ext}` : ""}`;
 
       const response = await fetch(fileUrl);
@@ -193,24 +248,34 @@ export function ResourceDetail({ resource: initialResource }: ResourceDetailProp
   }
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6 px-4 py-6 sm:px-6 lg:space-y-8">
+    <div className="mx-auto max-w-5xl space-y-6 px-4 py-6 sm:px-6 lg:space-y-8">
       {/* Breadcrumb */}
-      <nav className="flex items-center gap-1 text-sm text-muted-foreground">
-        <Link href="/resources" className="hover:text-primary transition-colors">
-          Resources
-        </Link>
-        <ChevronRight className="size-3.5" />
-        <span className="truncate text-foreground">{resource.title}</span>
-      </nav>
+      <Breadcrumb>
+        <BreadcrumbList>
+          <BreadcrumbLink render={<Link href="/resources" />}>
+            <BreadcrumbPage>Resources</BreadcrumbPage>
+          </BreadcrumbLink>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage className="truncate max-w-50 sm:max-w-none">
+              {resource.title}
+            </BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
 
       {/* Resource Header */}
       <div className="flex items-start gap-3 sm:gap-4">
-        <div className={`flex size-12 shrink-0 items-center justify-center rounded-xl sm:size-14 ${fileColor}`}>
+        <div
+          className={`flex size-12 shrink-0 items-center justify-center rounded-xl sm:size-14 ${fileColor}`}
+        >
           <FileIcon fileType={resource.fileType} className="size-6 sm:size-7" />
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap">
-            <h1 className="text-lg font-bold text-foreground sm:text-xl">{resource.title}</h1>
+            <h1 className="text-lg font-bold text-foreground sm:text-xl">
+              {resource.title}
+            </h1>
             {resource.isVerified && (
               <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
                 Verified
@@ -235,10 +300,17 @@ export function ResourceDetail({ resource: initialResource }: ResourceDetailProp
           orientation="horizontal"
         />
 
-        <Button variant="outline" size="sm" onClick={handleDownload} disabled={downloading}>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleDownload}
+          disabled={downloading}
+        >
           <Download className="size-4" />
           <span className="hidden sm:inline">Download</span>
-          <span className="text-muted-foreground">({resource.downloadCount})</span>
+          <span className="text-muted-foreground">
+            ({resource.downloadCount})
+          </span>
         </Button>
 
         <Button
@@ -247,7 +319,9 @@ export function ResourceDetail({ resource: initialResource }: ResourceDetailProp
           onClick={handleBookmark}
         >
           <Bookmark className="size-4" />
-          <span className="hidden sm:inline">{bookmarked ? "Bookmarked" : "Bookmark"}</span>
+          <span className="hidden sm:inline">
+            {bookmarked ? "Bookmarked" : "Bookmark"}
+          </span>
         </Button>
 
         <Button
@@ -343,13 +417,21 @@ export function ResourceDetail({ resource: initialResource }: ResourceDetailProp
           />
         ) : (
           <div className="flex items-center gap-3 rounded-lg bg-muted/30 p-3 ring-1 ring-foreground/5 sm:gap-4 sm:p-4">
-            <div className={`flex size-10 shrink-0 items-center justify-center rounded-lg sm:size-12 ${fileColor}`}>
-              <FileIcon fileType={resource.fileType} className="size-5 sm:size-6" />
+            <div
+              className={`flex size-10 shrink-0 items-center justify-center rounded-lg sm:size-12 ${fileColor}`}
+            >
+              <FileIcon
+                fileType={resource.fileType}
+                className="size-5 sm:size-6"
+              />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium text-foreground">{resource.title}</p>
+              <p className="truncate text-sm font-medium text-foreground">
+                {resource.title}
+              </p>
               <p className="text-xs text-muted-foreground">
-                {resource.fileType.split("/").pop()?.toUpperCase()} • {formatFileSize(resource.fileSize)}
+                {resource.fileType.split("/").pop()?.toUpperCase()} •{" "}
+                {formatFileSize(resource.fileSize)}
               </p>
             </div>
             <Button onClick={handleDownload} disabled={downloading} size="sm">
@@ -366,7 +448,9 @@ export function ResourceDetail({ resource: initialResource }: ResourceDetailProp
       {/* Related Resources */}
       {relatedResources.length > 0 && (
         <div>
-          <h2 className="mb-3 text-lg font-semibold text-foreground">Related Resources</h2>
+          <h2 className="mb-3 text-lg font-semibold text-foreground">
+            Related Resources
+          </h2>
           <div className="grid gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-3">
             {relatedResources.map((related) => {
               const relColor = getFileColor(related.fileType);
@@ -376,7 +460,9 @@ export function ResourceDetail({ resource: initialResource }: ResourceDetailProp
                   href={`/resources/${related.id}`}
                   className="flex items-start gap-3 rounded-xl border bg-card p-3 ring-1 ring-foreground/5 transition-all hover:shadow-md hover:ring-foreground/10"
                 >
-                  <div className={`flex size-8 shrink-0 items-center justify-center rounded-lg ${relColor}`}>
+                  <div
+                    className={`flex size-8 shrink-0 items-center justify-center rounded-lg ${relColor}`}
+                  >
                     <FileIcon fileType={related.fileType} className="size-4" />
                   </div>
                   <div className="min-w-0 flex-1">
@@ -404,7 +490,10 @@ export function ResourceDetail({ resource: initialResource }: ResourceDetailProp
             Why are you reporting this resource?
           </p>
 
-          <Select value={reportReason} onValueChange={(v) => setReportReason(v ?? "")}>
+          <Select
+            value={reportReason}
+            onValueChange={(v) => setReportReason(v ?? "")}
+          >
             <SelectTrigger className="h-9">
               <SelectValue placeholder="Select a reason" />
             </SelectTrigger>

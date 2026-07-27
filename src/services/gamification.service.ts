@@ -52,11 +52,15 @@ export const gamificationService = {
   },
 
   async getLeaderboard(
-    page = 1,
-    limit = 50,
+    query: { page?: number; limit?: number; role?: string } = {},
   ): Promise<LeaderboardResponse> {
+    const params = new URLSearchParams();
+    if (query.page) params.set("page", String(query.page));
+    if (query.limit) params.set("limit", String(query.limit));
+    if (query.role) params.set("role", query.role);
+    const qs = params.toString();
     const response = await serverApi.get<LeaderboardResponse>(
-      `/gamification/leaderboard?page=${page}&limit=${limit}`,
+      `/gamification/leaderboard${qs ? `?${qs}` : ""}`,
       { tags: ["leaderboard"] },
     );
     return response.data!;

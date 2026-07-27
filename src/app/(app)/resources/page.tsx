@@ -113,7 +113,7 @@ export default async function ResourcesPage({
           sort: sort as "newest" | "popular" | "downloads",
         }),
         resourceService.listResources({ sort: "popular", limit: 3 }),
-        gamificationService.getLeaderboard(1, 5),
+        gamificationService.getLeaderboard({ page: 1, limit: 5, role: "STUDENT" }),
       ]);
 
     initialResources = resourcesResult.data ?? [];

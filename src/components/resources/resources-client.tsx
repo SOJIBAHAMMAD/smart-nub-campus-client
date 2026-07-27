@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
-import { Search, SlidersHorizontal, X, LayoutGrid, List } from "lucide-react";
+import { Search, SlidersHorizontal, X, LayoutGrid, List, Plus, ChevronDown, ChevronRight } from "lucide-react";
 import { PageLayout } from "@/components/layout/page-layout";
 import { ResourcesSidebar } from "@/components/resources/resources-sidebar";
 import { ResourcesTrending } from "@/components/resources/resources-trending";
@@ -23,6 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import {
   listResources,
   voteResource,
@@ -36,6 +37,7 @@ import type {
 import { cn } from "@/lib/utils";
 import { useSocket, useSocketEvent } from "@/hooks/use-socket";
 import { env } from "@/env";
+import Link from "next/link";
 
 type TabOption = "all" | "bookmarks" | "uploads";
 type ViewMode = "grid" | "list";
@@ -60,6 +62,63 @@ function ResourceCardSkeleton() {
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function DepartmentGroup({
+  department,
+  courses,
+  selectedCourseId,
+  onSelect,
+}: {
+  department: string;
+  courses: { id: string; code: string; name: string; _count: { resources: number } }[];
+  selectedCourseId: string | null;
+  onSelect: (id: string) => void;
+}) {
+  const [expanded, setExpanded] = useState(true);
+  const hasSelection = courses.some((c) => c.id === selectedCourseId);
+
+  return (
+    <div>
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className={cn(
+          "flex w-full items-center justify-between rounded-lg px-2 py-1 text-[11px] font-semibold uppercase tracking-wider transition-colors",
+          hasSelection ? "text-primary" : "text-muted-foreground hover:text-foreground",
+        )}
+      >
+        <span>{department}</span>
+        <div className="flex items-center gap-1">
+          <span className="tabular-nums opacity-60">{courses.length}</span>
+          {expanded ? <ChevronDown className="size-3" /> : <ChevronRight className="size-3" />}
+        </div>
+      </button>
+      {expanded && (
+        <div className="ml-1 space-y-0.5 border-l pl-1.5">
+          {courses.map((course) => {
+            const active = course.id === selectedCourseId;
+            return (
+              <button
+                key={course.id}
+                onClick={() => onSelect(course.id)}
+                className={cn(
+                  "flex w-full items-center justify-between rounded-lg px-2 py-1 text-xs transition-colors",
+                  active
+                    ? "bg-primary/10 text-primary font-medium"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                )}
+              >
+                <span className="truncate">{course.code}</span>
+                <span className={cn("shrink-0 ml-1 tabular-nums text-[10px]", active ? "text-primary/70" : "opacity-50")}>
+                  {course._count.resources}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -122,6 +181,10 @@ export function ResourcesClient({
   );
   const sort = searchParams.get("sort") ?? "newest";
   const view: ViewMode = searchParams.get("view") === "list" ? "list" : "grid";
+  const activeTab: TabOption =
+    searchParams.get("tab") === "bookmarks" || searchParams.get("tab") === "uploads"
+      ? (searchParams.get("tab") as TabOption)
+      : "all";
 
   // Resolve category slug → id for the API (URL uses slug for readability)
   const categoryId = categorySlug
@@ -132,9 +195,10 @@ export function ResourcesClient({
   const [meta, setMeta] = useState<PaginationMeta | null>(initialMeta);
   const [loading, setLoading] = useState(false);
   const [initialized, setInitialized] = useState(false);
-  const [activeTab, setActiveTab] = useState<TabOption>("all");
   const [searchInput, setSearchInput] = useState(search);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+
+  const activeFilterCount = [categorySlug, courseIdParam, ...tags].filter(Boolean).length + (search ? 1 : 0) + (sort !== "newest" ? 1 : 0);
 
   // ── Socket.IO for real-time resource updates ────────────────────────────
   const socketUrl = env.NEXT_PUBLIC_BACKEND_URL.replace(/\/+$/, "");
@@ -204,6 +268,9 @@ export function ResourcesClient({
         if (courseIdParam) params.courseId = courseIdParam;
         if (tags.length > 0) params.tags = tags;
         if (sort) params.sort = sort;
+        if (activeTab === "bookmarks" || activeTab === "uploads") {
+          params.tab = activeTab;
+        }
 
         const result = await listResources(
           params as Parameters<typeof listResources>[0],
@@ -227,7 +294,7 @@ export function ResourcesClient({
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- tags is derived from tagsParam; including it would cause re-fetch on every render
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- tags is derived from tagsParam
   }, [
     page,
     search,
@@ -236,6 +303,7 @@ export function ResourcesClient({
     courseIdParam,
     tagsParam,
     sort,
+    activeTab,
     initialized,
   ]);
 
@@ -349,7 +417,7 @@ export function ResourcesClient({
       leftSidebar={
         <ResourcesSidebar
           activeTab={activeTab}
-          onTabChange={setActiveTab}
+          onTabChange={(tab) => updateParams({ tab: tab === "all" ? null : tab })}
           selectedCategorySlug={categorySlug}
           onCategoryChange={(slug) => updateParams({ category: slug })}
           selectedTags={tags}
@@ -357,6 +425,7 @@ export function ResourcesClient({
           categories={categories}
           courses={courses}
           allTags={allTags}
+          selectedCourseId={courseIdParam}
           onCourseChange={(id) => updateParams({ courseId: id })}
         />
       }
@@ -430,70 +499,174 @@ export function ResourcesClient({
             )}
           </div>
 
-          <Button
-            variant="outline"
-            size="sm"
-            className="lg:hidden"
-            onClick={() => setShowMobileFilters(!showMobileFilters)}
-          >
-            <SlidersHorizontal className="size-4" />
-            Filters
-          </Button>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/resources/upload"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-brand px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-brand/90 lg:hidden"
+            >
+              <Plus className="size-3.5" />
+              Upload
+            </Link>
 
-          <Select
-            value={sort}
-            onValueChange={(val) => updateParams({ sort: val })}
-          >
-            <SelectTrigger className="h-9 w-full sm:w-40">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {SORT_OPTIONS.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value}>
-                  {opt.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            {/* Mobile filter trigger */}
+            <Sheet open={showMobileFilters} onOpenChange={setShowMobileFilters}>
+              <button
+                onClick={() => setShowMobileFilters(true)}
+                className="relative inline-flex items-center gap-1.5 rounded-lg border bg-card px-3 py-1.5 text-xs font-medium text-foreground ring-1 ring-foreground/10 lg:hidden"
+              >
+                <SlidersHorizontal className="size-4" />
+                Filters
+                {activeFilterCount > 0 && (
+                  <span className="absolute -right-1 -top-1 flex size-4 items-center justify-center rounded-full bg-brand text-[10px] font-bold text-white">
+                    {activeFilterCount}
+                  </span>
+                )}
+              </button>
+              <SheetContent side="left" className="w-80 p-0">
+                <SheetHeader className="border-b px-4 py-3">
+                  <SheetTitle>Filters</SheetTitle>
+                </SheetHeader>
+                <div className="space-y-4 p-4">
+                  {/* Category */}
+                  <div>
+                    <h4 className="mb-2 text-xs font-semibold text-muted-foreground">Category</h4>
+                    <div className="flex flex-wrap gap-1.5">
+                      {categories.map((cat) => (
+                        <button
+                          key={cat.id}
+                          onClick={() => updateParams({ category: categorySlug === cat.slug ? null : cat.slug })}
+                          className={cn(
+                            "rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
+                            categorySlug === cat.slug
+                              ? "bg-primary/10 text-primary"
+                              : "text-muted-foreground bg-muted hover:text-foreground",
+                          )}
+                        >
+                          {cat.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Courses grouped by Department */}
+                  {courses.length > 0 && (
+                    <div>
+                      <h4 className="mb-2 text-xs font-semibold text-muted-foreground">Course</h4>
+                      <div className="space-y-1">
+                        {(() => {
+                          const grouped = new Map<string, typeof courses>();
+                          for (const course of courses) {
+                            const dept = course.department || "Other";
+                            const arr = grouped.get(dept) ?? [];
+                            arr.push(course);
+                            grouped.set(dept, arr);
+                          }
+                          return Array.from(grouped.entries()).map(([dept, deptCourses]) => (
+                            <DepartmentGroup
+                              key={dept}
+                              department={dept}
+                              courses={deptCourses}
+                              selectedCourseId={courseIdParam}
+                              onSelect={(id) => updateParams({ courseId: courseIdParam === id ? null : id })}
+                            />
+                          ));
+                        })()}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Tags */}
+                  {allTags.length > 0 && (
+                    <div>
+                      <h4 className="mb-2 text-xs font-semibold text-muted-foreground">Tags</h4>
+                      <div className="flex flex-wrap gap-1.5">
+                        {allTags.slice(0, 20).map((tag) => {
+                          const active = tags.includes(tag.slug);
+                          return (
+                            <button
+                              key={tag.id}
+                              onClick={() => toggleTag(tag.slug)}
+                              className={cn(
+                                "inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-medium transition-colors",
+                                active
+                                  ? "bg-primary/10 text-primary"
+                                  : "bg-muted text-muted-foreground hover:text-foreground",
+                              )}
+                            >
+                              #{tag.name}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Sort */}
+                  <div>
+                    <h4 className="mb-2 text-xs font-semibold text-muted-foreground">Sort</h4>
+                    <div className="space-y-1">
+                      {SORT_OPTIONS.map((opt) => (
+                        <button
+                          key={opt.value}
+                          onClick={() => updateParams({ sort: opt.value })}
+                          className={cn(
+                            "flex w-full items-center rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
+                            sort === opt.value
+                              ? "bg-primary/10 text-primary"
+                              : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                          )}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Clear all */}
+                  {activeFilterCount > 0 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      onClick={() => {
+                        updateParams({
+                          category: null,
+                          courseId: null,
+                          tags: null,
+                          sort: "newest",
+                          search: null,
+                        });
+                        setShowMobileFilters(false);
+                      }}
+                    >
+                      Clear All Filters
+                    </Button>
+                  )}
+                </div>
+              </SheetContent>
+            </Sheet>
+
+            <Select
+              value={sort}
+              onValueChange={(val) => updateParams({ sort: val })}
+            >
+              <SelectTrigger className="h-9 w-full sm:w-40">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {SORT_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
-        {/* ── Mobile Filters Panel ────────────────────────────────── */}
-        {showMobileFilters && (
-          <div className="rounded-xl border bg-card p-4 ring-1 ring-foreground/10 lg:hidden">
-            <div className="space-y-3">
-              <div>
-                <label className="text-xs font-semibold text-muted-foreground">
-                  Category
-                </label>
-                <Select
-                  value={categorySlug ?? "__all__"}
-                  onValueChange={(val) =>
-                    updateParams({ category: val === "__all__" ? null : val })
-                  }
-                >
-                  <SelectTrigger className="mt-1 h-8">
-                    <SelectValue placeholder="All Categories" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__all__">All Categories</SelectItem>
-                    {categories.map((cat) => (
-                      <SelectItem key={cat.id} value={cat.slug}>
-                        {cat.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* ── Active Filters Display ──────────────────────────────── */}
-        {(search || categorySlug || tags.length > 0) && (
+        {(search || categorySlug || courseIdParam || tags.length > 0) && (
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs text-muted-foreground">
-              Active filters:
-            </span>
             {search && (
               <span className="flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs text-primary">
                 Search: &ldquo;{search}&rdquo;
@@ -504,10 +677,16 @@ export function ResourcesClient({
             )}
             {categorySlug && (
               <span className="flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs text-primary">
-                Category:{" "}
-                {categories.find((c) => c.slug === categorySlug)?.name ??
-                  categorySlug}
+                {categories.find((c) => c.slug === categorySlug)?.name ?? categorySlug}
                 <button onClick={() => updateParams({ category: null })}>
+                  <X className="size-3" />
+                </button>
+              </span>
+            )}
+            {courseIdParam && (
+              <span className="flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs text-primary">
+                {courses.find((c) => c.id === courseIdParam)?.code ?? "Course"}
+                <button onClick={() => updateParams({ courseId: null })}>
                   <X className="size-3" />
                 </button>
               </span>
@@ -517,7 +696,7 @@ export function ResourcesClient({
                 key={t}
                 className="flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs text-primary"
               >
-                Tag: {t}
+                #{t}
                 <button onClick={() => toggleTag(t)}>
                   <X className="size-3" />
                 </button>

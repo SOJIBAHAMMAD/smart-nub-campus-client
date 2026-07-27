@@ -76,7 +76,7 @@ export async function getLeaderboard(
   limit = 50,
 ): Promise<ApiResponse> {
   try {
-    const data = await gamificationService.getLeaderboard(page, limit);
+    const data = await gamificationService.getLeaderboard({ page, limit });
     return { success: true, message: "Leaderboard fetched.", data };
   } catch (error) {
     const message =

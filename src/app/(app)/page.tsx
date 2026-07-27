@@ -39,7 +39,7 @@ async function EventsSection() {
 }
 
 async function ContributorsSection() {
-  const result = await gamificationService.getLeaderboard(1, 3);
+  const result = await gamificationService.getLeaderboard({ page: 1, limit: 3 });
   return <TopContributors contributors={result.data ?? []} />;
 }
 

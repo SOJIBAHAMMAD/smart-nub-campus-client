@@ -2,11 +2,20 @@
 
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
-import { ArrowLeft, AlertCircle } from "lucide-react";
+import { FileQuestion } from "lucide-react";
 import Link from "next/link";
 import { ResourceDetail } from "@/components/resources/resource-detail";
 import { getResource } from "@/actions/resource.actions";
 import type { Resource } from "@/types/resource.types";
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import { Button } from "@/components/ui/button";
 
 /** Loading skeleton for the resource detail page. */
 function ResourceDetailSkeleton() {
@@ -58,7 +67,9 @@ export default function ResourceDetailPage() {
         }
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : "Failed to load resource.");
+          setError(
+            err instanceof Error ? err.message : "Failed to load resource.",
+          );
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -66,7 +77,9 @@ export default function ResourceDetailPage() {
     }
 
     fetchResource();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [resourceId]);
 
   if (loading) {
@@ -75,18 +88,39 @@ export default function ResourceDetailPage() {
 
   if (error || !resource) {
     return (
-      <div className="mx-auto max-w-4xl px-4 py-12 text-center sm:px-6">
-        <AlertCircle className="mx-auto size-12 text-destructive/50" />
-        <p className="mt-4 text-lg font-medium text-foreground">
-          {error || "Resource not found."}
+      <div className="mx-auto max-w-4xl px-4 py-16 text-center sm:px-6">
+        <div className="mx-auto flex size-16 items-center justify-center rounded-2xl bg-muted">
+          <FileQuestion className="size-8 text-muted-foreground/60" />
+        </div>
+        <h1 className="mt-5 text-lg font-semibold text-foreground">
+          Resource not found
+        </h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          The resource you&apos;re looking for doesn&apos;t exist or may have
+          been removed.
         </p>
-        <Link
-          href="/resources"
-          className="mt-4 inline-flex items-center gap-1.5 rounded-xl border border-outline bg-success/2 px-4 py-2 text-sm font-medium text-success/90 transition-colors hover:bg-success/5"
+        <div className="mt-6">
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink render={<Link href="/resources" />}>
+                  <BreadcrumbPage>Resources</BreadcrumbPage>
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbPage>Not found</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+        </div>
+        <Button
+          variant="outline"
+          className="mt-6"
+          render={<Link href="/resources" />}
         >
-          <ArrowLeft className="size-4" />
-          Back to Resources
-        </Link>
+          Browse Resources
+        </Button>
       </div>
     );
   }

@@ -36,7 +36,7 @@ export function getFileLabel(fileType: string): string {
   if (ext.includes("doc") || ext.includes("word")) return "DOC";
   if (ext.includes("ppt") || ext.includes("presentation")) return "PPT";
   if (ext.includes("xls") || ext.includes("sheet")) return "XLS";
-  if (ext.includes("image") || ext.includes("png") || ext.includes("jpg")) return "IMG";
+  if (ext.includes("image") || ext.includes("png") || ext.includes("jpg") || ext.includes("jpeg")) return "IMG";
   if (ext.includes("zip") || ext.includes("rar")) return "ZIP";
   return "FILE";
 }

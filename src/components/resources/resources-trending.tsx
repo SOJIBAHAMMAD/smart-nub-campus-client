@@ -159,13 +159,13 @@ export function ResourcesTrending({
             <h3 className="text-sm font-semibold text-foreground">Need something?</h3>
           </div>
           <p className="mt-1 text-xs text-muted-foreground">
-            Can&apos;t find what you need? Request it from the community.
+            Can&apos;t find what you need? Upload it for the community.
           </p>
           <Link
             href="/resources/upload"
             className="mt-3 flex w-full items-center justify-center gap-1 rounded-xl border border-success bg-success/2 px-2.5 py-1.5 text-xs font-medium text-success/90 transition-colors hover:bg-success/5"
           >
-            Request Resource
+            Upload Resource
             <ChevronRight className="size-3.5" />
           </Link>
         </CardContent>

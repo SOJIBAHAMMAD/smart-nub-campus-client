@@ -113,7 +113,7 @@ export interface Comment {
   replies?: Comment[];
   upvoteCount: number;
   downvoteCount: number;
-  userCommentVote?: VoteType | null;
+  userVote?: VoteType | null;
   isDeleted: boolean;
   createdAt: string;
   updatedAt: string;
@@ -145,6 +145,7 @@ export interface ListResourcesParams {
   search?: string;
   sort?: "newest" | "popular" | "downloads";
   tag?: string | string[];
+  tab?: "bookmarks" | "uploads";
 }
 
 export interface ResourceListResponse {

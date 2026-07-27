@@ -50,7 +50,7 @@ export function CommentItem({
   const [editContent, setEditContent] = useState(comment.content);
 
   const isAuthor = currentUserId != null && currentUserId === comment.userId;
-  const userVote = comment.userCommentVote ?? null;
+  const userVote = comment.userVote ?? null;
 
   function handleEditSave() {
     if (editContent.trim() && onEdit) {
