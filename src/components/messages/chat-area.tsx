@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useMemo, useState, useCallback } from "react";
+import { useRef, useMemo, useState, useCallback, useEffect } from "react";
 import { ArrowLeft, MoreVertical, Info, Trash2, MessageSquare, Bell, BellOff } from "lucide-react";
 import type { Conversation, Message } from "@/types/message.types";
 import { Avatar } from "@/components/ui/avatar";
@@ -19,6 +19,7 @@ import {
   MessageScrollerContent,
   MessageScrollerItem,
   MessageScrollerButton,
+  useMessageScroller,
 } from "@/components/ui/message-scroller";
 import { Marker, MarkerContent } from "@/components/ui/marker";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -32,6 +33,33 @@ import { MessageSearch } from "./message-search";
 import { ImageLightbox } from "./image-lightbox";
 import { getConversationDisplay } from "./conversation-utils";
 import { formatDayLabel, isSameDay } from "./time";
+
+function SearchScroller({
+  searchQuery,
+  searchResultIds,
+  searchHighlightIndex,
+}: {
+  searchQuery?: string;
+  searchResultIds: string[];
+  searchHighlightIndex: number;
+}) {
+  const { scrollToMessage } = useMessageScroller();
+
+  useEffect(() => {
+    if (!searchQuery || searchResultIds.length === 0) return;
+    const activeId = searchResultIds[searchHighlightIndex];
+    if (!activeId) return;
+    scrollToMessage(activeId, { align: "center", behavior: "smooth" });
+    const el = document.getElementById(`msg-${activeId}`);
+    if (el) {
+      el.classList.add("search-flash");
+      const timer = setTimeout(() => el.classList.remove("search-flash"), 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [searchHighlightIndex, searchQuery, searchResultIds, scrollToMessage]);
+
+  return null;
+}
 
 interface ChatAreaProps {
   conversation: Conversation | null;
@@ -62,6 +90,10 @@ interface ChatAreaProps {
   searchResultCount?: number;
   searchLoading?: boolean;
   searchQuery?: string;
+  onSearchNext?: () => void;
+  onSearchPrev?: () => void;
+  searchHighlightIndex?: number;
+  searchResultIds?: string[];
 }
 
 export function ChatArea({
@@ -93,11 +125,16 @@ export function ChatArea({
   searchResultCount = 0,
   searchLoading,
   searchQuery,
+  onSearchNext,
+  onSearchPrev,
+  searchHighlightIndex = 0,
+  searchResultIds = [],
 }: ChatAreaProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [lightboxImages, setLightboxImages] = useState<{ url: string; alt?: string }[]>([]);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   const { name, image, isGroup } = conversation
     ? getConversationDisplay(conversation, currentUserId)
@@ -119,6 +156,41 @@ export function ChatArea({
     }
     return buckets;
   }, [messages]);
+
+  // Map: message ID → index of its first match in the global match list
+  const messageMatchMap = useMemo(() => {
+    if (!searchQuery || searchResultIds.length === 0) return new Map<string, number>();
+    const map = new Map<string, number>();
+    let runningIndex = 0;
+    const lowerQuery = searchQuery.toLowerCase();
+    for (const id of searchResultIds) {
+      map.set(id, runningIndex);
+      const msg = messages.find((m) => m.id === id);
+      if (msg?.content) {
+        const matches = msg.content.toLowerCase().split(lowerQuery).length - 1;
+        runningIndex += Math.max(matches, 1);
+      } else {
+        runningIndex += 1;
+      }
+    }
+    return map;
+  }, [searchQuery, searchResultIds, messages]);
+
+  // Total number of individual text matches across all result messages
+  const totalMatchCount = useMemo(() => {
+    if (!searchQuery || searchResultIds.length === 0) return 0;
+    const lowerQuery = searchQuery.toLowerCase();
+    let total = 0;
+    for (const id of searchResultIds) {
+      const msg = messages.find((m) => m.id === id);
+      if (msg?.content) {
+        total += Math.max(msg.content.toLowerCase().split(lowerQuery).length - 1, 1);
+      } else {
+        total += 1;
+      }
+    }
+    return total;
+  }, [searchQuery, searchResultIds, messages]);
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     const el = e.currentTarget;
@@ -213,7 +285,10 @@ export function ChatArea({
         <button
           type="button"
           onClick={onOpenProfile}
-          className="flex min-w-0 flex-1 items-center gap-3 rounded-lg px-1 py-1 text-left transition-colors hover:bg-muted/50"
+          className={cn(
+            "flex min-w-0 flex-1 items-center gap-3 rounded-lg px-1 py-1 text-left transition-colors hover:bg-muted/50",
+            searchOpen && "hidden sm:flex",
+          )}
           aria-label={`Open ${isGroup ? "group" : "contact"} info for ${name}`}
         >
           {isGroup ? (
@@ -239,25 +314,14 @@ export function ChatArea({
             onSearch={onSearch}
             resultCount={searchResultCount}
             loading={searchLoading}
-            className="hidden sm:flex"
+            onOpenChange={setSearchOpen}
+            onNavigateNext={onSearchNext}
+            onNavigatePrev={onSearchPrev}
+            currentIndex={searchResultCount > 0 ? searchHighlightIndex + 1 : 0}
           />
         )}
 
-        {/* Mute toggle */}
-        {onToggleMute && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onToggleMute}
-            aria-label={isMuted ? "Unmute conversation" : "Mute conversation"}
-          >
-            {isMuted ? (
-              <BellOff className="size-4 text-muted-foreground" />
-            ) : (
-              <Bell className="size-4" />
-            )}
-          </Button>
-        )}
+        {/* Mute toggle — handled in 3-dot dropdown */}
 
         <DropdownMenu>
           <DropdownMenuTrigger render={<Button variant="ghost" size="icon" />}>
@@ -304,6 +368,11 @@ export function ChatArea({
 
       {/* Messages with MessageScroller */}
       <MessageScrollerProvider autoScroll defaultScrollPosition="end">
+        <SearchScroller
+          searchQuery={searchQuery}
+          searchResultIds={searchResultIds}
+          searchHighlightIndex={searchHighlightIndex}
+        />
         <MessageScroller className="flex-1">
           <MessageScrollerViewport
             ref={scrollRef}
@@ -369,6 +438,7 @@ export function ChatArea({
                         return (
                           <MessageScrollerItem key={m.id} messageId={m.id}>
                             <div
+                              id={`msg-${m.id}`}
                               className={cn(
                                 "flex",
                                 isConsecutive ? "mt-0.5" : "mt-2.5",
@@ -381,6 +451,15 @@ export function ChatArea({
                                 showSender={showSender}
                                 currentUserId={currentUserId}
                                 participants={participants}
+                                searchHighlight={
+                                  searchQuery && searchResultIds.includes(m.id)
+                                    ? {
+                                        query: searchQuery,
+                                        activeMatchGlobalIndex: searchHighlightIndex,
+                                        firstMatchIndexInMessage: messageMatchMap.get(m.id) ?? 0,
+                                      }
+                                    : null
+                                }
                                 onReply={onReply}
                                 onForward={onForward}
                                 onEdit={onEdit}

@@ -13,6 +13,7 @@ interface MessageSearchProps {
   onNavigateNext?: () => void;
   onNavigatePrev?: () => void;
   currentIndex?: number;
+  onOpenChange?: (open: boolean) => void;
   className?: string;
 }
 
@@ -22,7 +23,8 @@ export function MessageSearch({
   loading,
   onNavigateNext,
   onNavigatePrev,
-  currentIndex: _currentIndex,
+  currentIndex,
+  onOpenChange,
   className,
 }: MessageSearchProps) {
   const [open, setOpen] = useState(false);
@@ -42,13 +44,15 @@ export function MessageSearch({
       }
       if (e.key === "Escape" && open) {
         setOpen(false);
+        onOpenChange?.(false);
         setQuery("");
         onSearch("");
       }
+
     };
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
-  }, [open, onSearch]);
+  }, [open, onSearch, resultCount, onNavigateNext, onNavigatePrev]);
 
   const handleChange = (value: string) => {
     setQuery(value);
@@ -60,6 +64,7 @@ export function MessageSearch({
 
   const handleClose = () => {
     setOpen(false);
+    onOpenChange?.(false);
     setQuery("");
     onSearch("");
   };
@@ -69,7 +74,7 @@ export function MessageSearch({
       <Button
         variant="ghost"
         size="icon"
-        onClick={() => setOpen(true)}
+        onClick={() => { setOpen(true); onOpenChange?.(true); }}
         aria-label="Search in conversation"
         className={className}
       >
@@ -79,15 +84,22 @@ export function MessageSearch({
   }
 
   return (
-    <div className={cn("flex items-center gap-1", className)}>
-      <div className="relative">
+    <div className={cn("flex min-w-0 flex-1 items-center gap-1 sm:flex-none", className)}>
+      <div className="relative min-w-0 flex-1 sm:flex-none">
         <Search className="pointer-events-none absolute top-1/2 left-2 size-3.5 -translate-y-1/2 text-muted-foreground" />
         <Input
           ref={inputRef}
           value={query}
           onChange={(e) => handleChange(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && resultCount > 0) {
+              e.preventDefault();
+              if (e.shiftKey) onNavigatePrev?.();
+              else onNavigateNext?.();
+            }
+          }}
           placeholder="Search messages..."
-          className="h-8 w-48 pl-7 pr-2 text-xs lg:w-56"
+          className="h-8 w-full pl-7 pr-2 text-xs sm:w-52 lg:w-64"
         />
       </div>
 
@@ -95,8 +107,14 @@ export function MessageSearch({
         <span className="whitespace-nowrap text-xs text-muted-foreground">
           {loading ? (
             <Loader2 className="size-3 animate-spin" />
+          ) : resultCount > 0 ? (
+            <span>
+              <span className="font-medium text-foreground">{currentIndex}</span>
+              {" of "}
+              {resultCount}
+            </span>
           ) : (
-            `${resultCount} result${resultCount !== 1 ? "s" : ""}`
+            "No results"
           )}
         </span>
       )}

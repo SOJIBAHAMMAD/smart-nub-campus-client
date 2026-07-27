@@ -349,6 +349,17 @@
   }
 }
 
+/* ── Search highlight flash animation ──────────────────────────────── */
+@keyframes search-flash {
+  0%, 100% { background-color: transparent; }
+  15%, 45% { background-color: oklch(0.85 0.16 85 / 0.35); }
+  30% { background-color: oklch(0.85 0.16 85 / 0.5); }
+}
+.search-flash {
+  animation: search-flash 1.5s ease-in-out;
+  border-radius: 0.5rem;
+}
+
 @layer utilities {
   .animate-shine {
     animation: shine 5s linear infinite;

@@ -34,19 +34,26 @@ export function NewMessageModal({
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchPerson[]>([]);
   const [loading, setLoading] = useState(false);
+  const [creatingId, setCreatingId] = useState<string | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (!open) {
       setQuery("");
       setResults([]);
+      setCreatingId(null);
       return;
     }
     if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (!query) {
+      setResults([]);
+      setLoading(false);
+      return;
+    }
     debounceRef.current = setTimeout(async () => {
       setLoading(true);
       try {
-        const res = await searchPeopleAction({ query: query || undefined, limit: 20 });
+        const res = await searchPeopleAction({ query, limit: 20 });
         const data = (res.data as { data?: SearchPerson[] })?.data ?? [];
         setResults(data.filter((p) => p.id !== currentUserId));
       } catch {

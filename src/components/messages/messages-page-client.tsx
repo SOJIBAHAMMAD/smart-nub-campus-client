@@ -59,7 +59,7 @@ export function MessagesPageClient({
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Message[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
-  const [_searchHighlightIndex, setSearchHighlightIndex] = useState(0);
+  const [searchHighlightIndex, setSearchHighlightIndex] = useState(0);
 
   const socketUrl = env.NEXT_PUBLIC_BACKEND_URL.replace(/\/+$/, "");
   const { socket, isConnected: _isConnected, status } = useSocket({ url: socketUrl });
@@ -591,6 +591,14 @@ export function MessagesPageClient({
     }
   }, [activeConversationId]);
 
+  const handleSearchNext = useCallback(() => {
+    setSearchHighlightIndex((prev) => (prev + 1) % searchResults.length);
+  }, [searchResults.length]);
+
+  const handleSearchPrev = useCallback(() => {
+    setSearchHighlightIndex((prev) => (prev - 1 + searchResults.length) % searchResults.length);
+  }, [searchResults.length]);
+
   const emitTypingStart = useCallback(() => {
     if (!activeConversationId || !socket) return;
     if (!typingActiveRef.current) {
@@ -722,6 +730,10 @@ export function MessagesPageClient({
             searchResultCount={searchResults.length}
             searchLoading={searchLoading}
             searchQuery={searchQuery}
+            onSearchNext={handleSearchNext}
+            onSearchPrev={handleSearchPrev}
+            searchHighlightIndex={searchHighlightIndex}
+            searchResultIds={searchResults.map((r) => r.id)}
           />
         }
         profilePanel={!isMobile && profileOpen ? profilePanelContent : undefined}

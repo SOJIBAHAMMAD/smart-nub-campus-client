@@ -20,6 +20,44 @@ import { formatClockTime, formatFileSize } from "./time";
 import { MessageContextMenu } from "./message-context-menu";
 import { MessageReactionBar, QuickReactionPicker } from "./emoji-picker";
 
+function escapeRegex(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function highlightText(
+  text: string,
+  query: string,
+  activeMatchGlobalIndex: number,
+  firstMatchIndexInMessage: number,
+): React.ReactNode[] {
+  if (!query) return [text];
+  const regex = new RegExp(`(${escapeRegex(query)})`, "gi");
+  const parts = text.split(regex);
+  let matchCount = 0;
+  return parts.map((part, i) => {
+    if (part.toLowerCase() === query.toLowerCase()) {
+      const localIndex = matchCount;
+      const globalIndex = firstMatchIndexInMessage + localIndex;
+      const isActive = globalIndex === activeMatchGlobalIndex;
+      matchCount++;
+      return (
+        <mark
+          key={i}
+          className={cn(
+            "rounded-sm px-0.5 font-semibold",
+            isActive
+              ? "bg-amber-300 text-amber-900 dark:bg-amber-600 dark:text-amber-100"
+              : "bg-yellow-200 text-yellow-900 dark:bg-yellow-700/50 dark:text-yellow-200",
+          )}
+        >
+          {part}
+        </mark>
+      );
+    }
+    return part;
+  });
+}
+
 interface MessageBubbleProps {
   message: Message;
   isOwn: boolean;
@@ -28,6 +66,7 @@ interface MessageBubbleProps {
   currentUserId: string;
   /** Whether to show read receipts. Respects the recipient's readReceipts preference. */
   showReadReceipts?: boolean;
+  searchHighlight?: { query: string; activeMatchGlobalIndex: number; firstMatchIndexInMessage: number } | null;
   onReply?: (message: Message) => void;
   onForward?: (message: Message) => void;
   onEdit?: (message: Message) => void;
@@ -44,6 +83,7 @@ export function MessageBubble({
   participants = [],
   currentUserId,
   showReadReceipts = true,
+  searchHighlight,
   onReply,
   onForward,
   onEdit,
@@ -131,7 +171,14 @@ export function MessageBubble({
           </a>
         ) : (
           <p className="whitespace-pre-wrap break-words leading-relaxed">
-            {message.content}
+            {searchHighlight && message.content
+              ? highlightText(
+                  message.content,
+                  searchHighlight.query,
+                  searchHighlight.activeMatchGlobalIndex,
+                  searchHighlight.firstMatchIndexInMessage,
+                )
+              : message.content}
           </p>
         )}
 
