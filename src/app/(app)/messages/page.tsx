@@ -17,14 +17,10 @@ import { messageService } from "@/services/message.service";
 import type { Conversation } from "@/types/message.types";
 
 /**
- * Messages page — uses a CUSTOM 4-column layout (NOT PageLayout).
+ * Messages page — conversation list only (no active conversation).
  *
- * The (app) group layout already provides the TopNav shell, so this page
- * only renders the bespoke MessagesPageClient which manages the sidebar,
- * conversation list, chat thread, and profile panel.
- *
- * Server-side we prefetch the current user id and the initial conversation
- * list so the first paint is meaningful; realtime updates happen client-side.
+ * When a conversation is selected, the user is navigated to /messages/[conversationId]
+ * which renders the full chat view with the conversation list as a sidebar.
  */
 export default async function MessagesPage() {
   let currentUserId = "";
@@ -47,6 +43,7 @@ export default async function MessagesPage() {
       <MessagesPageClient
         currentUserId={currentUserId}
         initialConversations={initialConversations}
+        activeConversationId={null}
       />
     </Suspense>
   );

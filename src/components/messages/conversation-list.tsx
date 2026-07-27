@@ -89,7 +89,7 @@ export function ConversationList({
   );
 
   return (
-    <div className={cn("flex h-full flex-col", className)}>
+    <div className={cn("flex h-full flex-col", className)} role="navigation" aria-label="Conversations">
       {/* Header with New buttons */}
       <div className="flex items-center justify-between border-b px-3 py-2">
         <h2 className="text-base font-bold text-foreground">Chats</h2>
@@ -145,7 +145,11 @@ export function ConversationList({
       </div>
 
       {/* List */}
-      <div className="min-h-0 flex-1 overflow-y-auto pb-2">
+      <div
+        className="min-h-0 flex-1 overflow-y-auto pb-2"
+        role="list"
+        aria-label="Conversation list"
+      >
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-2 px-4 py-12 text-center">
             <MessageSquare className="size-7 text-muted-foreground/60" />
@@ -171,7 +175,7 @@ export function ConversationList({
             )}
           </div>
         ) : (
-          <div className="space-y-0.5">
+          <div className="space-y-0.5" role="list">
             {filtered.map((c) => (
               <ConversationItem
                 key={c.id}

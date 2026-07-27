@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { FileText, Download, Pencil, AlertCircle, RotateCw } from "lucide-react";
+import { FileText, Download, Pencil, AlertCircle, RotateCw, Check, CheckCheck } from "lucide-react";
 import type { Message } from "@/types/message.types";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
@@ -18,7 +18,7 @@ import {
 import { cn } from "@/lib/utils";
 import { formatClockTime, formatFileSize } from "./time";
 import { MessageContextMenu } from "./message-context-menu";
-import { MessageReactionBar, EmojiPicker } from "./emoji-picker";
+import { MessageReactionBar, QuickReactionPicker } from "./emoji-picker";
 
 interface MessageBubbleProps {
   message: Message;
@@ -26,6 +26,8 @@ interface MessageBubbleProps {
   showSender: boolean;
   participants?: { id: string; name: string; image?: string | null }[];
   currentUserId: string;
+  /** Whether to show read receipts. Respects the recipient's readReceipts preference. */
+  showReadReceipts?: boolean;
   onReply?: (message: Message) => void;
   onForward?: (message: Message) => void;
   onEdit?: (message: Message) => void;
@@ -41,6 +43,7 @@ export function MessageBubble({
   showSender,
   participants = [],
   currentUserId,
+  showReadReceipts = true,
   onReply,
   onForward,
   onEdit,
@@ -59,23 +62,23 @@ export function MessageBubble({
 
   const bubbleContent = (
     <Bubble
-      variant={isOwn ? "default" : "outline"}
+      variant={isOwn ? "tinted" : "outline"}
       align={isOwn ? "end" : "start"}
     >
       <BubbleContent
         className={cn(
-          !isOwn && "bg-muted/70",
+          "relative",
           isDeleted && "opacity-60 italic",
           isFailed && "border-destructive/30",
         )}
       >
         {/* Reply preview */}
         {message.replyTo && (
-          <div className="mb-2 rounded-md border-l-2 border-primary/40 bg-primary/5 px-2 py-1">
+          <div className="mb-2 rounded-md border-l-2 border-primary/40 bg-primary/5 px-2 py-1.5">
             <span className="text-[10px] font-semibold text-primary">
               {message.replyTo.sender?.name ?? "Someone"}
             </span>
-            <p className="line-clamp-2 text-[11px] text-muted-foreground">
+            <p className="line-clamp-2 text-[11px] leading-snug text-muted-foreground">
               {message.replyTo.content}
             </p>
           </div>
@@ -89,26 +92,37 @@ export function MessageBubble({
         )}
 
         {isImage && message.fileUrl ? (
-          <img
-            src={message.fileUrl}
-            alt={message.fileName ?? "image"}
-            onClick={() => onImageClick?.(message.fileUrl!, message.fileName ?? "image")}
-            className="max-h-64 w-full cursor-zoom-in rounded-lg object-cover"
-            loading="lazy"
-          />
+          <div className="relative overflow-hidden rounded-lg">
+            <img
+              src={message.fileUrl}
+              alt={message.fileName ?? "Shared image"}
+              onClick={() => onImageClick?.(message.fileUrl!, message.fileName ?? "image")}
+              className="max-h-64 w-full cursor-zoom-in object-cover"
+              loading="lazy"
+            />
+            <div className="absolute bottom-1.5 right-1.5 flex items-center gap-1 rounded-md bg-black/50 px-1.5 py-0.5 text-[10px] text-white/90 backdrop-blur-sm">
+              <span>{formatClockTime(message.createdAt)}</span>
+              {isOwn && showReadReceipts && (
+                <span className={cn(message.isRead ? "text-blue-400" : "text-white/70")}>
+                  {message.isRead ? <CheckCheck className="size-3" /> : <Check className="size-3" />}
+                </span>
+              )}
+            </div>
+          </div>
         ) : isFile && message.fileUrl ? (
           <a
             href={message.fileUrl}
             target="_blank"
             rel="noopener noreferrer"
             download={message.fileName ?? true}
-            className="flex items-center gap-2 py-1"
+            className="flex items-center gap-3 rounded-lg border bg-muted/30 px-3 py-2.5 transition-colors hover:bg-muted/50"
+            aria-label={`Download ${message.fileName ?? "file"}${message.fileSize ? `, ${formatFileSize(message.fileSize)}` : ""}`}
           >
-            <span className="flex size-9 items-center justify-center rounded-lg bg-primary/15 text-primary">
-              <FileText className="size-4" />
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <FileText className="size-5" />
             </span>
-            <span className="flex min-w-0 flex-col">
-              <span className="truncate font-medium">{message.fileName}</span>
+            <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+              <span className="truncate text-sm font-medium">{message.fileName}</span>
               <span className="text-[11px] text-muted-foreground">
                 {formatFileSize(message.fileSize)}
               </span>
@@ -121,29 +135,27 @@ export function MessageBubble({
           </p>
         )}
 
-        <div
-          className={cn(
-            "mt-0.5 flex items-center justify-end gap-1 text-[10px] text-muted-foreground/80",
-            (isImage || isFile) && "absolute bottom-1 right-1.5 rounded bg-black/30 px-1 text-white/90",
-          )}
-        >
-          {message.isEdited && (
-            <span className="flex items-center gap-0.5">
-              <Pencil className="size-2.5" />
-              edited
-            </span>
-          )}
-          <span>{formatClockTime(message.createdAt)}</span>
-          {isOwn && !isFailed && (
-            <span className={cn(message.isRead && "text-blue-500")}>
-              {message.isRead ? "✓✓" : "✓"}
-            </span>
-          )}
-        </div>
+        {/* Timestamp + read receipts (text messages only, image has overlay) */}
+        {!isImage && (
+          <div className="mt-0.5 flex items-center justify-end gap-1 text-[10px] text-muted-foreground/70">
+            {message.isEdited && (
+              <span className="flex items-center gap-0.5">
+                <Pencil className="size-2.5" />
+                edited
+              </span>
+            )}
+            <time dateTime={message.createdAt}>{formatClockTime(message.createdAt)}</time>
+            {isOwn && !isFailed && showReadReceipts && (
+              <span className={cn(message.isRead ? "text-blue-500" : "text-muted-foreground/50")} aria-label={message.isRead ? "Read" : "Sent"}>
+                {message.isRead ? <CheckCheck className="size-3" /> : <Check className="size-3" />}
+              </span>
+            )}
+          </div>
+        )}
 
         {/* Failed state with retry */}
         {isFailed && isOwn && (
-          <div className="mt-1 flex items-center gap-1.5">
+          <div className="mt-1.5 flex items-center gap-1.5">
             <span className="flex items-center gap-1 text-[10px] text-destructive">
               <AlertCircle className="size-3" />
               Failed to send
@@ -211,7 +223,7 @@ export function MessageBubble({
             onDelete={onDelete}
           >
             <div
-              className="group/context relative"
+              className="group/context relative w-fit"
               onContextMenu={(e) => {
                 e.preventDefault();
               }}
@@ -224,8 +236,11 @@ export function MessageBubble({
 
               {/* Quick reaction button on hover */}
               {showReactionPicker && onReaction && !isDeleted && (
-                <div className="absolute -top-1 right-0 z-20 opacity-0 transition-opacity group-hover/context:opacity-100">
-                  <EmojiPicker
+                <div className={cn(
+                  "absolute -top-2 z-20 opacity-0 transition-opacity group-hover/context:opacity-100",
+                  isOwn ? "right-0" : "left-0",
+                )}>
+                  <QuickReactionPicker
                     onSelect={(emoji) => {
                       onReaction(message.id, emoji);
                       setShowReactionPicker(false);

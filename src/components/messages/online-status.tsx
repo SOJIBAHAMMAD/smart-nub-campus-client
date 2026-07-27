@@ -3,6 +3,8 @@ import { cn } from "@/lib/utils";
 interface OnlineStatusProps {
   /** Whether the user is currently online. */
   online: boolean;
+  /** Whether to show the online status dot at all. Respects user's showOnlineStatus preference. */
+  visible?: boolean;
   /** Tailwind size classes for the dot. */
   className?: string;
   /** Show the text label next to the dot. */
@@ -12,8 +14,12 @@ interface OnlineStatusProps {
 /**
  * Small colored dot (green = online, gray = offline) used on avatars and
  * in conversation headers to convey presence. Online dots have a subtle pulse.
+ *
+ * When `visible` is false (user has disabled showOnlineStatus), renders nothing.
  */
-export function OnlineStatus({ online, className, showLabel }: OnlineStatusProps) {
+export function OnlineStatus({ online, visible = true, className, showLabel }: OnlineStatusProps) {
+  if (!visible) return null;
+
   return (
     <span className="inline-flex items-center gap-1.5">
       <span className="relative inline-flex">

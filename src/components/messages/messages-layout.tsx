@@ -28,37 +28,37 @@ export function MessagesLayout({
       )}
     >
       {/* Mobile: single view, list OR chat with smooth transition */}
-      <div className="flex-1 md:hidden">
+      <div className="flex h-full min-h-0 flex-1 flex-col md:hidden">
         <div
           className={cn(
-            "h-full transition-transform duration-200 ease-out",
+            "min-h-0 flex-1 transition-transform duration-200 ease-out",
             showChat ? "hidden" : "block",
           )}
         >
           {conversationList}
         </div>
         {showChat && (
-          <div className="h-full animate-in fade-in slide-in-from-right-2 duration-200">
+          <div className="min-h-0 flex-1 animate-in fade-in slide-in-from-right-2 duration-200">
             {chat}
           </div>
         )}
       </div>
 
       {/* Tablet+: side-by-side with optional profile panel */}
-      <div className="hidden flex-1 md:flex">
+      <div className="hidden h-full min-h-0 flex-1 md:flex">
         <aside
           className={cn(
-            "flex h-full shrink-0 flex-col border-r bg-background transition-all duration-200",
+            "flex h-full min-h-0 shrink-0 flex-col border-r bg-background transition-all duration-200",
             "w-72 lg:w-80",
             showChat && "md:w-64 lg:w-72",
           )}
         >
           {conversationList}
         </aside>
-        <main className="flex min-w-0 flex-1">
-          <div className="flex min-w-0 flex-1 flex-col">
+        <main className="flex min-h-0 min-w-0 flex-1">
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col">
             {showChat ? (
-              <div className="animate-in fade-in duration-150">
+              <div className="flex min-h-0 flex-1 flex-col animate-in fade-in duration-150">
                 {chat}
               </div>
             ) : (

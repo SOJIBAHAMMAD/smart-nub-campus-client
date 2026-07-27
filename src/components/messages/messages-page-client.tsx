@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Loader2, WifiOff } from "lucide-react";
 import { toast } from "sonner";
 import { env } from "@/env";
+import ROUTES from "@/constants/routes";
 import { useSocket, useSocketEvent } from "@/hooks/use-socket";
 import { messageClientService as messageService } from "@/services/message.client.service";
 import type { Conversation, Message } from "@/types/message.types";
@@ -22,6 +23,7 @@ interface MessagesPageClientProps {
   currentUserId: string;
   initialConversations: Conversation[];
   initialOnlineUserIds?: string[];
+  activeConversationId?: string | null;
 }
 
 const PAGE_SIZE = 30;
@@ -30,9 +32,10 @@ export function MessagesPageClient({
   currentUserId,
   initialConversations,
   initialOnlineUserIds = [],
+  activeConversationId = null,
 }: MessagesPageClientProps) {
+  const router = useRouter();
   const [conversations, setConversations] = useState<Conversation[]>(initialConversations);
-  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [hasMore, setHasMore] = useState(false);
@@ -57,8 +60,6 @@ export function MessagesPageClient({
   const [searchResults, setSearchResults] = useState<Message[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [_searchHighlightIndex, setSearchHighlightIndex] = useState(0);
-
-  const searchParams = useSearchParams();
 
   const socketUrl = env.NEXT_PUBLIC_BACKEND_URL.replace(/\/+$/, "");
   const { socket, isConnected: _isConnected, status } = useSocket({ url: socketUrl });
@@ -100,10 +101,29 @@ export function MessagesPageClient({
         : msg.type === "file"
           ? "FILE"
           : "TEXT") as Message["type"],
+      fileUrl: msg.fileUrl ?? undefined,
+      filePublicId: msg.filePublicId ?? undefined,
+      fileName: msg.fileName ?? undefined,
+      fileSize: msg.fileSize ?? undefined,
       isRead: msg.senderId === currentUserId,
       isDeleted: false,
-      isEdited: false,
-      isForwarded: false,
+      isEdited: msg.isEdited ?? false,
+      isForwarded: msg.isForwarded ?? false,
+      replyToId: msg.replyToId ?? undefined,
+      replyTo: msg.replyTo
+        ? {
+            ...msg.replyTo,
+            type: "TEXT" as const,
+            isRead: true,
+            isDeleted: false,
+            isEdited: false,
+            isForwarded: false,
+            createdAt: msg.createdAt,
+            updatedAt: msg.createdAt,
+            conversationId: msg.conversationId,
+            sender: msg.replyTo.sender,
+          }
+        : undefined,
       createdAt: msg.createdAt,
       updatedAt: msg.createdAt,
     };
@@ -136,9 +156,19 @@ export function MessagesPageClient({
     if (isActive) {
       setMessages((prev) => {
         if (isOwn) {
+          // For file/image messages, match by fileName since content is the filename
+          const isFileMsg = msg.type === "file" || msg.type === "image";
           let idx = prev.findIndex(
             (m) => typeof m.id === "string" && m.id.startsWith("temp-") && m.content === msg.content,
           );
+          if (idx === -1 && isFileMsg) {
+            idx = prev.findIndex(
+              (m) =>
+                typeof m.id === "string" &&
+                m.id.startsWith("temp-") &&
+                m.fileName === msg.fileName,
+            );
+          }
           if (idx === -1) {
             idx = prev.findIndex(
               (m) => typeof m.id === "string" && m.id.startsWith("temp-"),
@@ -265,34 +295,31 @@ export function MessagesPageClient({
 
   const selectConversation = useCallback(
     (id: string) => {
-      setActiveConversationId(id);
+      router.push(ROUTES.CONVERSATION(id));
+    },
+    [router],
+  );
+
+  // Load messages when activeConversationId prop changes (from Next.js route)
+  useEffect(() => {
+    if (!activeConversationId) {
       setMessages([]);
       setHasMore(false);
       setMessagesPage(1);
-      setReplyTo(null);
-      setSearchQuery("");
-      setSearchResults([]);
-      const params = new URLSearchParams(Array.from(searchParams.entries()));
-      params.set("c", id);
-      window.history.replaceState(null, "", `?${params.toString()}`);
-      void loadMessages(id).then(() => emitRead(id));
-    },
-    [loadMessages, searchParams, emitRead],
-  );
-
-  useEffect(() => {
-    const c = searchParams.get("c");
-    if (!c) return;
-    setActiveConversationId(c);
+      return;
+    }
     setMessages([]);
     setHasMore(false);
     setMessagesPage(1);
-    void loadMessages(c).then(() => emitRead(c));
-    if (!conversations.some((x) => x.id === c)) {
+    setReplyTo(null);
+    setSearchQuery("");
+    setSearchResults([]);
+    void loadMessages(activeConversationId).then(() => emitRead(activeConversationId));
+    if (!conversations.some((x) => x.id === activeConversationId)) {
       void refreshConversations();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [activeConversationId]);
 
   useEffect(() => {
     if (!socket || !activeConversationId) return;
@@ -337,7 +364,7 @@ export function MessagesPageClient({
 
   const sendFile = useCallback(
     async (file: File) => {
-      if (!activeConversationId) return;
+      if (!activeConversationId || !socket) return;
       const isImage = file.type.startsWith("image/");
       const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
       const optimistic: Message = {
@@ -363,24 +390,18 @@ export function MessagesPageClient({
         const { uploadService } = await import("@/services/upload.service");
         const uploaded = await uploadService.upload(
           file,
-          "message",
+          "messages",
           isImage ? "image" : "raw",
         );
-        const saved = await messageService.sendMessage(activeConversationId, {
+        socket.emit("messaging:send", {
+          conversationId: activeConversationId,
           content: file.name,
-          type: isImage ? "IMAGE" : "FILE",
+          type: isImage ? "image" : "file",
           fileUrl: uploaded.url,
           filePublicId: uploaded.publicId,
           fileName: file.name,
           fileSize: file.size,
         });
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.id === tempId
-              ? { ...saved, id: saved.id, fileUrl: uploaded.url, filePublicId: uploaded.publicId, status: "sent" }
-              : m,
-          ),
-        );
       } catch (err) {
         setMessages((prev) =>
           prev.map((m) =>
@@ -390,7 +411,7 @@ export function MessagesPageClient({
         toast.error(err instanceof Error ? err.message : "Failed to send file.");
       }
     },
-    [activeConversationId, currentUserId],
+    [activeConversationId, currentUserId, socket],
   );
 
   const handleReply = useCallback((message: Message) => {
@@ -444,15 +465,20 @@ export function MessagesPageClient({
         prev.map((m) => {
           if (m.id !== messageId) return m;
           const existing = m.reactions ?? [];
-          // Toggle: if user already reacted with this emoji, remove it
-          const alreadyExists = existing.find(
+          // Remove any prior reaction by this user on this message
+          const filtered = existing.filter((r) => r.userId !== reaction.userId);
+          // If server returned a reaction with matching emoji, it was a replacement — add it
+          // If same emoji was toggled off, server returns the deleted reaction; detect by checking
+          // if the returned emoji matches the user's prior reaction (now removed) → skip re-adding
+          const hadSameEmoji = existing.some(
             (r) => r.userId === reaction.userId && r.emoji === reaction.emoji,
           );
-          if (alreadyExists) {
-            return { ...m, reactions: existing.filter((r) => r.id !== reaction.id) };
+          if (hadSameEmoji) {
+            // Same emoji toggled off — don't re-add
+            return { ...m, reactions: filtered };
           }
-          // Otherwise add
-          return { ...m, reactions: [...existing, reaction] };
+          // Different emoji or new reaction — add it
+          return { ...m, reactions: [...filtered, reaction] };
         }),
       );
     } catch (err) {
@@ -680,10 +706,7 @@ export function MessagesPageClient({
             onTypingStop={emitTypingStop}
             onLoadOlder={loadOlder}
             onBackToList={() => {
-              setActiveConversationId(null);
-              const params = new URLSearchParams(Array.from(searchParams.entries()));
-              params.delete("c");
-              window.history.replaceState(null, "", `?${params.toString()}`);
+              router.push(ROUTES.MESSAGES);
             }}
             onReply={handleReply}
             onForward={handleForward}

@@ -1,0 +1,58 @@
+import type { Metadata } from "next";
+import { Suspense } from "react";
+import { serverApi } from "@/lib/server-api";
+import { messageService } from "@/services/message.service";
+import { MessagesPageClient } from "@/components/messages/messages-page-client";
+import type { Conversation } from "@/types/message.types";
+import { notFound } from "next/navigation";
+
+interface PageProps {
+  params: Promise<{ conversationId: string }>;
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { conversationId } = await params;
+  return {
+    title: `Chat | Smart NUB Campus`,
+    description: `Conversation ${conversationId}`,
+  };
+}
+
+/**
+ * Conversation page — renders the full chat view with conversation list sidebar.
+ * The conversationId comes from the URL path segment.
+ */
+export default async function ConversationPage({ params }: PageProps) {
+  const { conversationId } = await params;
+
+  let currentUserId = "";
+  let initialConversations: Conversation[] = [];
+
+  try {
+    const me = await serverApi.get<{ user: { id: string } }>("/identity/me", {
+      cache: "no-store",
+    });
+    currentUserId = me.data?.user?.id ?? "";
+
+    const res = await messageService.listConversations({ limit: 50 });
+    initialConversations = res.conversations ?? [];
+  } catch {
+    // Client handles empty/error state gracefully.
+  }
+
+  // Validate that the conversation exists and the user is a participant
+  const isValid = initialConversations.some((c) => c.id === conversationId);
+  if (!isValid && initialConversations.length > 0) {
+    notFound();
+  }
+
+  return (
+    <Suspense fallback={null}>
+      <MessagesPageClient
+        currentUserId={currentUserId}
+        initialConversations={initialConversations}
+        activeConversationId={conversationId}
+      />
+    </Suspense>
+  );
+}

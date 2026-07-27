@@ -103,10 +103,10 @@ export function ChatArea({
     ? getConversationDisplay(conversation, currentUserId)
     : { name: "", image: undefined, isGroup: false };
 
-  const otherId = !isGroup && conversation
-    ? conversation.conversationParticipants?.find((p) => p.userId !== currentUserId)
-        ?.userId
-    : undefined;
+  const otherId =
+    !isGroup && conversation
+      ? conversation.conversationParticipants?.find((p) => p.userId !== currentUserId)?.userId
+      : undefined;
   const isOnline = otherId ? onlineUsers.has(otherId) : false;
 
   const groups = useMemo(() => {
@@ -127,16 +127,18 @@ export function ChatArea({
     }
   };
 
-  const handleImageClick = useCallback((url: string, alt?: string) => {
-    // Collect all image messages for lightbox navigation
-    const allImages = messages
-      .filter((m) => m.type === "IMAGE" && m.fileUrl)
-      .map((m) => ({ url: m.fileUrl!, alt: m.fileName ?? "image" }));
-    const idx = allImages.findIndex((img) => img.url === url);
-    setLightboxImages(allImages.length > 0 ? allImages : [{ url, alt }]);
-    setLightboxIndex(idx >= 0 ? idx : 0);
-    setLightboxOpen(true);
-  }, [messages]);
+  const handleImageClick = useCallback(
+    (url: string, alt?: string) => {
+      const allImages = messages
+        .filter((m) => m.type === "IMAGE" && m.fileUrl)
+        .map((m) => ({ url: m.fileUrl!, alt: m.fileName ?? "image" }));
+      const idx = allImages.findIndex((img) => img.url === url);
+      setLightboxImages(allImages.length > 0 ? allImages : [{ url, alt }]);
+      setLightboxIndex(idx >= 0 ? idx : 0);
+      setLightboxOpen(true);
+    },
+    [messages],
+  );
 
   const participants = useMemo(
     () =>
@@ -156,7 +158,9 @@ export function ChatArea({
             <MessageSquare className="size-12 text-primary/30" />
           </div>
           <div className="absolute -top-2 -right-2 flex size-8 items-center justify-center rounded-full bg-primary/10">
-            <span className="text-lg">💬</span>
+            <span className="text-lg" aria-hidden="true">
+              💬
+            </span>
           </div>
         </div>
         <div className="space-y-2">
@@ -167,15 +171,21 @@ export function ChatArea({
         </div>
         <div className="flex gap-3">
           <div className="flex items-center gap-2 rounded-lg border bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
-            <span className="text-base">👥</span>
+            <span className="text-base" aria-hidden="true">
+              👥
+            </span>
             Group chats
           </div>
           <div className="flex items-center gap-2 rounded-lg border bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
-            <span className="text-base">📎</span>
+            <span className="text-base" aria-hidden="true">
+              📎
+            </span>
             Share files
           </div>
           <div className="flex items-center gap-2 rounded-lg border bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
-            <span className="text-base">😊</span>
+            <span className="text-base" aria-hidden="true">
+              😊
+            </span>
             Reactions
           </div>
         </div>
@@ -184,9 +194,12 @@ export function ChatArea({
   }
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full min-h-0 flex-col">
       {/* Header */}
-      <div className="flex items-center gap-2 border-b bg-background px-4 py-3">
+      <header
+        className="flex items-center gap-2 border-b bg-background px-4 py-2.5"
+        role="banner"
+      >
         <Button
           variant="ghost"
           size="icon"
@@ -200,7 +213,8 @@ export function ChatArea({
         <button
           type="button"
           onClick={onOpenProfile}
-          className="flex min-w-0 flex-1 items-center gap-3 text-left"
+          className="flex min-w-0 flex-1 items-center gap-3 rounded-lg px-1 py-1 text-left transition-colors hover:bg-muted/50"
+          aria-label={`Open ${isGroup ? "group" : "contact"} info for ${name}`}
         >
           {isGroup ? (
             <GroupChatHeader
@@ -235,16 +249,18 @@ export function ChatArea({
             variant="ghost"
             size="icon"
             onClick={onToggleMute}
-            aria-label={isMuted ? "Unmute" : "Mute"}
+            aria-label={isMuted ? "Unmute conversation" : "Mute conversation"}
           >
-            {isMuted ? <BellOff className="size-4 text-muted-foreground" /> : <Bell className="size-4" />}
+            {isMuted ? (
+              <BellOff className="size-4 text-muted-foreground" />
+            ) : (
+              <Bell className="size-4" />
+            )}
           </Button>
         )}
 
         <DropdownMenu>
-          <DropdownMenuTrigger
-            render={<Button variant="ghost" size="icon" />}
-          >
+          <DropdownMenuTrigger render={<Button variant="ghost" size="icon" />}>
             <MoreVertical className="size-4" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
@@ -265,16 +281,22 @@ export function ChatArea({
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-      </div>
+      </header>
 
       {/* Search results info */}
       {searchQuery && (
-        <div className="border-b bg-primary/5 px-4 py-1.5 text-xs text-muted-foreground">
+        <div
+          className="border-b bg-primary/5 px-4 py-1.5 text-xs text-muted-foreground"
+          role="status"
+          aria-live="polite"
+        >
           {searchLoading ? (
             "Searching..."
           ) : (
             <>
-              Found <span className="font-medium text-foreground">{searchResultCount}</span> result{searchResultCount !== 1 ? "s" : ""} for &ldquo;{searchQuery}&rdquo;
+              Found{" "}
+              <span className="font-medium text-foreground">{searchResultCount}</span>{" "}
+              result{searchResultCount !== 1 ? "s" : ""} for &ldquo;{searchQuery}&rdquo;
             </>
           )}
         </div>
@@ -283,14 +305,29 @@ export function ChatArea({
       {/* Messages with MessageScroller */}
       <MessageScrollerProvider autoScroll defaultScrollPosition="end">
         <MessageScroller className="flex-1">
-            <MessageScrollerViewport ref={scrollRef} onScroll={handleScroll}>
-              <MessageScrollerContent className="gap-3 px-4 pb-8">
+          <MessageScrollerViewport
+            ref={scrollRef}
+            onScroll={handleScroll}
+            role="log"
+            aria-label="Messages"
+            aria-live="polite"
+            aria-atomic="false"
+          >
+            <MessageScrollerContent className="gap-1 px-4 pb-8 pt-4">
               {loadingMessages && messages.length === 0 ? (
-                <div className="mt-auto space-y-4">
+                <div className="mt-auto space-y-3">
                   {[1, 2, 3, 4].map((i) => (
-                    <div key={i} className={cn("flex gap-2", i % 2 === 0 && "flex-row-reverse")}>
+                    <div
+                      key={i}
+                      className={cn("flex gap-2", i % 2 === 0 && "flex-row-reverse")}
+                    >
                       <Skeleton className="size-8 rounded-full" />
-                      <Skeleton className={cn("h-14 rounded-2xl", i % 2 === 0 ? "w-1/2" : "w-2/3")} />
+                      <Skeleton
+                        className={cn(
+                          "h-12 rounded-2xl",
+                          i % 2 === 0 ? "w-1/2 rounded-br-sm" : "w-2/3 rounded-bl-sm",
+                        )}
+                      />
                     </div>
                   ))}
                 </div>
@@ -305,7 +342,7 @@ export function ChatArea({
                     </MessageScrollerItem>
                   )}
                   {groups.map((bucket) => (
-                    <div key={`day-group-${bucket.label}`} className="flex flex-col gap-2">
+                    <div key={`day-group-${bucket.label}`} className="flex flex-col">
                       <MessageScrollerItem messageId={`day-${bucket.label}`}>
                         <Marker variant="separator">
                           <MarkerContent>{bucket.label}</MarkerContent>
@@ -313,24 +350,46 @@ export function ChatArea({
                       </MessageScrollerItem>
                       {bucket.items.map((m, idx) => {
                         const prev = bucket.items[idx - 1];
+                        const next = bucket.items[idx + 1];
                         const showSender =
-                          !prev || prev.senderId !== m.senderId || !isSameDay(prev.createdAt, m.createdAt);
+                          !prev ||
+                          prev.senderId !== m.senderId ||
+                          !isSameDay(prev.createdAt, m.createdAt);
+                        // Reduce gap between consecutive messages from same sender
+                        const isConsecutive =
+                          prev &&
+                          prev.senderId === m.senderId &&
+                          isSameDay(prev.createdAt, m.createdAt);
+                        // Show tail on last message of a group
+                        const isLastInGroup =
+                          !next ||
+                          next.senderId !== m.senderId ||
+                          !isSameDay(m.createdAt, next.createdAt);
+
                         return (
                           <MessageScrollerItem key={m.id} messageId={m.id}>
-                            <MessageBubble
-                              message={m}
-                              isOwn={m.senderId === currentUserId}
-                              showSender={showSender}
-                              currentUserId={currentUserId}
-                              participants={participants}
-                              onReply={onReply}
-                              onForward={onForward}
-                              onEdit={onEdit}
-                              onDelete={onDelete}
-                              onReaction={onReaction}
-                              onRetry={onRetry}
-                              onImageClick={handleImageClick}
-                            />
+                            <div
+                              className={cn(
+                                "flex",
+                                isConsecutive ? "mt-0.5" : "mt-2.5",
+                                isLastInGroup && "mb-1",
+                              )}
+                            >
+                              <MessageBubble
+                                message={m}
+                                isOwn={m.senderId === currentUserId}
+                                showSender={showSender}
+                                currentUserId={currentUserId}
+                                participants={participants}
+                                onReply={onReply}
+                                onForward={onForward}
+                                onEdit={onEdit}
+                                onDelete={onDelete}
+                                onReaction={onReaction}
+                                onRetry={onRetry}
+                                onImageClick={handleImageClick}
+                              />
+                            </div>
                           </MessageScrollerItem>
                         );
                       })}
@@ -348,9 +407,9 @@ export function ChatArea({
               )}
             </MessageScrollerContent>
           </MessageScrollerViewport>
-            <MessageScrollerButton />
-          </MessageScroller>
-        </MessageScrollerProvider>
+          <MessageScrollerButton />
+        </MessageScroller>
+      </MessageScrollerProvider>
 
       {/* Composer */}
       <MessageInput
