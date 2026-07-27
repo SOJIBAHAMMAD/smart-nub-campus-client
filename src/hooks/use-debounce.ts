@@ -1,27 +1,25 @@
-"use client";
+import { useEffect, useState } from 'react'
+import { useDebounceFn } from '@/hooks/use-debounce-fn'
+import type { DebounceOptions } from '@/hooks/use-debounce-fn'
 
-import { useState, useEffect } from "react";
+export function useDebounce<T>(
+  value: T,
+  debounceMs?: number,
+  options?: DebounceOptions,
+) {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value)
 
-/**
- * Debounces a value by the specified delay.
- * Useful for search inputs and filter controls to avoid firing on every keystroke.
- *
- * @param value - The value to debounce.
- * @param delay - Debounce delay in milliseconds. Defaults to 300ms.
- * @returns The debounced value that updates after the delay.
- */
-export function useDebounce<T>(value: T, delay = 300): T {
-  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+  const { run } = useDebounceFn(
+    () => {
+      setDebouncedValue(value)
+    },
+    debounceMs,
+    options,
+  )
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
+    return run()
+  }, [value, run])
 
-    return () => {
-      clearTimeout(timer);
-    };
-  }, [value, delay]);
-
-  return debouncedValue;
+  return debouncedValue
 }

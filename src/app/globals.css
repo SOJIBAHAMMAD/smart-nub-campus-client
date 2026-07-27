@@ -67,6 +67,14 @@
 
   --color-info: var(--info);
   --color-info-bg: var(--info-bg);
+  @keyframes shine {
+  0% {
+    background-position: 100%;
+    }
+  100% {
+    background-position: -100%;
+    }
+  }
 }
 
 /* ========================================================================== */
@@ -338,5 +346,11 @@
   30% {
     transform: translateY(-4px);
     opacity: 1;
+  }
+}
+
+@layer utilities {
+  .animate-shine {
+    animation: shine 5s linear infinite;
   }
 }
