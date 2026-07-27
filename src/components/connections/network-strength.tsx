@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import {
-  TrendingUp,
   AlertCircle,
   Users,
   Star,
@@ -19,7 +18,7 @@ import { getProfileCompletenessAction } from "@/actions/connection.actions";
 import type { ConnectionOverview } from "@/types";
 
 interface NetworkStrengthProps {
-  overview: ConnectionOverview;
+  overview?: ConnectionOverview;
 }
 
 interface CompletenessData {
@@ -57,6 +56,7 @@ export function NetworkStrength({ overview }: NetworkStrengthProps) {
 
   const percentage = completeness?.percentage ?? 0;
   const missing = completeness?.missingFields ?? [];
+  const stats = overview ?? { totalConnections: 0, favorites: 0, pending: 0, sent: 0 };
 
   return (
     <div className="space-y-4">
@@ -85,28 +85,28 @@ export function NetworkStrength({ overview }: NetworkStrengthProps) {
         <StatItem
           icon={<Users className="size-3.5" />}
           label="Connections"
-          value={overview.totalConnections}
+          value={stats.totalConnections}
           color="text-emerald-500"
           bg="bg-emerald-500/10"
         />
         <StatItem
           icon={<Star className="size-3.5" />}
           label="Favorites"
-          value={overview.favorites}
+          value={stats.favorites}
           color="text-violet-500"
           bg="bg-violet-500/10"
         />
         <StatItem
           icon={<Shield className="size-3.5" />}
           label="Pending"
-          value={overview.pending}
+          value={stats.pending}
           color="text-amber-500"
           bg="bg-amber-500/10"
         />
         <StatItem
           icon={<CheckCircle2 className="size-3.5" />}
           label="Sent"
-          value={overview.sent}
+          value={stats.sent}
           color="text-sky-500"
           bg="bg-sky-500/10"
         />

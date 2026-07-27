@@ -10,6 +10,7 @@ import {
   SlidersHorizontal,
   Sparkles,
   X,
+  TrendingUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -25,10 +26,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import { DEPARTMENTS, SEMESTER_OPTIONS } from "@/lib/constants";
 import { TagPill } from "@/components/ui/tag-pill";
+import { NetworkStrength } from "./network-strength";
 import type { ConnectionFilterState } from "./connection-filters";
+import type { ConnectionOverview } from "@/types";
 
 export type ConnectionTab = "all" | "pending" | "sent" | "blocked";
 
@@ -40,6 +43,7 @@ interface MyNetworkSidebarProps {
   onFiltersChange: (filters: ConnectionFilterState) => void;
   skills?: { id: string; name: string; slug: string }[];
   onFindPeople: () => void;
+  overview: ConnectionOverview;
 }
 
 const TABS: { id: ConnectionTab; label: string; icon: React.ReactNode }[] = [
@@ -57,6 +61,7 @@ export function MyNetworkSidebar({
   onFiltersChange,
   skills = [],
   onFindPeople,
+  overview,
 }: MyNetworkSidebarProps) {
   const [showFilters, setShowFilters] = useState(true);
 
@@ -81,9 +86,7 @@ export function MyNetworkSidebar({
     });
 
   const hasActiveFilters =
-    filters.department ||
-    filters.semester ||
-    filters.skills.length > 0;
+    filters.department || filters.semester || filters.skills.length > 0;
 
   return (
     <div className="space-y-6">
@@ -237,6 +240,20 @@ export function MyNetworkSidebar({
           </div>
         )}
       </div>
+
+      <Card>
+        <CardContent className="p-4">
+          <div className="mb-3 flex items-center gap-2">
+            <div className="flex size-7 items-center justify-center rounded-lg bg-primary/10">
+              <TrendingUp className="size-3.5 text-primary" />
+            </div>
+            <h3 className="text-sm font-semibold text-foreground">
+              Network Strength
+            </h3>
+          </div>
+          <NetworkStrength overview={overview} />
+        </CardContent>
+      </Card>
 
       <div className="rounded-xl border border-dashed border-primary/30 bg-primary/5 p-4">
         <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-primary">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useTransition } from "react";
+import { useState, useRef, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
@@ -11,7 +11,6 @@ import {
   Star,
   MoreVertical,
   Ban,
-  Trash2,
   UserMinus,
 } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
@@ -28,6 +27,12 @@ import {
   TooltipTrigger,
   TooltipContent,
 } from "@/components/ui/tooltip";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
 import {
   ConnectionStatusBadge,
   type Relationship,
@@ -80,6 +85,7 @@ interface PeopleCardProps {
   relationship?: Relationship;
   connectionId?: string;
   direction?: "incoming" | "outgoing" | "none";
+  isFavorite?: boolean;
   showMutual?: boolean;
   compact?: boolean;
   onChanged?: () => void;
@@ -116,6 +122,7 @@ export function PeopleCard({
   relationship = "none",
   connectionId,
   direction: _direction = "none",
+  isFavorite: initialFavorite = false,
   showMutual = false,
   compact = false,
   onChanged,
@@ -123,31 +130,13 @@ export function PeopleCard({
   note,
 }: PeopleCardProps) {
   const [status, setStatus] = useState<Relationship>(relationship);
+  const [isFavorited, setIsFavorited] = useState(initialFavorite);
   const [busy, setBusy] = useState<string | null>(null);
-  const [menuOpen, setMenuOpen] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const [messagePending, startMessageTransition] = useTransition();
   const router = useRouter();
-
-  useEffect(() => {
-    if (!menuOpen) return;
-    const onPointerDown = (e: MouseEvent | TouchEvent) => {
-      if (cardRef.current && !cardRef.current.contains(e.target as Node)) {
-        setMenuOpen(false);
-      }
-    };
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setMenuOpen(false);
-    };
-    document.addEventListener("mousedown", onPointerDown);
-    document.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.removeEventListener("mousedown", onPointerDown);
-      document.removeEventListener("keydown", onKeyDown);
-    };
-  }, [menuOpen]);
 
   const department = user.department ?? user.student?.department ?? null;
   const currentSemester =
@@ -215,11 +204,25 @@ export function PeopleCard({
       return res;
     });
 
-  const handleToggleFavorite = () =>
-    run("fav", async () => {
-      const res = await toggleFavoriteAction(connectionId!);
-      return res;
-    });
+  const handleToggleFavorite = async () => {
+    if (!connectionId) return;
+    setBusy("fav");
+    try {
+      const res = await toggleFavoriteAction(connectionId);
+      if (!res.success) {
+        toast.error(res.message);
+        return;
+      }
+      const nowFavorited = !isFavorited;
+      setIsFavorited(nowFavorited);
+      toast.success(nowFavorited ? "Added to favorites" : "Removed from favorites");
+      onChanged?.();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Something went wrong.");
+    } finally {
+      setBusy(null);
+    }
+  };
 
   const handleRemove = () =>
     run("remove", async () => {
@@ -257,6 +260,10 @@ export function PeopleCard({
     });
   };
 
+  const handleCardClick = () => {
+    router.push(ROUTES.USER_PROFILE(user.id));
+  };
+
   const skills = (rawSkills ?? []).map(skillName).filter(Boolean);
   const accent = getAccentClass(department);
   const maxSkills = compact ? 2 : 3;
@@ -267,7 +274,7 @@ export function PeopleCard({
       ref={cardRef}
       size={compact ? "sm" : "default"}
       className={cn(
-        "relative overflow-hidden transition-all duration-200",
+        "relative transition-all duration-200",
         "hover:-translate-y-0.5 hover:shadow-lg",
         compact && "hover:-translate-y-0",
       )}
@@ -282,7 +289,11 @@ export function PeopleCard({
       )}
 
       <CardHeader className="gap-3 px-4 pt-4 sm:px-5 sm:pt-5">
-        <div className="flex items-start gap-3">
+        <button
+          type="button"
+          className="flex flex-1 cursor-pointer items-start gap-3 text-left"
+          onClick={handleCardClick}
+        >
           <div className="relative shrink-0">
             <Avatar
               id={user.id}
@@ -301,7 +312,7 @@ export function PeopleCard({
           <div className="min-w-0 flex-1">
             <p
               className={cn(
-                "font-semibold text-foreground leading-snug",
+                "font-semibold text-foreground leading-snug group-data-[interactive]/card:transition-colors group-data-[interactive]/card:group-hover/card:text-primary",
                 compact ? "text-sm" : "text-[15px]",
               )}
             >
@@ -316,11 +327,11 @@ export function PeopleCard({
                 .join(" \u00b7 ") || "NUB Student"}
             </p>
           </div>
+        </button>
 
-          <CardAction>
-            <ConnectionStatusBadge relationship={status} />
-          </CardAction>
-        </div>
+        <CardAction>
+          <ConnectionStatusBadge relationship={status} />
+        </CardAction>
       </CardHeader>
 
       <CardContent className="space-y-3 px-4 pb-4 sm:px-5 sm:pb-5">
@@ -369,6 +380,7 @@ export function PeopleCard({
         )}
 
         <div className="flex items-center gap-2 pt-1">
+          {/* ── Not connected ──────────────────────────────────── */}
           {status === "none" && (
             <Button
               size="sm"
@@ -394,6 +406,7 @@ export function PeopleCard({
             </Button>
           )}
 
+          {/* ── Pending incoming ───────────────────────────────── */}
           {status === "pending_incoming" && connectionId && (
             <>
               <Button
@@ -430,6 +443,7 @@ export function PeopleCard({
             </>
           )}
 
+          {/* ── Pending outgoing ───────────────────────────────── */}
           {status === "pending_outgoing" && connectionId && (
             <Button
               size="sm"
@@ -438,10 +452,11 @@ export function PeopleCard({
               disabled={busy === "cancel"}
             >
               <X className="size-3.5" />
-              Cancel
+              Cancel Request
             </Button>
           )}
 
+          {/* ── Blocked ────────────────────────────────────────── */}
           {status === "blocked" && (
             <Button
               size="sm"
@@ -454,6 +469,7 @@ export function PeopleCard({
             </Button>
           )}
 
+          {/* ── Connected ──────────────────────────────────────── */}
           {status === "connected" && (
             <>
               <Button
@@ -473,13 +489,20 @@ export function PeopleCard({
                       variant="ghost"
                       onClick={handleToggleFavorite}
                       disabled={busy === "fav"}
-                      className="text-muted-foreground hover:text-amber-500"
+                      className={cn(
+                        "transition-colors",
+                        isFavorited
+                          ? "text-amber-500 hover:text-amber-600"
+                          : "text-muted-foreground hover:text-amber-500",
+                      )}
                     />
                   }
                 >
-                  <Star className="size-3.5" />
+                  <Star className={cn("size-3.5", isFavorited && "fill-amber-500")} />
                 </TooltipTrigger>
-                <TooltipContent>Toggle favorite</TooltipContent>
+                <TooltipContent>
+                  {isFavorited ? "Remove from favorites" : "Add to favorites"}
+                </TooltipContent>
               </Tooltip>
               <Tooltip>
                 <TooltipTrigger
@@ -497,56 +520,31 @@ export function PeopleCard({
                 </TooltipTrigger>
                 <TooltipContent>Remove connection</TooltipContent>
               </Tooltip>
-            </>
-          )}
 
-          {(status === "none" || status === "connected") && (
-            <div className="relative ml-auto">
-              <Tooltip>
-                <TooltipTrigger
+              {/* Kebab: only for connected state with 2+ destructive actions */}
+              <DropdownMenu>
+                <DropdownMenuTrigger
                   render={
                     <button
                       type="button"
                       className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                      onClick={() => setMenuOpen((v) => !v)}
                     />
                   }
                   aria-label="More actions"
                 >
                   <MoreVertical className="size-4" />
-                </TooltipTrigger>
-                <TooltipContent>More actions</TooltipContent>
-              </Tooltip>
-
-              {menuOpen && (
-                <div className="absolute right-0 top-full z-10 w-40 overflow-hidden rounded-lg border bg-popover p-1 shadow-lg ring-1 ring-foreground/10">
-                  {status === "none" && (
-                    <button
-                      className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-destructive transition-colors hover:bg-destructive/10"
-                      onClick={() => {
-                        setMenuOpen(false);
-                        handleBlock();
-                      }}
-                    >
-                      <Ban className="size-3.5" />
-                      Block
-                    </button>
-                  )}
-                  {status === "connected" && (
-                    <button
-                      className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-destructive transition-colors hover:bg-destructive/10"
-                      onClick={() => {
-                        setMenuOpen(false);
-                        handleRemove();
-                      }}
-                    >
-                      <Trash2 className="size-3.5" />
-                      Remove
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" sideOffset={4}>
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onClick={handleBlock}
+                  >
+                    <Ban className="size-3.5" />
+                    Block User
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </>
           )}
         </div>
       </CardContent>

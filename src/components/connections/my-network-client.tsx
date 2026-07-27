@@ -71,7 +71,10 @@ const SUB_TABS: { id: SubTab; label: string }[] = [
   { id: "favorites", label: "Favorites" },
 ];
 
-const EMPTY_STATE: Record<string, { icon: React.ReactNode; title: string; desc: string }> = {
+const EMPTY_STATE: Record<
+  string,
+  { icon: React.ReactNode; title: string; desc: string }
+> = {
   all: {
     icon: <Users className="size-8" />,
     title: "No connections yet",
@@ -107,7 +110,12 @@ const EMPTY_STATE: Record<string, { icon: React.ReactNode; title: string; desc: 
 interface MyNetworkClientProps {
   initialOverview: ConnectionOverview;
   initialSuggestions: SuggestedPerson[];
-  initialPopularSkills: { id: string; name: string; slug: string; count?: number }[];
+  initialPopularSkills: {
+    id: string;
+    name: string;
+    slug: string;
+    count?: number;
+  }[];
 }
 
 export function MyNetworkClient({
@@ -142,7 +150,9 @@ export function MyNetworkClient({
     initialSuggestions as PeopleCardUser[],
   );
   const [popularSkills, setPopularSkills] =
-    useState<{ id: string; name: string; slug: string; count?: number }[]>(initialPopularSkills);
+    useState<{ id: string; name: string; slug: string; count?: number }[]>(
+      initialPopularSkills,
+    );
   const [activeSkills, setActiveSkills] = useState<string[]>(initialSkills);
 
   const [loading, setLoading] = useState(false);
@@ -201,7 +211,8 @@ export function MyNetworkClient({
         setSent((res.data as unknown as ConnectionWithUser[]) ?? []);
       } else if (tab === "blocked") {
         const res = await getBlockedUsersAction();
-        const blockedUsers = (res.data as unknown as ConnectionOtherUser[]) ?? [];
+        const blockedUsers =
+          (res.data as unknown as ConnectionOtherUser[]) ?? [];
         setPeople(
           blockedUsers.map((u) => ({
             id: u.id,
@@ -228,11 +239,17 @@ export function MyNetworkClient({
             page,
             limit: 12,
           });
-          const payload = res.data as unknown as { data: PeopleCardUser[]; meta: PaginationMeta };
+          const payload = res.data as unknown as {
+            data: PeopleCardUser[];
+            meta: PaginationMeta;
+          };
           setPeople(payload?.data ?? []);
           setMeta(payload?.meta ?? null);
         } else {
-          const filterMap: Record<SubTab, "ALL" | "SENIORS" | "JUNIORS" | "SAME_SEMESTER" | "FAVORITES"> = {
+          const filterMap: Record<
+            SubTab,
+            "ALL" | "SENIORS" | "JUNIORS" | "SAME_SEMESTER" | "FAVORITES"
+          > = {
             all: "ALL",
             seniors: "SENIORS",
             juniors: "JUNIORS",
@@ -240,7 +257,10 @@ export function MyNetworkClient({
             favorites: "FAVORITES",
           };
           const res = await getMyConnectionsAction(filterMap[subTab], page, 12);
-          const payload = res.data as unknown as { data: ConnectionWithUser[]; meta: PaginationMeta };
+          const payload = res.data as unknown as {
+            data: ConnectionWithUser[];
+            meta: PaginationMeta;
+          };
           setConnections(payload?.data ?? []);
           setMeta(payload?.meta ?? null);
         }
@@ -278,7 +298,12 @@ export function MyNetworkClient({
       try {
         const res = await listTagsAction();
         const tags = (res.success ? res.data : []) as
-          | { id: string; name: string; slug: string; _count?: { resourceTags: number } }[]
+          | {
+              id: string;
+              name: string;
+              slug: string;
+              _count?: { resourceTags: number };
+            }[]
           | undefined;
         const mapped = (tags ?? []).map((t) => ({
           id: t.id,
@@ -299,7 +324,8 @@ export function MyNetworkClient({
     if (search) params.set("q", search);
     if (filters.department) params.set("dept", filters.department);
     if (filters.semester) params.set("sem", String(filters.semester));
-    if (filters.skills.length > 0) params.set("skills", filters.skills.join(","));
+    if (filters.skills.length > 0)
+      params.set("skills", filters.skills.join(","));
     const qs = params.toString();
     router.replace(qs ? `?${qs}` : window.location.pathname, { scroll: false });
   }, [tab, subTab, search, filters, router]);
@@ -355,7 +381,9 @@ export function MyNetworkClient({
         toast.error(res.message);
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to unblock user.");
+      toast.error(
+        err instanceof Error ? err.message : "Failed to unblock user.",
+      );
     }
   };
 
@@ -386,12 +414,13 @@ export function MyNetworkClient({
       filters.skills.length > 0);
 
   const totalPages = meta?.totalPages ?? 1;
-  const showInvitations = tab === "all" && (pending.length > 0 || sent.length > 0);
+  const showInvitations =
+    tab === "all" && (pending.length > 0 || sent.length > 0);
 
   return (
     <div className="grid gap-6 pb-20 md:grid-cols-[220px_1fr] md:pb-0 lg:grid-cols-[260px_1fr_280px]">
       <aside className="hidden md:block">
-        <div className="sticky top-20">
+        <div className="sticky top-2">
           <MyNetworkSidebar
             activeTab={tab}
             onTabChange={(t) => {
@@ -406,6 +435,7 @@ export function MyNetworkClient({
             }}
             skills={popularSkills}
             onFindPeople={handleFindPeople}
+            overview={overview}
           />
         </div>
       </aside>
@@ -443,7 +473,9 @@ export function MyNetworkClient({
                     <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
                       {filters.department}
                       <button
-                        onClick={() => setFilters((f) => ({ ...f, department: "" }))}
+                        onClick={() =>
+                          setFilters((f) => ({ ...f, department: "" }))
+                        }
                         className="ml-0.5 rounded-full p-0.5 hover:bg-primary/20"
                         aria-label={`Remove ${filters.department} filter`}
                       >
@@ -455,7 +487,9 @@ export function MyNetworkClient({
                     <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
                       Sem {filters.semester}
                       <button
-                        onClick={() => setFilters((f) => ({ ...f, semester: "" }))}
+                        onClick={() =>
+                          setFilters((f) => ({ ...f, semester: "" }))
+                        }
                         className="ml-0.5 rounded-full p-0.5 hover:bg-primary/20"
                         aria-label={`Remove semester ${filters.semester} filter`}
                       >
@@ -486,7 +520,9 @@ export function MyNetworkClient({
                       </span>
                     );
                   })}
-                  {(filters.department || filters.semester || filters.skills.length > 0) && (
+                  {(filters.department ||
+                    filters.semester ||
+                    filters.skills.length > 0) && (
                     <button
                       onClick={() =>
                         setFilters((f) => ({
@@ -517,7 +553,10 @@ export function MyNetworkClient({
                     </Button>
                   }
                 />
-                <SheetContent side="bottom" className="max-h-[80vh] overflow-y-auto">
+                <SheetContent
+                  side="bottom"
+                  className="max-h-[80vh] overflow-y-auto"
+                >
                   <SheetHeader>
                     <SheetTitle>Network Filters</SheetTitle>
                   </SheetHeader>
@@ -537,6 +576,7 @@ export function MyNetworkClient({
                       }}
                       skills={popularSkills}
                       onFindPeople={handleFindPeople}
+                      overview={overview}
                     />
                   </div>
                 </SheetContent>
@@ -634,7 +674,9 @@ export function MyNetworkClient({
                   );
                 })}
                 {totalPages > 5 && (
-                  <span className="px-1 text-xs text-muted-foreground">...</span>
+                  <span className="px-1 text-xs text-muted-foreground">
+                    ...
+                  </span>
                 )}
               </div>
               <Button
@@ -651,9 +693,8 @@ export function MyNetworkClient({
       </main>
 
       <aside className="hidden lg:block">
-        <div className="sticky top-20">
+        <div className="sticky top-2">
           <MyNetworkRightPanel
-            overview={overview}
             suggestions={suggestions}
             popularSkills={popularSkills}
             onSkillSelect={handleSkillSelect}
@@ -833,6 +874,7 @@ function ContentSwitch({
             relationship="connected"
             connectionId={c.id}
             direction="none"
+            isFavorite={c.isFavorite}
             onChanged={onChanged}
           />
         </PeopleGridItem>
@@ -904,21 +946,12 @@ function EmptyState({
       <p className="mt-1.5 max-w-xs text-xs leading-relaxed text-muted-foreground">
         {desc ?? state.desc}
       </p>
-      {action && (
-        <div className="mt-4">{action}</div>
-      )}
+      {action && <div className="mt-4">{action}</div>}
       {onAction && !action && (
-        <Button
-          size="sm"
-          variant="outline"
-          className="mt-4"
-          onClick={onAction}
-        >
+        <Button size="sm" variant="outline" className="mt-4" onClick={onAction}>
           Find People
         </Button>
       )}
     </motion.div>
   );
 }
-
-
