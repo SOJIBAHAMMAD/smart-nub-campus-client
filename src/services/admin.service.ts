@@ -22,6 +22,8 @@ import type {
   ListAdminEventsResponse,
   AdminEvent,
   CreateEventInput,
+  ListAdminReportsResponse,
+  AdminReportStatus,
 } from "@/types/admin.types";
 
 /**
@@ -179,6 +181,7 @@ export const adminService = {
     if (params.categoryId) searchParams.set("categoryId", params.categoryId);
     if (params.isVerified !== undefined)
       searchParams.set("isVerified", String(params.isVerified));
+    if (params.sort) searchParams.set("sort", params.sort);
 
     const response = await apiClient.get<{
       success: boolean;
@@ -202,6 +205,47 @@ export const adminService = {
 
   async deleteResource(id: string): Promise<void> {
     await apiClient.del(`/admin/resources/${id}`);
+  },
+
+  async bulkVerifyResources(
+    ids: string[],
+    isVerified: boolean,
+  ): Promise<void> {
+    await Promise.all(ids.map((id) => this.verifyResource(id, isVerified)));
+  },
+
+  async bulkDeleteResources(ids: string[]): Promise<void> {
+    await Promise.all(ids.map((id) => this.deleteResource(id)));
+  },
+
+  // ── Resource Reports ────────────────────────────────────────────────────
+
+  async listReports(
+    page = 1,
+    limit = 20,
+  ): Promise<ListAdminReportsResponse> {
+    const searchParams = new URLSearchParams();
+    searchParams.set("page", String(page));
+    searchParams.set("limit", String(limit));
+
+    const response = await apiClient.get<{
+      success: boolean;
+      message: string;
+      data: ListAdminReportsResponse;
+    }>(`/resources/admin/reports?${searchParams.toString()}`);
+    return response.data!.data;
+  },
+
+  async reviewReport(
+    id: string,
+    status: AdminReportStatus,
+  ): Promise<{ id: string; status: string }> {
+    const response = await apiClient.patch<{
+      success: boolean;
+      message: string;
+      data: { id: string; status: string };
+    }>(`/resources/admin/reports/${id}`, { status });
+    return response.data!.data;
   },
 
   // ── Course Management ───────────────────────────────────────────────────

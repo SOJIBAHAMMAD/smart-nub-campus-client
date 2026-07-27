@@ -2,13 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
-import {
-  Search,
-  SlidersHorizontal,
-  X,
-  LayoutGrid,
-  List,
-} from "lucide-react";
+import { Search, SlidersHorizontal, X, LayoutGrid, List } from "lucide-react";
 import { PageLayout } from "@/components/layout/page-layout";
 import { ResourcesSidebar } from "@/components/resources/resources-sidebar";
 import { ResourcesTrending } from "@/components/resources/resources-trending";
@@ -16,10 +10,29 @@ import { ResourceCard } from "@/components/resources/resource-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Empty, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { listResources, voteResource, bookmarkResource } from "@/actions/resource.actions";
-import type { Resource, ResourceCategory, PaginationMeta } from "@/types/resource.types";
+import {
+  Empty,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  listResources,
+  voteResource,
+  bookmarkResource,
+} from "@/actions/resource.actions";
+import type {
+  Resource,
+  ResourceCategory,
+  PaginationMeta,
+} from "@/types/resource.types";
 import { cn } from "@/lib/utils";
 import { useSocket, useSocketEvent } from "@/hooks/use-socket";
 import { env } from "@/env";
@@ -55,10 +68,26 @@ interface ResourcesClientProps {
   initialResources: Resource[];
   initialMeta: PaginationMeta | null;
   categories: (ResourceCategory & { _count: { resources: number } })[];
-  courses: { id: string; code: string; name: string; department: string; _count: { resources: number } }[];
-  allTags: { id: string; name: string; slug: string; _count: { resourceTags: number } }[];
+  courses: {
+    id: string;
+    code: string;
+    name: string;
+    department: string;
+    _count: { resources: number };
+  }[];
+  allTags: {
+    id: string;
+    name: string;
+    slug: string;
+    _count: { resourceTags: number };
+  }[];
   trendingResources: Resource[];
-  contributors: { rank: number; name: string; image?: string | null; totalPoints: number }[];
+  contributors: {
+    rank: number;
+    name: string;
+    image?: string | null;
+    totalPoints: number;
+  }[];
   initialFilters: {
     search: string;
     category: string | null;
@@ -87,7 +116,10 @@ export function ResourcesClient({
   const categorySlug = searchParams.get("category");
   const courseIdParam = searchParams.get("courseId");
   const tagsParam = searchParams.get("tags") ?? "";
-  const tags = useMemo(() => (tagsParam ? tagsParam.split(",").filter(Boolean) : []), [tagsParam]);
+  const tags = useMemo(
+    () => (tagsParam ? tagsParam.split(",").filter(Boolean) : []),
+    [tagsParam],
+  );
   const sort = searchParams.get("sort") ?? "newest";
   const view: ViewMode = searchParams.get("view") === "list" ? "list" : "grid";
 
@@ -113,7 +145,8 @@ export function ResourcesClient({
     setResources((prev) => {
       const resource = data.resource as unknown as Resource;
       if (prev.some((r) => r.id === resource.id)) return prev;
-      if (search || categorySlug || courseIdParam || tags.length > 0) return prev;
+      if (search || categorySlug || courseIdParam || tags.length > 0)
+        return prev;
       return [resource, ...prev];
     });
   });
@@ -172,9 +205,14 @@ export function ResourcesClient({
         if (tags.length > 0) params.tags = tags;
         if (sort) params.sort = sort;
 
-        const result = await listResources(params as Parameters<typeof listResources>[0]);
+        const result = await listResources(
+          params as Parameters<typeof listResources>[0],
+        );
         if (!cancelled && result.success && result.data) {
-          const data = result.data as { data?: Resource[]; meta?: PaginationMeta };
+          const data = result.data as {
+            data?: Resource[];
+            meta?: PaginationMeta;
+          };
           setResources(data.data ?? []);
           setMeta(data.meta ?? null);
         }
@@ -186,94 +224,125 @@ export function ResourcesClient({
     }
 
     fetchData();
-    return () => { cancelled = true; };
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- tags is derived from tagsParam; including it would cause re-fetch on every render
-  }, [page, search, categorySlug, categoryId, courseIdParam, tagsParam, sort, initialized]);
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- tags is derived from tagsParam; including it would cause re-fetch on every render
+  }, [
+    page,
+    search,
+    categorySlug,
+    categoryId,
+    courseIdParam,
+    tagsParam,
+    sort,
+    initialized,
+  ]);
 
   // ── Optimistic vote toggle ─────────────────────────────────────
-  const handleVote = useCallback(async (resourceId: string, currentVote: Resource["userVote"]) => {
-    const wasUp = currentVote === "UP";
-    const wasDown = currentVote === "DOWN";
+  const handleVote = useCallback(
+    async (resourceId: string, currentVote: Resource["userVote"]) => {
+      const wasUp = currentVote === "UP";
+      const wasDown = currentVote === "DOWN";
 
-    // Optimistically set to upvote
-    setResources((prev) =>
-      prev.map((r) => {
-        if (r.id !== resourceId) return r;
-        return {
-          ...r,
-          userVote: "UP" as const,
-          upvoteCount: r.upvoteCount + (wasUp ? -1 : wasDown ? 1 : 1),
-          downvoteCount: r.downvoteCount + (wasDown ? -1 : 0),
-        };
-      }),
-    );
+      // Optimistically set to upvote
+      setResources((prev) =>
+        prev.map((r) => {
+          if (r.id !== resourceId) return r;
+          return {
+            ...r,
+            userVote: "UP" as const,
+            upvoteCount: r.upvoteCount + (wasUp ? -1 : wasDown ? 1 : 1),
+            downvoteCount: r.downvoteCount + (wasDown ? -1 : 0),
+          };
+        }),
+      );
 
-    try {
-      const result = await voteResource(resourceId, "UP");
-      if (result.success && result.data) {
-        const data = result.data as { upvoteCount: number; downvoteCount: number; action: string };
+      try {
+        const result = await voteResource(resourceId, "UP");
+        if (result.success && result.data) {
+          const data = result.data as {
+            upvoteCount: number;
+            downvoteCount: number;
+            action: string;
+          };
+          setResources((prev) =>
+            prev.map((r) =>
+              r.id === resourceId
+                ? {
+                    ...r,
+                    upvoteCount: data.upvoteCount,
+                    downvoteCount: data.downvoteCount,
+                    userVote: data.action === "removed" ? null : "UP",
+                  }
+                : r,
+            ),
+          );
+        }
+      } catch {
+        // Revert on failure
         setResources((prev) =>
           prev.map((r) =>
             r.id === resourceId
               ? {
                   ...r,
-                  upvoteCount: data.upvoteCount,
-                  downvoteCount: data.downvoteCount,
-                  userVote: data.action === "removed" ? null : "UP",
+                  userVote: currentVote,
+                  upvoteCount: r.upvoteCount + (wasUp ? 1 : -1),
+                  downvoteCount: r.downvoteCount + (wasDown ? -1 : 0),
                 }
               : r,
           ),
         );
       }
-    } catch {
-      // Revert on failure
-      setResources((prev) =>
-        prev.map((r) =>
-          r.id === resourceId
-            ? { ...r, userVote: currentVote, upvoteCount: r.upvoteCount + (wasUp ? 1 : -1), downvoteCount: r.downvoteCount + (wasDown ? -1 : 0) }
-            : r,
-        ),
-      );
-    }
-  }, []);
+    },
+    [],
+  );
 
   // ── Optimistic bookmark toggle ─────────────────────────────────
-  const handleBookmark = useCallback(async (resourceId: string, currentBookmarked: boolean) => {
-    setResources((prev) =>
-      prev.map((r) =>
-        r.id === resourceId ? { ...r, isBookmarked: !currentBookmarked } : r,
-      ),
-    );
+  const handleBookmark = useCallback(
+    async (resourceId: string, currentBookmarked: boolean) => {
+      setResources((prev) =>
+        prev.map((r) =>
+          r.id === resourceId ? { ...r, isBookmarked: !currentBookmarked } : r,
+        ),
+      );
 
-    try {
-      const result = await bookmarkResource(resourceId);
-      if (!result.success) {
-        // Revert on failure
+      try {
+        const result = await bookmarkResource(resourceId);
+        if (!result.success) {
+          // Revert on failure
+          setResources((prev) =>
+            prev.map((r) =>
+              r.id === resourceId
+                ? { ...r, isBookmarked: currentBookmarked }
+                : r,
+            ),
+          );
+        }
+      } catch {
         setResources((prev) =>
           prev.map((r) =>
             r.id === resourceId ? { ...r, isBookmarked: currentBookmarked } : r,
           ),
         );
       }
-    } catch {
-      setResources((prev) =>
-        prev.map((r) =>
-          r.id === resourceId ? { ...r, isBookmarked: currentBookmarked } : r,
-        ),
-      );
-    }
-  }, []);
+    },
+    [],
+  );
 
-  const toggleTag = useCallback((slug: string) => {
-    const current = new Set(tags);
-    if (current.has(slug)) {
-      current.delete(slug);
-    } else {
-      current.add(slug);
-    }
-    const next = Array.from(current);
-    updateParams({ tags: next.length > 0 ? next.join(",") : null });
-  }, [tags, updateParams]);
+  const toggleTag = useCallback(
+    (slug: string) => {
+      const current = new Set(tags);
+      if (current.has(slug)) {
+        current.delete(slug);
+      } else {
+        current.add(slug);
+      }
+      const next = Array.from(current);
+      updateParams({ tags: next.length > 0 ? next.join(",") : null });
+    },
+    [tags, updateParams],
+  );
 
   return (
     <PageLayout
@@ -311,7 +380,7 @@ export function ResourcesClient({
           </div>
 
           {/* List / Grid view toggle */}
-          <Card className="shrink-0 rounded-lg p-0.5">
+          <Card className="shrink-0 flex flex-row items-center gap-2 rounded-lg p-0.5">
             <button
               onClick={() => updateParams({ view: "grid" })}
               className={cn(
@@ -371,8 +440,11 @@ export function ResourcesClient({
             Filters
           </Button>
 
-          <Select value={sort} onValueChange={(val) => updateParams({ sort: val })}>
-            <SelectTrigger className="h-9 w-full sm:w-[160px]">
+          <Select
+            value={sort}
+            onValueChange={(val) => updateParams({ sort: val })}
+          >
+            <SelectTrigger className="h-9 w-full sm:w-40">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -390,10 +462,14 @@ export function ResourcesClient({
           <div className="rounded-xl border bg-card p-4 ring-1 ring-foreground/10 lg:hidden">
             <div className="space-y-3">
               <div>
-                <label className="text-xs font-semibold text-muted-foreground">Category</label>
+                <label className="text-xs font-semibold text-muted-foreground">
+                  Category
+                </label>
                 <Select
                   value={categorySlug ?? "__all__"}
-                  onValueChange={(val) => updateParams({ category: val === "__all__" ? null : val })}
+                  onValueChange={(val) =>
+                    updateParams({ category: val === "__all__" ? null : val })
+                  }
                 >
                   <SelectTrigger className="mt-1 h-8">
                     <SelectValue placeholder="All Categories" />
@@ -415,7 +491,9 @@ export function ResourcesClient({
         {/* ── Active Filters Display ──────────────────────────────── */}
         {(search || categorySlug || tags.length > 0) && (
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs text-muted-foreground">Active filters:</span>
+            <span className="text-xs text-muted-foreground">
+              Active filters:
+            </span>
             {search && (
               <span className="flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs text-primary">
                 Search: &ldquo;{search}&rdquo;
@@ -426,7 +504,9 @@ export function ResourcesClient({
             )}
             {categorySlug && (
               <span className="flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs text-primary">
-                Category: {categories.find((c) => c.slug === categorySlug)?.name ?? categorySlug}
+                Category:{" "}
+                {categories.find((c) => c.slug === categorySlug)?.name ??
+                  categorySlug}
                 <button onClick={() => updateParams({ category: null })}>
                   <X className="size-3" />
                 </button>
@@ -524,12 +604,16 @@ export function ResourcesClient({
                 return (
                   <button
                     key={pageNum}
-                    onClick={() => updateParams({ page: pageNum === 1 ? null : String(pageNum) })}
+                    onClick={() =>
+                      updateParams({
+                        page: pageNum === 1 ? null : String(pageNum),
+                      })
+                    }
                     className={cn(
                       "flex size-8 items-center justify-center rounded-lg text-sm font-medium transition-colors",
                       pageNum === page
                         ? "bg-primary text-primary-foreground"
-                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground",
                     )}
                   >
                     {pageNum}

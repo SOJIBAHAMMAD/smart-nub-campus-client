@@ -202,6 +202,14 @@ export interface AdminResource {
   uploader: { id: string; name: string; email: string };
 }
 
+export type AdminResourceSort =
+  | "newest"
+  | "oldest"
+  | "downloads"
+  | "upvotes"
+  | "reports"
+  | "views";
+
 export interface ListAdminResourcesParams {
   page: number;
   limit: number;
@@ -209,10 +217,37 @@ export interface ListAdminResourcesParams {
   courseId?: string;
   categoryId?: string;
   isVerified?: boolean;
+  sort?: AdminResourceSort;
 }
 
 export interface ListAdminResourcesResponse {
   data: AdminResource[];
+  meta: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
+// ── Resource Reports ─────────────────────────────────────────────────────
+
+export interface AdminResourceReport {
+  id: string;
+  reason: string;
+  description: string | null;
+  status: "PENDING" | "REVIEWED" | "DISMISSED" | "ACTION_TAKEN";
+  reviewedById: string | null;
+  reviewedAt: string | null;
+  createdAt: string;
+  resource: { id: string; title: string; fileType: string };
+  user: { id: string; name: string; email: string };
+}
+
+export type AdminReportStatus = "REVIEWED" | "DISMISSED" | "ACTION_TAKEN";
+
+export interface ListAdminReportsResponse {
+  data: AdminResourceReport[];
   meta: {
     page: number;
     limit: number;

@@ -41,9 +41,7 @@ export function PageLayout({
   const hasRight = !!rightSidebar;
 
   return (
-    <div
-      className={cn("mx-auto w-full max-w-360 px-4 py-6 sm:px-6", className)}
-    >
+    <div className={cn("mx-auto w-full px-4 py-6 sm:px-6", className)}>
       <div
         className={cn(
           "grid gap-6",
@@ -55,8 +53,12 @@ export function PageLayout({
       >
         {/* ── Left sidebar ──────────────────────────────────────────── */}
         {hasLeft && (
-          <aside className="hidden lg:block" role="complementary" aria-label="Page sidebar">
-            <div className="sticky top-20">{leftSidebar}</div>
+          <aside
+            className="hidden lg:block"
+            role="complementary"
+            aria-label="Page sidebar"
+          >
+            <div className="sticky top-2">{leftSidebar}</div>
           </aside>
         )}
 
@@ -65,8 +67,12 @@ export function PageLayout({
 
         {/* ── Right sidebar ─────────────────────────────────────────── */}
         {hasRight && (
-          <aside className="hidden lg:block" role="complementary" aria-label="Page information">
-            <div className="sticky top-20">{rightSidebar}</div>
+          <aside
+            className="hidden lg:block"
+            role="complementary"
+            aria-label="Page information"
+          >
+            <div className="sticky top-2">{rightSidebar}</div>
           </aside>
         )}
       </div>

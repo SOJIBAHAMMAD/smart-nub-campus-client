@@ -81,7 +81,7 @@ export function AdminLayoutShell({
         </aside>
 
         {/* Main content skeleton */}
-        <main className="flex-1 lg:ml-64 pt-16 p-6">
+        <main className="flex-1 lg:ml-64 pt-16 p-6 overflow-y-auto">
           <div className="space-y-4">
             <Skeleton className="h-8 w-48" />
             <div className="grid grid-cols-4 gap-4">
@@ -140,7 +140,7 @@ export function AdminLayoutShell({
       </div>
 
       {/* Main content */}
-      <main className="lg:ml-64 pt-16 lg:pt-0">{children}</main>
+      <main className="lg:ml-64 h-screen pt-16 lg:pt-0 overflow-y-auto">{children}</main>
     </div>
   );
 }
