@@ -1,10 +1,12 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
-import { Send, Paperclip, Smile } from "lucide-react";
+import { Send, Paperclip, X } from "lucide-react";
+import type { Message } from "@/types/message.types";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { EmojiPicker } from "./emoji-picker";
 
 interface MessageInputProps {
   /** Whether a send is currently in-flight. */
@@ -17,12 +19,18 @@ interface MessageInputProps {
   onTypingStart?: () => void;
   /** Emitted when the user stops typing (blur / empty / send). */
   onTypingStop?: () => void;
+  /** Message currently being replied to. */
+  replyTo?: Message | null;
+  /** Cancel reply callback. */
+  onCancelReply?: () => void;
+  /** Participants for showing reply preview name. */
+  participants?: { id: string; name: string }[];
   className?: string;
 }
 
 /**
- * The composer at the bottom of the chat thread (Column 3). Supports an
- * auto-expanding textarea, file attachment, and an emoji picker button.
+ * The composer at the bottom of the chat thread. Supports an
+ * auto-expanding textarea, file attachment, emoji picker, and reply-to banner.
  * Enter sends; Shift+Enter inserts a newline.
  */
 export function MessageInput({
@@ -31,6 +39,9 @@ export function MessageInput({
   onSendFile,
   onTypingStart,
   onTypingStop,
+  replyTo,
+  onCancelReply,
+  participants = [],
   className,
 }: MessageInputProps) {
   const [value, setValue] = useState("");
@@ -96,11 +107,36 @@ export function MessageInput({
     requestAnimationFrame(resize);
   };
 
-  const EMOJIS = ["😀", "😂", "❤️", "👍", "🎉", "🔥", "🙏", "😎"];
+  const replySender = replyTo
+    ? participants.find((p) => p.id === replyTo.senderId)?.name ?? "Someone"
+    : "";
 
   return (
-    <div className={cn("border-t bg-background p-3", className)}>
-      <div className="flex items-end gap-2">
+    <div className={cn("border-t bg-background", className)}>
+      {/* Reply-to banner */}
+      {replyTo && (
+        <div className="flex items-center gap-2 border-b bg-muted/50 px-4 py-2">
+          <div className="min-w-0 flex-1 border-l-2 border-primary/40 pl-2">
+            <p className="text-[10px] font-semibold text-primary">
+              Replying to {replySender}
+            </p>
+            <p className="truncate text-xs text-muted-foreground">
+              {replyTo.type === "IMAGE" ? "📷 Image" : replyTo.type === "FILE" ? `📎 ${replyTo.fileName ?? "File"}` : replyTo.content}
+            </p>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onCancelReply}
+            className="size-6 shrink-0"
+            aria-label="Cancel reply"
+          >
+            <X className="size-3.5" />
+          </Button>
+        </div>
+      )}
+
+      <div className="flex items-end gap-2 p-3">
         <input
           ref={fileRef}
           type="file"
@@ -114,6 +150,7 @@ export function MessageInput({
           disabled={disabled || uploading}
           onClick={() => fileRef.current?.click()}
           aria-label="Attach file"
+          className="size-8"
         >
           <Paperclip className="size-4" />
         </Button>
@@ -132,19 +169,11 @@ export function MessageInput({
             }}
             rows={1}
             placeholder="Type a message..."
-            className="max-h-40 min-h-10 resize-none py-2 pr-10"
+            className="max-h-40 min-h-10 resize-none py-2 pr-2"
           />
-          <button
-            type="button"
-            onClick={() =>
-              insertEmoji(EMOJIS[Math.floor(Math.random() * EMOJIS.length)])
-            }
-            className="absolute top-1/2 right-2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-            aria-label="Add emoji"
-          >
-            <Smile className="size-4" />
-          </button>
         </div>
+
+        <EmojiPicker onSelect={insertEmoji} />
 
         <Button
           type="button"
@@ -152,6 +181,7 @@ export function MessageInput({
           disabled={disabled || uploading || !value.trim()}
           onClick={submit}
           aria-label="Send message"
+          className="size-8"
         >
           <Send className="size-4" />
         </Button>

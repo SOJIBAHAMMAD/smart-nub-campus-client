@@ -35,7 +35,5 @@ export function getPreviewText(conversation: Conversation): string {
   if (!last) return "No messages yet";
   if (last.type === "IMAGE") return "📷 Photo";
   if (last.type === "FILE") return `📎 ${last.fileName ?? "File"}`;
-  const prefix =
-    last.senderId === conversation.creatorId ? "" : "";
-  return `${prefix}${last.content}`;
+  return last.content;
 }

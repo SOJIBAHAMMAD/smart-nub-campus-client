@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useMemo } from "react";
-import { ArrowLeft, Search, MoreVertical, Info, Trash2, MessageSquare } from "lucide-react";
+import { useRef, useMemo, useState, useCallback } from "react";
+import { ArrowLeft, MoreVertical, Info, Trash2, MessageSquare, Bell, BellOff } from "lucide-react";
 import type { Conversation, Message } from "@/types/message.types";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,8 @@ import { MessageBubble } from "./message-bubble";
 import { MessageInput } from "./message-input";
 import { GroupChatHeader } from "./group-chat-header";
 import { TypingIndicator } from "./typing-indicator";
+import { MessageSearch } from "./message-search";
+import { ImageLightbox } from "./image-lightbox";
 import { getConversationDisplay } from "./conversation-utils";
 import { formatDayLabel, isSameDay } from "./time";
 
@@ -46,6 +48,20 @@ interface ChatAreaProps {
   onTypingStop: () => void;
   onLoadOlder: () => void;
   onBackToList: () => void;
+  onReply?: (message: Message) => void;
+  onForward?: (message: Message) => void;
+  onEdit?: (message: Message) => void;
+  onDelete?: (message: Message) => void;
+  onReaction?: (messageId: string, emoji: string) => void;
+  onRetry?: (message: Message) => void;
+  onToggleMute?: () => void;
+  isMuted?: boolean;
+  replyTo?: Message | null;
+  onCancelReply?: () => void;
+  onSearch?: (query: string) => void;
+  searchResultCount?: number;
+  searchLoading?: boolean;
+  searchQuery?: string;
 }
 
 export function ChatArea({
@@ -63,9 +79,25 @@ export function ChatArea({
   onTypingStop,
   onLoadOlder,
   onBackToList,
+  onReply,
+  onForward,
+  onEdit,
+  onDelete,
+  onReaction,
+  onRetry,
+  onToggleMute,
+  isMuted,
+  replyTo,
+  onCancelReply,
+  onSearch,
+  searchResultCount = 0,
+  searchLoading,
+  searchQuery,
 }: ChatAreaProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const prevLenRef = useRef(0);
+  const [lightboxImages, setLightboxImages] = useState<{ url: string; alt?: string }[]>([]);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
   const { name, image, isGroup } = conversation
     ? getConversationDisplay(conversation, currentUserId)
@@ -95,11 +127,58 @@ export function ChatArea({
     }
   };
 
+  const handleImageClick = useCallback((url: string, alt?: string) => {
+    // Collect all image messages for lightbox navigation
+    const allImages = messages
+      .filter((m) => m.type === "IMAGE" && m.fileUrl)
+      .map((m) => ({ url: m.fileUrl!, alt: m.fileName ?? "image" }));
+    const idx = allImages.findIndex((img) => img.url === url);
+    setLightboxImages(allImages.length > 0 ? allImages : [{ url, alt }]);
+    setLightboxIndex(idx >= 0 ? idx : 0);
+    setLightboxOpen(true);
+  }, [messages]);
+
+  const participants = useMemo(
+    () =>
+      conversation?.conversationParticipants?.map((p) => ({
+        id: p.userId,
+        name: p.user?.name ?? "User",
+        image: p.user?.image,
+      })) ?? [],
+    [conversation],
+  );
+
   if (!conversation) {
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-3 text-center text-muted-foreground">
-        <MessageSquare className="size-10 opacity-40" />
-        <p className="text-sm">Select a conversation to start chatting.</p>
+      <div className="flex h-full flex-col items-center justify-center gap-6 px-4 text-center">
+        <div className="relative">
+          <div className="flex size-24 items-center justify-center rounded-3xl bg-gradient-to-br from-primary/10 to-primary/5">
+            <MessageSquare className="size-12 text-primary/30" />
+          </div>
+          <div className="absolute -top-2 -right-2 flex size-8 items-center justify-center rounded-full bg-primary/10">
+            <span className="text-lg">💬</span>
+          </div>
+        </div>
+        <div className="space-y-2">
+          <h3 className="text-lg font-semibold text-foreground">Welcome to Messages</h3>
+          <p className="max-w-sm text-sm text-muted-foreground">
+            Select a conversation from the sidebar to start chatting, or create a new one.
+          </p>
+        </div>
+        <div className="flex gap-3">
+          <div className="flex items-center gap-2 rounded-lg border bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
+            <span className="text-base">👥</span>
+            Group chats
+          </div>
+          <div className="flex items-center gap-2 rounded-lg border bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
+            <span className="text-base">📎</span>
+            Share files
+          </div>
+          <div className="flex items-center gap-2 rounded-lg border bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
+            <span className="text-base">😊</span>
+            Reactions
+          </div>
+        </div>
       </div>
     );
   }
@@ -140,9 +219,27 @@ export function ChatArea({
           )}
         </button>
 
-        <Button variant="ghost" size="icon" aria-label="Search in conversation">
-          <Search className="size-4" />
-        </Button>
+        {/* Search */}
+        {onSearch && (
+          <MessageSearch
+            onSearch={onSearch}
+            resultCount={searchResultCount}
+            loading={searchLoading}
+            className="hidden sm:flex"
+          />
+        )}
+
+        {/* Mute toggle */}
+        {onToggleMute && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onToggleMute}
+            aria-label={isMuted ? "Unmute" : "Mute"}
+          >
+            {isMuted ? <BellOff className="size-4 text-muted-foreground" /> : <Bell className="size-4" />}
+          </Button>
+        )}
 
         <DropdownMenu>
           <DropdownMenuTrigger
@@ -155,6 +252,12 @@ export function ChatArea({
               <Info className="size-4" />
               {isGroup ? "Group info" : "Contact info"}
             </DropdownMenuItem>
+            {onToggleMute && (
+              <DropdownMenuItem onClick={onToggleMute}>
+                {isMuted ? <Bell className="size-4" /> : <BellOff className="size-4" />}
+                {isMuted ? "Unmute" : "Mute"}
+              </DropdownMenuItem>
+            )}
             <DropdownMenuSeparator />
             <DropdownMenuItem variant="destructive" onClick={() => {}}>
               <Trash2 className="size-4" />
@@ -164,6 +267,19 @@ export function ChatArea({
         </DropdownMenu>
       </div>
 
+      {/* Search results info */}
+      {searchQuery && (
+        <div className="border-b bg-primary/5 px-4 py-1.5 text-xs text-muted-foreground">
+          {searchLoading ? (
+            "Searching..."
+          ) : (
+            <>
+              Found <span className="font-medium text-foreground">{searchResultCount}</span> result{searchResultCount !== 1 ? "s" : ""} for &ldquo;{searchQuery}&rdquo;
+            </>
+          )}
+        </div>
+      )}
+
       {/* Messages with MessageScroller */}
       <MessageScrollerProvider autoScroll defaultScrollPosition="end">
         <MessageScroller className="flex-1">
@@ -172,9 +288,9 @@ export function ChatArea({
               {loadingMessages && messages.length === 0 ? (
                 <div className="mt-auto space-y-4">
                   {[1, 2, 3, 4].map((i) => (
-                    <div key={i} className="flex gap-2">
+                    <div key={i} className={cn("flex gap-2", i % 2 === 0 && "flex-row-reverse")}>
                       <Skeleton className="size-8 rounded-full" />
-                      <Skeleton className="h-14 w-2/3 rounded-2xl" />
+                      <Skeleton className={cn("h-14 rounded-2xl", i % 2 === 0 ? "w-1/2" : "w-2/3")} />
                     </div>
                   ))}
                 </div>
@@ -205,13 +321,15 @@ export function ChatArea({
                               message={m}
                               isOwn={m.senderId === currentUserId}
                               showSender={showSender}
-                              participants={
-                                conversation.conversationParticipants?.map((p) => ({
-                                  id: p.userId,
-                                  name: p.user?.name ?? "User",
-                                  image: p.user?.image,
-                                })) ?? []
-                              }
+                              currentUserId={currentUserId}
+                              participants={participants}
+                              onReply={onReply}
+                              onForward={onForward}
+                              onEdit={onEdit}
+                              onDelete={onDelete}
+                              onReaction={onReaction}
+                              onRetry={onRetry}
+                              onImageClick={handleImageClick}
                             />
                           </MessageScrollerItem>
                         );
@@ -240,6 +358,18 @@ export function ChatArea({
         onSendFile={onSendFile}
         onTypingStart={onTypingStart}
         onTypingStop={onTypingStop}
+        replyTo={replyTo}
+        onCancelReply={onCancelReply}
+        participants={participants}
+      />
+
+      {/* Image Lightbox */}
+      <ImageLightbox
+        images={lightboxImages}
+        currentIndex={lightboxIndex}
+        open={lightboxOpen}
+        onClose={() => setLightboxOpen(false)}
+        onNavigate={setLightboxIndex}
       />
     </div>
   );

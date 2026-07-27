@@ -15,7 +15,7 @@ export function UnreadBadge({ count, className }: UnreadBadgeProps) {
   return (
     <span
       className={cn(
-        "inline-flex min-w-5 items-center justify-center rounded-full bg-primary px-1.5 py-0.5 text-[11px] font-semibold leading-none text-primary-foreground",
+        "inline-flex min-w-5 items-center justify-center rounded-full bg-primary px-1.5 py-0.5 text-[11px] font-semibold leading-none text-primary-foreground animate-in zoom-in-50 duration-200",
         className,
       )}
     >

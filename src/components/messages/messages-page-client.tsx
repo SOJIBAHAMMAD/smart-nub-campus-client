@@ -2,12 +2,12 @@
 
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
-import { Loader2 } from "lucide-react";
+import { Loader2, WifiOff } from "lucide-react";
 import { toast } from "sonner";
 import { env } from "@/env";
 import { useSocket, useSocketEvent } from "@/hooks/use-socket";
 import { messageClientService as messageService } from "@/services/message.client.service";
-import type { Conversation, Message, ConversationType } from "@/types/message.types";
+import type { Conversation, Message } from "@/types/message.types";
 import type { Message as SocketMessage } from "@/lib/types/socket-events";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useMediaQuery } from "@/hooks/use-media-query";
@@ -48,6 +48,15 @@ export function MessagesPageClient({
   const [typingByConversation, setTypingByConversation] = useState<
     Record<string, { active: boolean; names?: string[]; ts?: number }>
   >({});
+
+  // Reply state
+  const [replyTo, setReplyTo] = useState<Message | null>(null);
+
+  // Search state
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<Message[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [_searchHighlightIndex, setSearchHighlightIndex] = useState(0);
 
   const searchParams = useSearchParams();
 
@@ -93,6 +102,8 @@ export function MessagesPageClient({
           : "TEXT") as Message["type"],
       isRead: msg.senderId === currentUserId,
       isDeleted: false,
+      isEdited: false,
+      isForwarded: false,
       createdAt: msg.createdAt,
       updatedAt: msg.createdAt,
     };
@@ -155,6 +166,20 @@ export function MessagesPageClient({
         m.id === receipt.messageId ? { ...m, isRead: true, readAt: receipt.readAt } : m,
       ),
     );
+  });
+
+  useSocketEvent(socket, "error:message", (data) => {
+    // Mark any stuck "sending" messages as failed
+    setMessages((prev) => {
+      const hasSending = prev.some((m) => m.status === "sending");
+      if (!hasSending) return prev;
+      return prev.map((m) =>
+        m.status === "sending" ? { ...m, status: "failed" as const } : m,
+      );
+    });
+    if (data.message) {
+      toast.error(data.message);
+    }
   });
 
   useSocketEvent(socket, "typing:update", (data) => {
@@ -244,6 +269,9 @@ export function MessagesPageClient({
       setMessages([]);
       setHasMore(false);
       setMessagesPage(1);
+      setReplyTo(null);
+      setSearchQuery("");
+      setSearchResults([]);
       const params = new URLSearchParams(Array.from(searchParams.entries()));
       params.set("c", id);
       window.history.replaceState(null, "", `?${params.toString()}`);
@@ -286,18 +314,25 @@ export function MessagesPageClient({
         type: "TEXT",
         isRead: false,
         isDeleted: false,
+        isEdited: false,
+        isForwarded: false,
+        status: "sending",
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
+        replyToId: replyTo?.id,
+        replyTo: replyTo ?? undefined,
       };
       setMessages((prev) => dedupe(prev.concat(optimistic)));
+      setReplyTo(null);
 
       socket?.emit("messaging:send", {
         conversationId: activeConversationId,
         content: text,
         type: "text",
+        replyToId: replyTo?.id,
       });
     },
-    [activeConversationId, currentUserId, socket],
+    [activeConversationId, currentUserId, socket, replyTo],
   );
 
   const sendFile = useCallback(
@@ -316,6 +351,9 @@ export function MessagesPageClient({
         fileSize: file.size,
         isRead: false,
         isDeleted: false,
+        isEdited: false,
+        isForwarded: false,
+        status: "sending",
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
@@ -339,17 +377,193 @@ export function MessagesPageClient({
         setMessages((prev) =>
           prev.map((m) =>
             m.id === tempId
-              ? { ...saved, id: saved.id, fileUrl: uploaded.url, filePublicId: uploaded.publicId }
+              ? { ...saved, id: saved.id, fileUrl: uploaded.url, filePublicId: uploaded.publicId, status: "sent" }
               : m,
           ),
         );
       } catch (err) {
-        setMessages((prev) => prev.filter((m) => m.id !== tempId));
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === tempId ? { ...m, status: "failed" } : m,
+          ),
+        );
         toast.error(err instanceof Error ? err.message : "Failed to send file.");
       }
     },
     [activeConversationId, currentUserId],
   );
+
+  const handleReply = useCallback((message: Message) => {
+    setReplyTo(message);
+  }, []);
+
+  const handleForward = useCallback((message: Message) => {
+    // Forward: pick target conversation then send
+    toast.info(`Forward "${message.content.slice(0, 30)}${message.content.length > 30 ? "..." : ""}" — select a conversation`);
+    // For now, open new message modal with forwarded state
+    setNewOpen(true);
+  }, []);
+
+  const handleEdit = useCallback(async (message: Message) => {
+    if (!activeConversationId) return;
+    const newContent = window.prompt("Edit message:", message.content);
+    if (!newContent || newContent === message.content) return;
+    try {
+      const updated = await messageService.editMessage(activeConversationId, message.id, newContent);
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === message.id ? { ...m, content: updated.content, isEdited: true, editedAt: updated.editedAt } : m,
+        ),
+      );
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to edit message.");
+    }
+  }, [activeConversationId]);
+
+  const handleDelete = useCallback(async (message: Message) => {
+    if (!activeConversationId) return;
+    if (!confirm("Delete this message?")) return;
+    try {
+      await messageService.deleteMessage(activeConversationId, message.id);
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === message.id ? { ...m, content: "This message was deleted.", isDeleted: true } : m,
+        ),
+      );
+      toast.success("Message deleted.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to delete message.");
+    }
+  }, [activeConversationId]);
+
+  const handleReaction = useCallback(async (messageId: string, emoji: string) => {
+    if (!activeConversationId) return;
+    try {
+      const reaction = await messageService.addReaction(activeConversationId, messageId, emoji);
+      setMessages((prev) =>
+        prev.map((m) => {
+          if (m.id !== messageId) return m;
+          const existing = m.reactions ?? [];
+          // Toggle: if user already reacted with this emoji, remove it
+          const alreadyExists = existing.find(
+            (r) => r.userId === reaction.userId && r.emoji === reaction.emoji,
+          );
+          if (alreadyExists) {
+            return { ...m, reactions: existing.filter((r) => r.id !== reaction.id) };
+          }
+          // Otherwise add
+          return { ...m, reactions: [...existing, reaction] };
+        }),
+      );
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to add reaction.");
+    }
+  }, [activeConversationId]);
+
+  const handleToggleMute = useCallback(async () => {
+    if (!activeConversationId) return;
+    const convo = conversations.find((c) => c.id === activeConversationId);
+    if (!convo) return;
+    const me = convo.conversationParticipants?.find((p) => p.userId === currentUserId);
+    const newMuted = !(me?.isMuted ?? false);
+    try {
+      await messageService.updateConversationSettings(activeConversationId, { isMuted: newMuted });
+      setConversations((prev) =>
+        prev.map((c) => {
+          if (c.id !== activeConversationId) return c;
+          return {
+            ...c,
+            conversationParticipants: c.conversationParticipants?.map((p) =>
+              p.userId === currentUserId ? { ...p, isMuted: newMuted } : p,
+            ),
+          };
+        }),
+      );
+      toast.success(newMuted ? "Conversation muted" : "Conversation unmuted");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to update settings.");
+    }
+  }, [activeConversationId, conversations, currentUserId]);
+
+  const handleTogglePin = useCallback(async (pinned: boolean) => {
+    if (!activeConversationId) return;
+    try {
+      await messageService.updateConversationSettings(activeConversationId, { isPinned: pinned });
+      setConversations((prev) =>
+        prev.map((c) => {
+          if (c.id !== activeConversationId) return c;
+          return {
+            ...c,
+            conversationParticipants: c.conversationParticipants?.map((p) =>
+              p.userId === currentUserId ? { ...p, isPinned: pinned } : p,
+            ),
+          };
+        }),
+      );
+      toast.success(pinned ? "Conversation pinned" : "Conversation unpinned");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to update settings.");
+    }
+  }, [activeConversationId, currentUserId]);
+
+  const handleRetry = useCallback(async (message: Message) => {
+    if (!activeConversationId || !socket) return;
+    // Mark as sending
+    setMessages((prev) =>
+      prev.map((m) =>
+        m.id === message.id ? { ...m, status: "sending" as const } : m,
+      ),
+    );
+    try {
+      if (message.type === "FILE" || message.type === "IMAGE") {
+        // For files, re-upload would be complex — just mark as failed and toast
+        toast.error("File retry not supported. Please resend the file.");
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === message.id ? { ...m, status: "failed" as const } : m,
+          ),
+        );
+        return;
+      }
+      // Resend text via socket
+      socket.emit("messaging:send", {
+        conversationId: activeConversationId,
+        content: message.content,
+        type: "text",
+        replyToId: message.replyToId,
+      });
+      // The messaging:new handler will replace the temp message
+    } catch {
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === message.id ? { ...m, status: "failed" as const } : m,
+        ),
+      );
+      toast.error("Failed to resend message.");
+    }
+  }, [activeConversationId, socket]);
+
+  const handleSearch = useCallback(async (query: string) => {
+    setSearchQuery(query);
+    if (!query || !activeConversationId) {
+      setSearchResults([]);
+      return;
+    }
+    setSearchLoading(true);
+    try {
+      const res = await messageService.listMessages({
+        conversationId: activeConversationId,
+        search: query,
+        limit: 50,
+      });
+      setSearchResults(res.messages ?? []);
+      setSearchHighlightIndex(0);
+    } catch {
+      setSearchResults([]);
+    } finally {
+      setSearchLoading(false);
+    }
+  }, [activeConversationId]);
 
   const emitTypingStart = useCallback(() => {
     if (!activeConversationId || !socket) return;
@@ -394,6 +608,13 @@ export function MessagesPageClient({
     : { active: false };
 
   const isMobile = useMediaQuery("(max-width: 767px)");
+  const _isTablet = useMediaQuery("(min-width: 768px) and (max-width: 1023px)");
+
+  const activeConvoMuted = useMemo(() => {
+    if (!activeConversation) return false;
+    const me = activeConversation.conversationParticipants?.find((p) => p.userId === currentUserId);
+    return me?.isMuted ?? false;
+  }, [activeConversation, currentUserId]);
 
   const profilePanelContent = activeConversation && (
     <UserProfilePanel
@@ -402,15 +623,30 @@ export function MessagesPageClient({
       onlineUsers={onlineUsers}
       sharedFiles={sharedFiles}
       onClose={() => setProfileOpen(false)}
+      onTogglePin={handleTogglePin}
+      onToggleMute={handleToggleMute}
     />
   );
 
   return (
     <>
+      {/* Connection status - toast-like pill at top */}
       {status !== "connected" && (
-        <div className="sticky top-0 z-20 flex items-center justify-center gap-2 bg-amber-500/10 py-1 text-xs text-amber-700">
-          <Loader2 className="size-3 animate-spin" />
-          {status === "connecting" ? "Connecting…" : "Reconnecting…"}
+        <div className="fixed top-4 left-1/2 z-50 -translate-x-1/2 animate-in fade-in slide-in-from-top-2 duration-300">
+          <div className="flex items-center gap-2 rounded-full border bg-background/95 px-4 py-2 shadow-lg backdrop-blur-sm">
+            {status === "connecting" ? (
+              <>
+                <Loader2 className="size-3.5 animate-spin text-amber-500" />
+                <span className="text-xs font-medium text-amber-600">Connecting...</span>
+              </>
+            ) : (
+              <>
+                <WifiOff className="size-3.5 text-red-500" />
+                <span className="text-xs font-medium text-red-600">Disconnected</span>
+                <span className="text-[10px] text-muted-foreground">Reconnecting...</span>
+              </>
+            )}
+          </div>
         </div>
       )}
 
@@ -449,6 +685,20 @@ export function MessagesPageClient({
               params.delete("c");
               window.history.replaceState(null, "", `?${params.toString()}`);
             }}
+            onReply={handleReply}
+            onForward={handleForward}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            onReaction={handleReaction}
+            onRetry={handleRetry}
+            onToggleMute={handleToggleMute}
+            isMuted={activeConvoMuted}
+            replyTo={replyTo}
+            onCancelReply={() => setReplyTo(null)}
+            onSearch={handleSearch}
+            searchResultCount={searchResults.length}
+            searchLoading={searchLoading}
+            searchQuery={searchQuery}
           />
         }
         profilePanel={!isMobile && profileOpen ? profilePanelContent : undefined}

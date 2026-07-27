@@ -39,8 +39,18 @@ export interface ConversationParticipant {
   lastReadAt?: string | null;
   isAdmin: boolean;
   isMuted: boolean;
+  isPinned: boolean;
   joinedAt: string;
 }
+
+export interface MessageReaction {
+  id: string;
+  userId: string;
+  emoji: string;
+  createdAt: string;
+}
+
+export type MessageSendStatus = "sending" | "sent" | "failed";
 
 export interface Message {
   id: string;
@@ -55,9 +65,16 @@ export interface Message {
   fileSize?: number | null;
   isRead: boolean;
   readAt?: string | null;
+  isEdited: boolean;
+  editedAt?: string | null;
+  isForwarded: boolean;
+  forwardedFromId?: string | null;
   replyToId?: string | null;
   replyTo?: Message | null;
+  reactions?: MessageReaction[];
   isDeleted: boolean;
+  /** UI-only field for tracking optimistic send status. */
+  status?: MessageSendStatus;
   createdAt: string;
   updatedAt: string;
 }
@@ -87,6 +104,7 @@ export interface ListMessagesParams {
   page?: number;
   limit?: number;
   before?: string;
+  search?: string;
 }
 
 export interface ConversationListResponse {
@@ -97,4 +115,16 @@ export interface ConversationListResponse {
 export interface MessageListResponse {
   messages: Message[];
   meta: import("./resource.types").PaginationMeta;
+}
+
+// ── Extended UI types ────────────────────────────────────────────────────────
+
+export interface ForwardMessagePayload {
+  targetConversationId: string;
+  messageId: string;
+}
+
+export interface ConversationSettingsUpdate {
+  isPinned?: boolean;
+  isMuted?: boolean;
 }

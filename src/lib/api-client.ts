@@ -62,6 +62,11 @@ export const apiClient = {
       method: "PATCH",
       body: JSON.stringify(body),
     }),
+  put: <T>(endpoint: string, body: unknown) =>
+    apiFetch<T>(endpoint, {
+      method: "PUT",
+      body: JSON.stringify(body),
+    }),
   del: <T>(endpoint: string, body?: unknown) =>
     apiFetch<T>(endpoint, {
       method: "DELETE",

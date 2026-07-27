@@ -18,9 +18,12 @@ interface SharedFilesProps {
 export function SharedFiles({ files, className }: SharedFilesProps) {
   if (files.length === 0) {
     return (
-      <p className={cn("px-1 text-xs text-muted-foreground", className)}>
-        No files shared yet.
-      </p>
+      <div className={cn("rounded-lg border border-dashed bg-muted/30 px-3 py-6 text-center", className)}>
+        <FileText className="mx-auto mb-1 size-5 text-muted-foreground/40" />
+        <p className="text-xs text-muted-foreground">
+          No files shared yet.
+        </p>
+      </div>
     );
   }
 

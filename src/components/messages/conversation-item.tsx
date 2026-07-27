@@ -1,3 +1,4 @@
+import { Pin, BellOff } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import type { Conversation } from "@/types/message.types";
 import { cn } from "@/lib/utils";
@@ -22,8 +23,9 @@ interface ConversationItemProps {
 }
 
 /**
- * A single row in the conversation list (Column 2). Shows avatar, name,
- * last-message preview, relative timestamp, unread badge, and online dot.
+ * A single row in the conversation list. Shows avatar, name,
+ * last-message preview, relative timestamp, unread badge, online dot,
+ * and pin/mute indicators.
  */
 export function ConversationItem({
   conversation,
@@ -43,12 +45,17 @@ export function ConversationItem({
     : undefined;
   const isOnline = otherId ? onlineUsers.has(otherId) : false;
 
+  const me = conversation.conversationParticipants?.find((p) => p.userId === currentUserId);
+  const isPinned = me?.isPinned ?? false;
+  const isMuted = me?.isMuted ?? false;
+  const hasUnread = (conversation.unreadCount ?? 0) > 0;
+
   return (
     <button
       type="button"
       onClick={() => onSelect(conversation.id)}
       className={cn(
-        "flex w-full items-start gap-3 rounded-xl px-4 py-3 text-left transition-colors",
+        "flex w-full items-start gap-3 rounded-xl px-4 py-3 text-left transition-all duration-150",
         active
           ? "bg-primary/10 ring-1 ring-primary/20"
           : "hover:bg-muted",
@@ -65,18 +72,35 @@ export function ConversationItem({
 
       <div className="min-w-0 flex-1">
         <div className="flex items-center justify-between gap-2">
-          <span className="truncate text-sm font-semibold text-foreground">
+          <span className={cn(
+            "truncate text-sm",
+            hasUnread ? "font-bold text-foreground" : "font-semibold text-foreground",
+          )}>
             {name}
           </span>
-          <span className="shrink-0 text-[11px] text-muted-foreground">
-            {conversation.lastMessageAt
-              ? formatRelativeShort(conversation.lastMessageAt)
-              : ""}
-          </span>
+          <div className="flex shrink-0 items-center gap-1">
+            {isPinned && (
+              <Pin className="size-3 text-muted-foreground" />
+            )}
+            {isMuted && (
+              <BellOff className="size-3 text-muted-foreground" />
+            )}
+            <span className={cn(
+              "text-[11px]",
+              hasUnread ? "font-medium text-foreground" : "text-muted-foreground",
+            )}>
+              {conversation.lastMessageAt
+                ? formatRelativeShort(conversation.lastMessageAt)
+                : ""}
+            </span>
+          </div>
         </div>
 
         <div className="mt-0.5 flex items-center justify-between gap-2">
-          <span className="truncate text-xs text-muted-foreground">
+          <span className={cn(
+            "truncate text-xs",
+            hasUnread ? "font-medium text-foreground" : "text-muted-foreground",
+          )}>
             {typing ? (
               <TypingIndicator names={typingNames} />
             ) : (

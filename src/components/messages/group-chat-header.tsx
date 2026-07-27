@@ -20,8 +20,7 @@ export function GroupChatHeader({
   className,
 }: GroupChatHeaderProps) {
   const members =
-    conversation.conversationParticipants?.filter((p) => p.userId !== currentUserId) ??
-    [];
+    conversation.conversationParticipants?.filter((p) => p.userId !== currentUserId) ?? [];
   const onlineCount = members.filter((m) => m.user && onlineUsers.has(m.user.id)).length;
 
   return (
@@ -37,7 +36,10 @@ export function GroupChatHeader({
           {conversation.name ?? "Group"}
         </p>
         <p className="text-xs text-muted-foreground">
-          {members.length + 1} members · {onlineCount} online
+          {members.length + 1} members
+          {onlineCount > 0 && (
+            <span className="text-emerald-600"> · {onlineCount} online</span>
+          )}
         </p>
       </div>
 

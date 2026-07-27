@@ -3,10 +3,12 @@ import { buildQueryString } from "@/lib/utils";
 import type {
   Conversation,
   Message,
+  MessageReaction,
   ListConversationsParams,
   ListMessagesParams,
   ConversationListResponse,
   MessageListResponse,
+  ConversationSettingsUpdate,
 } from "@/types/message.types";
 
 function unwrap<T>(data: unknown): T {
@@ -70,6 +72,7 @@ export const messageClientService = {
               user: { id: otherUser.id, name: otherUser.name, image: otherUser.image },
               isAdmin: false,
               isMuted: false,
+              isPinned: false,
               joinedAt: raw.createdAt as string,
             },
           ]
@@ -104,6 +107,8 @@ export const messageClientService = {
       filePublicId?: string;
       fileName?: string;
       fileSize?: number;
+      isForwarded?: boolean;
+      forwardedFromId?: string;
     },
   ): Promise<Message> {
     const res = await apiClient.post<Message>(
@@ -113,8 +118,63 @@ export const messageClientService = {
     return unwrap<Message>(res.data);
   },
 
+  async editMessage(
+    conversationId: string,
+    messageId: string,
+    content: string,
+  ): Promise<Message> {
+    const res = await apiClient.put<Message>(
+      `/messages/conversations/${conversationId}/messages/${messageId}`,
+      { content },
+    );
+    return unwrap<Message>(res.data);
+  },
+
+  async deleteMessage(
+    conversationId: string,
+    messageId: string,
+  ): Promise<void> {
+    await apiClient.del(
+      `/messages/conversations/${conversationId}/messages/${messageId}`,
+    );
+  },
+
+  async addReaction(
+    conversationId: string,
+    messageId: string,
+    emoji: string,
+  ): Promise<MessageReaction> {
+    const res = await apiClient.post<MessageReaction>(
+      `/messages/conversations/${conversationId}/messages/${messageId}/reactions`,
+      { emoji },
+    );
+    return unwrap<MessageReaction>(res.data);
+  },
+
+  async forwardMessage(
+    sourceConversationId: string,
+    targetConversationId: string,
+    messageId: string,
+  ): Promise<Message> {
+    const res = await apiClient.post<Message>(
+      `/messages/conversations/${sourceConversationId}/messages/forward`,
+      { targetConversationId, messageId },
+    );
+    return unwrap<Message>(res.data);
+  },
+
   async markAsRead(conversationId: string): Promise<void> {
     await apiClient.post(`/messages/conversations/${conversationId}/read`, {});
+  },
+
+  async updateConversationSettings(
+    conversationId: string,
+    settings: ConversationSettingsUpdate,
+  ): Promise<void> {
+    await apiClient.put(
+      `/messages/conversations/${conversationId}/settings`,
+      settings,
+    );
   },
 
   async createGroup(data: {
