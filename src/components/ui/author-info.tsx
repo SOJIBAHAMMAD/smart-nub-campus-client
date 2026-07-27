@@ -13,6 +13,8 @@ interface AuthorInfoProps {
   timestamp: string;
   size?: "sm" | "md";
   className?: string;
+  /** When false, renders the name as plain text instead of a link. */
+  linked?: boolean;
 }
 
 const avatarSizes = {
@@ -31,7 +33,20 @@ export function AuthorInfo({
   timestamp,
   size = "sm",
   className,
+  linked = true,
 }: AuthorInfoProps) {
+  const nameContent = (
+    <span
+      className={cn(
+        "truncate font-medium text-foreground",
+        linked && "hover:text-primary transition-colors",
+        textSizes[size],
+      )}
+    >
+      {user.name}
+    </span>
+  );
+
   return (
     <div className={cn("flex items-center gap-1.5", className)}>
       <Avatar
@@ -41,15 +56,13 @@ export function AuthorInfo({
         className={avatarSizes[size]}
       />
       <div className="flex items-center gap-1 min-w-0">
-        <Link
-          href={`/profile/${user.id}`}
-          className={cn(
-            "truncate font-medium text-foreground hover:text-primary transition-colors",
-            textSizes[size],
-          )}
-        >
-          {user.name}
-        </Link>
+        {linked ? (
+          <Link href={`/profile/${user.id}`}>
+            {nameContent}
+          </Link>
+        ) : (
+          nameContent
+        )}
         {action && (
           <span className="shrink-0 text-muted-foreground">
             {action}

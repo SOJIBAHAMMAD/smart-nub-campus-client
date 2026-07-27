@@ -1,37 +1,54 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { MessageCircle, ArrowUpDown } from "lucide-react";
+import { MessageCircle, ArrowUpDown, TrendingUp, Clock, History } from "lucide-react";
 import { CommentItem } from "@/components/resources/comment-item";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { listResourceComments, addResourceComment, deleteResourceComment } from "@/actions/resource.actions";
+import { Avatar } from "@/components/ui/avatar";
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
+import {
+  listResourceComments,
+  addResourceComment,
+  deleteResourceComment,
+  voteComment,
+  editResourceComment,
+} from "@/actions/resource.actions";
 import type { Comment } from "@/types/resource.types";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type SortOption = "newest" | "oldest" | "most_upvoted";
 
 interface CommentSectionProps {
-  /** The resource ID to fetch and post comments for. */
   resourceId: string;
-  /** The current user's ID, or null if not logged in. */
   currentUserId?: string | null;
 }
 
-/**
- * Comments section for the resource detail page.
- * Fetches and renders comments with add, sort, and reply functionality.
- */
 export function CommentSection({ resourceId, currentUserId = null }: CommentSectionProps) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
   const [newComment, setNewComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>("newest");
-  const [showSortMenu, setShowSortMenu] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
-  /** Fetch comments for the resource. */
   useEffect(() => {
     let cancelled = false;
 
@@ -53,7 +70,6 @@ export function CommentSection({ resourceId, currentUserId = null }: CommentSect
     return () => { cancelled = true; };
   }, [resourceId]);
 
-  /** Submit a new top-level comment. */
   async function handleSubmitComment() {
     if (!newComment.trim() || submitting) return;
     setSubmitting(true);
@@ -74,7 +90,6 @@ export function CommentSection({ resourceId, currentUserId = null }: CommentSect
     }
   }
 
-  /** Handle reply to a comment. */
   async function handleReply(parentId: string, content: string) {
     try {
       const result = await addResourceComment(resourceId, {
@@ -109,9 +124,7 @@ export function CommentSection({ resourceId, currentUserId = null }: CommentSect
     }
   }
 
-  /** Handle comment deletion. */
   async function handleDelete(commentId: string) {
-    if (!window.confirm("Are you sure you want to delete this comment?")) return;
     try {
       const result = await deleteResourceComment(commentId);
       if (result.success) {
@@ -123,13 +136,81 @@ export function CommentSection({ resourceId, currentUserId = null }: CommentSect
               replies: (c.replies ?? []).filter((r) => r.id !== commentId),
             }))
         );
+        toast.success("Comment deleted.");
       }
     } catch {
-      // Error silently handled
+      toast.error("Failed to delete comment.");
     }
   }
 
-  /** Count all comments including replies. */
+  async function handleVote(commentId: string, type: "UP" | "DOWN") {
+    try {
+      const result = await voteComment(commentId, type);
+      if (result.success && result.data) {
+        const data = result.data as { upvoteCount: number; downvoteCount: number; action: string };
+        setComments((prev) =>
+          prev.map((c) => {
+            if (c.id === commentId) {
+              return {
+                ...c,
+                upvoteCount: data.upvoteCount,
+                downvoteCount: data.downvoteCount,
+                userCommentVote: data.action === "removed" ? null : type,
+              };
+            }
+            if (c.replies) {
+              return {
+                ...c,
+                replies: c.replies.map((r) =>
+                  r.id === commentId
+                    ? {
+                        ...r,
+                        upvoteCount: data.upvoteCount,
+                        downvoteCount: data.downvoteCount,
+                        userCommentVote: data.action === "removed" ? null : type,
+                      }
+                    : r
+                ),
+              };
+            }
+            return c;
+          })
+        );
+      }
+    } catch {
+      toast.error("Failed to record vote.");
+    }
+  }
+
+  async function handleEdit(commentId: string, content: string) {
+    try {
+      const result = await editResourceComment(commentId, content);
+      if (result.success) {
+        setComments((prev) =>
+          prev.map((c) => {
+            if (c.id === commentId) {
+              return { ...c, content, updatedAt: new Date().toISOString() };
+            }
+            if (c.replies) {
+              return {
+                ...c,
+                replies: c.replies.map((r) =>
+                  r.id === commentId
+                    ? { ...r, content, updatedAt: new Date().toISOString() }
+                    : r
+                ),
+              };
+            }
+            return c;
+          })
+        );
+        toast.success("Comment updated.");
+      }
+    } catch {
+      toast.error("Failed to update comment.");
+    }
+  }
+
   function countAllComments(): number {
     return comments.reduce((acc, c) => {
       let count = 1;
@@ -143,7 +224,6 @@ export function CommentSection({ resourceId, currentUserId = null }: CommentSect
     }, 0);
   }
 
-  /** Sort comments based on selected option. */
   function getSortedComments(): Comment[] {
     const sorted = [...comments];
     switch (sortBy) {
@@ -156,122 +236,158 @@ export function CommentSection({ resourceId, currentUserId = null }: CommentSect
           (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
         );
       case "most_upvoted":
-        return sorted;
+        return sorted.sort(
+          (a, b) => (b.upvoteCount ?? 0) - (a.upvoteCount ?? 0)
+        );
       default:
         return sorted;
     }
   }
 
+  const sortIcons: Record<SortOption, React.ReactNode> = {
+    newest: <Clock className="size-3.5" />,
+    oldest: <History className="size-3.5" />,
+    most_upvoted: <TrendingUp className="size-3.5" />,
+  };
+
   const sortLabels: Record<SortOption, string> = {
-    newest: "Newest First",
-    oldest: "Oldest First",
-    most_upvoted: "Most Upvoted",
+    newest: "Newest",
+    oldest: "Oldest",
+    most_upvoted: "Top",
   };
 
   return (
     <div className="space-y-4">
-      {/* ── Header ────────────────────────────────────────────────── */}
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <MessageCircle className="size-5 text-foreground" />
           <h2 className="text-lg font-semibold text-foreground">
-            Comments ({countAllComments()})
+            {countAllComments()} Comment{countAllComments() !== 1 ? "s" : ""}
           </h2>
         </div>
 
-        {/* Sort dropdown */}
-        <div className="relative">
-          <button
-            onClick={() => setShowSortMenu(!showSortMenu)}
-            className="flex items-center gap-1.5 rounded-lg border bg-card px-2.5 py-1.5 text-xs text-muted-foreground ring-1 ring-foreground/10 transition-colors hover:bg-muted"
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            render={
+              <button className="flex items-center gap-1.5 rounded-lg border bg-card px-2.5 py-1.5 text-xs text-muted-foreground ring-1 ring-foreground/10 transition-colors hover:bg-muted">
+                {sortIcons[sortBy]}
+                {sortLabels[sortBy]}
+              </button>
+            }
+          />
+          <DropdownMenuContent align="end">
+            {(Object.keys(sortLabels) as SortOption[]).map((option) => (
+              <DropdownMenuItem
+                key={option}
+                onClick={() => setSortBy(option)}
+              >
+                {sortIcons[option]}
+                {sortLabels[option]}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      {/* New comment input */}
+      <div className="rounded-xl border bg-card p-3 ring-1 ring-foreground/5 sm:p-4">
+        <div className="flex gap-3">
+          <Avatar
+            id={currentUserId ?? ""}
+            name="You"
+            className="size-8 shrink-0 mt-0.5"
+          />
+          <div className="flex-1 min-w-0">
+            <RichTextEditor
+              value={newComment}
+              onChange={setNewComment}
+              placeholder="Share your thoughts on this resource..."
+              className="text-sm"
+            />
+          </div>
+        </div>
+        <div className="mt-3 flex items-center justify-end gap-2">
+          <Button
+            size="sm"
+            onClick={handleSubmitComment}
+            disabled={!newComment.trim() || submitting}
           >
-            <ArrowUpDown className="size-3" />
-            {sortLabels[sortBy]}
-          </button>
-          {showSortMenu && (
-            <>
-              <div className="fixed inset-0 z-10" onClick={() => setShowSortMenu(false)} />
-              <div className="absolute right-0 top-full z-20 mt-1 w-36 rounded-lg border bg-card py-1 shadow-md ring-1 ring-foreground/10">
-                {(Object.keys(sortLabels) as SortOption[]).map((option) => (
-                  <button
-                    key={option}
-                    onClick={() => {
-                      setSortBy(option);
-                      setShowSortMenu(false);
-                    }}
-                    className={cn(
-                      "flex w-full items-center px-3 py-1.5 text-xs transition-colors",
-                      sortBy === option
-                        ? "bg-primary/10 text-primary font-medium"
-                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                    )}
-                  >
-                    {sortLabels[option]}
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
+            {submitting ? "Posting..." : "Comment"}
+          </Button>
         </div>
       </div>
 
-      {/* ── New comment input ─────────────────────────────────────── */}
-      <div className="flex gap-3">
-        <textarea
-          value={newComment}
-          onChange={(e) => setNewComment(e.target.value)}
-          placeholder="Add a comment..."
-          maxLength={5000}
-          className="flex-1 resize-none rounded-xl border bg-card px-3 py-2.5 text-sm outline-none ring-1 ring-foreground/10 transition-colors placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/50"
-          rows={3}
-        />
-      </div>
-      <div className="flex items-center justify-between">
-        <span className="text-xs text-muted-foreground">{newComment.length}/5000</span>
-        <Button
-          size="sm"
-          onClick={handleSubmitComment}
-          disabled={!newComment.trim() || submitting}
-        >
-          {submitting ? "Posting..." : "Post Comment"}
-        </Button>
-      </div>
-
-      {/* ── Comments list ─────────────────────────────────────────── */}
+      {/* Comments list */}
       {loading ? (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="animate-pulse rounded-lg bg-muted/50 p-3">
+            <div key={i} className="animate-pulse rounded-xl bg-card p-4 ring-1 ring-foreground/5">
               <div className="flex items-center gap-2">
                 <div className="size-6 rounded-full bg-muted" />
                 <div className="h-3 w-20 rounded bg-muted" />
+                <div className="h-3 w-12 rounded bg-muted" />
               </div>
-              <div className="mt-2 h-4 w-3/4 rounded bg-muted" />
+              <div className="mt-3 space-y-1.5">
+                <div className="h-3.5 w-3/4 rounded bg-muted" />
+                <div className="h-3.5 w-1/2 rounded bg-muted" />
+              </div>
             </div>
           ))}
         </div>
       ) : comments.length === 0 ? (
-        <Card>
-          <CardContent className="p-8 text-center ring-1 ring-foreground/10">
-            <MessageCircle className="mx-auto size-8 text-muted-foreground/50" />
-            <p className="mt-2 text-sm text-muted-foreground">
-              No comments yet. Be the first to comment!
+        <Empty>
+          <EmptyHeader>
+            <EmptyMedia>
+              <MessageCircle className="size-10" />
+            </EmptyMedia>
+            <EmptyTitle>No comments yet</EmptyTitle>
+            <p className="text-sm text-muted-foreground">
+              Be the first to share your thoughts on this resource.
             </p>
-          </CardContent>
-        </Card>
+          </EmptyHeader>
+        </Empty>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-2">
           {getSortedComments().map((comment) => (
             <CommentItem
               key={comment.id}
               comment={comment}
               currentUserId={currentUserId}
-              onReply={(parentId, content) => handleReply(parentId, content)}
-              onDelete={handleDelete}
+              onReply={handleReply}
+              onDelete={(id) => setDeleteTarget(id)}
+              onVote={handleVote}
+              onEdit={handleEdit}
             />
           ))}
         </div>
       )}
+
+      {/* Delete confirmation dialog */}
+      <AlertDialog open={deleteTarget != null} onOpenChange={() => setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete comment?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. The comment will be permanently removed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (deleteTarget) {
+                  handleDelete(deleteTarget);
+                  setDeleteTarget(null);
+                }
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

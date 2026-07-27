@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronUp, Bookmark, Download, Eye, CheckCircle2 } from "lucide-react";
+import { Bookmark, Download, Eye, CheckCircle2 } from "lucide-react";
 import type { Resource } from "@/types/resource.types";
 import { FileIcon, getFileColor, getFileLabel, formatFileSize } from "@/components/resources/file-type-utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { TagPill } from "@/components/ui/tag-pill";
 import { AuthorInfo } from "@/components/ui/author-info";
-import { Metric } from "@/components/ui/metric";
+import { VoteControls } from "@/components/ui/vote-controls";
 import { cn } from "@/lib/utils";
 
 interface ResourceCardProps {
@@ -17,11 +17,14 @@ interface ResourceCardProps {
   onBookmark?: (resourceId: string, currentBookmarked: boolean) => void;
 }
 
+/** Strip HTML tags for plain-text display in cards. */
+function stripHtml(html: string): string {
+  return html.replace(/<[^>]*>/g, "").trim();
+}
+
 export function ResourceCard({ resource, variant = "grid", onVote, onBookmark }: ResourceCardProps) {
   const fileColor = getFileColor(resource.fileType);
   const fileLabel = getFileLabel(resource.fileType);
-
-  const upvoted = resource.userVote === "UP";
   const bookmarked = resource.isBookmarked ?? false;
 
   const stop = (e: React.MouseEvent) => e.preventDefault();
@@ -30,20 +33,29 @@ export function ResourceCard({ resource, variant = "grid", onVote, onBookmark }:
     return (
       <Card data-interactive className="group">
         <Link href={`/resources/${resource.id}`} className="contents">
-          <CardContent className="flex gap-4 py-4">
+          <CardContent className="flex gap-3 py-3 sm:gap-4 sm:py-4">
+            {/* Vote controls (vertical, always visible on list cards) */}
+            <div className="hidden shrink-0 sm:block">
+              <VoteControls
+                upvotes={resource.upvoteCount}
+                downvotes={resource.downvoteCount ?? 0}
+                activeVote={resource.userVote ?? null}
+                onVote={(type) => onVote?.(resource.id, resource.userVote)}
+                orientation="vertical"
+                size="sm"
+              />
+            </div>
+
             {/* File type icon */}
             <div className={cn(
-              "flex size-12 shrink-0 flex-col items-center justify-center rounded-xl",
+              "flex size-11 shrink-0 items-center justify-center rounded-xl sm:size-12",
               fileColor,
             )}>
               <FileIcon fileType={resource.fileType} className="size-5" />
-              <span className="mt-0.5 text-[9px] font-bold uppercase leading-none opacity-70">
-                {fileLabel}
-              </span>
             </div>
 
             {/* Main content */}
-            <div className="min-w-0 flex-1 space-y-1.5">
+            <div className="min-w-0 flex-1 space-y-1">
               {/* Title row */}
               <div className="flex items-start gap-2">
                 <h3 className="flex-1 text-sm font-semibold text-foreground line-clamp-1 group-hover/link:text-primary">
@@ -72,7 +84,7 @@ export function ResourceCard({ resource, variant = "grid", onVote, onBookmark }:
               {/* Description */}
               {resource.description && (
                 <p className="text-xs text-muted-foreground line-clamp-1">
-                  {resource.description}
+                  {stripHtml(resource.description)}
                 </p>
               )}
 
@@ -92,10 +104,10 @@ export function ResourceCard({ resource, variant = "grid", onVote, onBookmark }:
                 </div>
               )}
 
-              {/* Bottom row: author + meta + vote */}
-              <div className="flex items-center gap-3 pt-0.5">
+              {/* Bottom row: author + meta */}
+              <div className="flex items-center gap-2 pt-0.5">
                 {resource.uploader && (
-                  <AuthorInfo user={resource.uploader} timestamp={resource.createdAt} size="sm" />
+                  <AuthorInfo user={resource.uploader} timestamp={resource.createdAt} size="sm" linked={false} />
                 )}
 
                 <span className="text-muted-foreground/40">·</span>
@@ -125,16 +137,17 @@ export function ResourceCard({ resource, variant = "grid", onVote, onBookmark }:
                       {resource.viewCount}
                     </span>
                   )}
-                  <button
-                    onClick={(e) => {
-                      stop(e);
-                      onVote?.(resource.id, resource.userVote);
-                    }}
-                    className={cn(upvoted && "text-primary")}
-                    aria-label="Upvote"
-                  >
-                    <Metric icon={ChevronUp} value={resource.upvoteCount} />
-                  </button>
+                  {/* Mobile vote */}
+                  <div className="sm:hidden">
+                    <VoteControls
+                      upvotes={resource.upvoteCount}
+                      downvotes={resource.downvoteCount ?? 0}
+                      activeVote={resource.userVote ?? null}
+                      onVote={(type) => onVote?.(resource.id, resource.userVote)}
+                      orientation="horizontal"
+                      size="sm"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -164,6 +177,12 @@ export function ResourceCard({ resource, variant = "grid", onVote, onBookmark }:
             {resource.title}
           </h3>
 
+          {resource.description && (
+            <p className="text-xs text-muted-foreground line-clamp-2">
+              {stripHtml(resource.description)}
+            </p>
+          )}
+
           {resource.resourceTags && resource.resourceTags.length > 0 && (
             <div className="flex flex-wrap gap-1">
               {resource.resourceTags.slice(0, 3).map((rt) =>
@@ -176,19 +195,17 @@ export function ResourceCard({ resource, variant = "grid", onVote, onBookmark }:
 
           <div className="flex items-center justify-between border-t border-border/40 pt-3">
             {resource.uploader && (
-              <AuthorInfo user={resource.uploader} timestamp={resource.createdAt} size="sm" />
+              <AuthorInfo user={resource.uploader} timestamp={resource.createdAt} size="sm" linked={false} />
             )}
-            <div className="flex items-center gap-1">
-              <button
-                onClick={(e) => {
-                  stop(e);
-                  onVote?.(resource.id, resource.userVote);
-                }}
-                className={cn(upvoted && "text-primary")}
-                aria-label="Upvote"
-              >
-                <Metric icon={ChevronUp} value={resource.upvoteCount} />
-              </button>
+            <div className="flex items-center gap-2">
+              <VoteControls
+                upvotes={resource.upvoteCount}
+                downvotes={resource.downvoteCount ?? 0}
+                activeVote={resource.userVote ?? null}
+                onVote={(type) => onVote?.(resource.id, resource.userVote)}
+                orientation="horizontal"
+                size="sm"
+              />
               <button
                 onClick={(e) => {
                   stop(e);

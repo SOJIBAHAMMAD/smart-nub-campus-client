@@ -6,7 +6,9 @@ import { Upload, X, FileText, CheckCircle, AlertCircle, Loader2 } from "lucide-r
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TagInput, type TagInputTag } from "@/components/ui/tag-input";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { createResource } from "@/actions/resource.actions";
 import { uploadService } from "@/services/upload.service";
 import type { ResourceCourse, ResourceCategory } from "@/types/resource.types";
@@ -272,57 +274,58 @@ export function ResourceUploadForm({
           {/* Description */}
           <div className="space-y-1.5">
             <Label htmlFor="description">Description</Label>
-            <textarea
-              id="description"
+            <RichTextEditor
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Brief description of the resource..."
-              rows={3}
-              disabled={stage === "uploading" || stage === "submitting"}
-              className="w-full resize-none rounded-md border bg-transparent px-2.5 py-1.5 text-sm outline-none ring-1 ring-foreground/10 transition-colors placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/50 disabled:opacity-50"
+              onChange={setDescription}
+              placeholder="Describe what's in this resource..."
+              className="text-sm min-h-[120px]"
             />
           </div>
 
           {/* Course */}
           <div className="space-y-1.5">
-            <Label htmlFor="course">
+            <Label>
               Course <span className="text-destructive">*</span>
             </Label>
-            <select
-              id="course"
+            <Select
               value={courseId}
-              onChange={(e) => setCourseId(e.target.value)}
+              onValueChange={(v) => setCourseId(v ?? "")}
               disabled={stage === "uploading" || stage === "submitting"}
-              className="h-9 w-full rounded-md border bg-transparent px-2.5 text-sm outline-none ring-1 ring-foreground/10 transition-colors focus:border-ring focus:ring-2 focus:ring-ring/50 disabled:opacity-50"
             >
-              <option value="">Select a course</option>
-              {courses.map((course) => (
-                <option key={course.id} value={course.id}>
-                  {course.code} — {course.name}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger className="h-9">
+                <SelectValue placeholder="Select a course" />
+              </SelectTrigger>
+              <SelectContent>
+                {courses.map((course) => (
+                  <SelectItem key={course.id} value={course.id}>
+                    {course.code} — {course.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Category */}
           <div className="space-y-1.5">
-            <Label htmlFor="category">
+            <Label>
               Category <span className="text-destructive">*</span>
             </Label>
-            <select
-              id="category"
+            <Select
               value={categoryId}
-              onChange={(e) => setCategoryId(e.target.value)}
+              onValueChange={(v) => setCategoryId(v ?? "")}
               disabled={stage === "uploading" || stage === "submitting"}
-              className="h-9 w-full rounded-md border bg-transparent px-2.5 text-sm outline-none ring-1 ring-foreground/10 transition-colors focus:border-ring focus:ring-2 focus:ring-ring/50 disabled:opacity-50"
             >
-              <option value="">Select a category</option>
-              {categories.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.name}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger className="h-9">
+                <SelectValue placeholder="Select a category" />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map((cat) => (
+                  <SelectItem key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Tags */}

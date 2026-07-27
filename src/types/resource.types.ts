@@ -111,6 +111,9 @@ export interface Comment {
   user?: ResourceUploader;
   parentId?: string | null;
   replies?: Comment[];
+  upvoteCount: number;
+  downvoteCount: number;
+  userCommentVote?: VoteType | null;
   isDeleted: boolean;
   createdAt: string;
   updatedAt: string;

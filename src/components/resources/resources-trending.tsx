@@ -5,6 +5,7 @@ import { TrendingUp, Tag, Users, FileText, ChevronRight } from "lucide-react";
 import { TagPill } from "@/components/ui/tag-pill";
 import type { Resource } from "@/types/resource.types";
 import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 import Image from "next/image";
 
 interface LeaderboardEntry {
@@ -51,9 +52,15 @@ export function ResourcesTrending({
               <Link
                 key={resource.id}
                 href={`/resources/${resource.id}`}
-                className="flex items-start gap-3 rounded-lg border bg-card p-2.5 ring-1 ring-foreground/10 transition-all hover:shadow-sm"
+                className="flex items-start gap-3 rounded-lg border bg-card p-2.5 ring-1 ring-foreground/5 transition-all hover:shadow-sm hover:ring-foreground/10"
               >
-                <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+                <span className={cn(
+                  "flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-bold",
+                  idx === 0 ? "bg-yellow-500/15 text-yellow-600 dark:text-yellow-400"
+                    : idx === 1 ? "bg-muted text-muted-foreground"
+                    : idx === 2 ? "bg-orange-500/15 text-orange-600 dark:text-orange-400"
+                    : "bg-primary/10 text-primary"
+                )}>
                   {idx + 1}
                 </span>
                 <div className="min-w-0 flex-1">

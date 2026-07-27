@@ -76,9 +76,10 @@ export async function deleteResource(id: string): Promise<ApiResponse> {
 
 export async function voteResource(
   resourceId: string,
+  type: "UP" | "DOWN" = "UP",
 ): Promise<ApiResponse> {
   try {
-    const data = await resourceService.toggleVote(resourceId);
+    const data = await resourceService.toggleVote(resourceId, type);
     return { success: true, message: "Vote toggled.", data };
   } catch (error) {
     const message =
@@ -152,6 +153,34 @@ export async function deleteResourceComment(
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to delete comment.";
+    return { success: false, message };
+  }
+}
+
+export async function voteComment(
+  commentId: string,
+  type: "UP" | "DOWN" = "UP",
+): Promise<ApiResponse> {
+  try {
+    const data = await resourceService.toggleCommentVote(commentId, type);
+    return { success: true, message: "Vote toggled.", data };
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to record vote.";
+    return { success: false, message };
+  }
+}
+
+export async function editResourceComment(
+  commentId: string,
+  content: string,
+): Promise<ApiResponse> {
+  try {
+    const data = await resourceService.editComment(commentId, content);
+    return { success: true, message: "Comment updated.", data };
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to update comment.";
     return { success: false, message };
   }
 }

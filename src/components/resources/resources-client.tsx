@@ -16,6 +16,8 @@ import { ResourceCard } from "@/components/resources/resource-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { listResources, voteResource, bookmarkResource } from "@/actions/resource.actions";
 import type { Resource, ResourceCategory, PaginationMeta } from "@/types/resource.types";
 import { cn } from "@/lib/utils";
@@ -190,27 +192,35 @@ export function ResourcesClient({
 
   // ── Optimistic vote toggle ─────────────────────────────────────
   const handleVote = useCallback(async (resourceId: string, currentVote: Resource["userVote"]) => {
-    // Update UI instantly
+    const wasUp = currentVote === "UP";
+    const wasDown = currentVote === "DOWN";
+
+    // Optimistically set to upvote
     setResources((prev) =>
       prev.map((r) => {
         if (r.id !== resourceId) return r;
-        const wasUp = currentVote === "UP";
         return {
           ...r,
-          userVote: wasUp ? null : "UP",
-          upvoteCount: r.upvoteCount + (wasUp ? -1 : 1),
+          userVote: "UP" as const,
+          upvoteCount: r.upvoteCount + (wasUp ? -1 : wasDown ? 1 : 1),
+          downvoteCount: r.downvoteCount + (wasDown ? -1 : 0),
         };
       }),
     );
 
     try {
-      const result = await voteResource(resourceId);
+      const result = await voteResource(resourceId, "UP");
       if (result.success && result.data) {
-        const data = result.data as { upvoteCount: number; action: string };
+        const data = result.data as { upvoteCount: number; downvoteCount: number; action: string };
         setResources((prev) =>
           prev.map((r) =>
             r.id === resourceId
-              ? { ...r, upvoteCount: data.upvoteCount, userVote: data.action === "added" ? "UP" : data.action === "updated" ? "UP" : null }
+              ? {
+                  ...r,
+                  upvoteCount: data.upvoteCount,
+                  downvoteCount: data.downvoteCount,
+                  userVote: data.action === "removed" ? null : "UP",
+                }
               : r,
           ),
         );
@@ -220,7 +230,7 @@ export function ResourcesClient({
       setResources((prev) =>
         prev.map((r) =>
           r.id === resourceId
-            ? { ...r, userVote: currentVote, upvoteCount: r.upvoteCount + (currentVote === "UP" ? 1 : -1) }
+            ? { ...r, userVote: currentVote, upvoteCount: r.upvoteCount + (wasUp ? 1 : -1), downvoteCount: r.downvoteCount + (wasDown ? -1 : 0) }
             : r,
         ),
       );
@@ -361,17 +371,18 @@ export function ResourcesClient({
             Filters
           </Button>
 
-          <select
-            value={sort}
-            onChange={(e) => updateParams({ sort: e.target.value })}
-            className="h-9 rounded-md border bg-transparent px-2.5 text-sm outline-none ring-1 ring-foreground/10"
-          >
-            {SORT_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
+          <Select value={sort} onValueChange={(val) => updateParams({ sort: val })}>
+            <SelectTrigger className="h-9 w-full sm:w-[160px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {SORT_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {/* ── Mobile Filters Panel ────────────────────────────────── */}
@@ -380,18 +391,22 @@ export function ResourcesClient({
             <div className="space-y-3">
               <div>
                 <label className="text-xs font-semibold text-muted-foreground">Category</label>
-                <select
-                  value={categorySlug ?? ""}
-                  onChange={(e) => updateParams({ category: e.target.value || null })}
-                  className="mt-1 h-8 w-full rounded-md border bg-transparent px-2 text-xs outline-none ring-1 ring-foreground/10"
+                <Select
+                  value={categorySlug ?? "__all__"}
+                  onValueChange={(val) => updateParams({ category: val === "__all__" ? null : val })}
                 >
-                  <option value="">All Categories</option>
-                  {categories.map((cat) => (
-                    <option key={cat.id} value={cat.slug}>
-                      {cat.name}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger className="mt-1 h-8">
+                    <SelectValue placeholder="All Categories" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__all__">All Categories</SelectItem>
+                    {categories.map((cat) => (
+                      <SelectItem key={cat.id} value={cat.slug}>
+                        {cat.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </div>
@@ -447,15 +462,17 @@ export function ResourcesClient({
             </div>
           )
         ) : resources.length === 0 ? (
-          <Card>
-            <CardContent className="p-12 text-center ring-1 ring-foreground/10">
-              <Search className="mx-auto size-10 text-muted-foreground/40" />
-              <p className="mt-3 text-sm font-medium text-foreground">No resources found</p>
-              <p className="mt-1 text-xs text-muted-foreground">
+          <Empty>
+            <EmptyHeader>
+              <EmptyMedia>
+                <Search className="size-10" />
+              </EmptyMedia>
+              <EmptyTitle>No resources found</EmptyTitle>
+              <p className="text-sm text-muted-foreground">
                 Try adjusting your search or filters.
               </p>
-            </CardContent>
-          </Card>
+            </EmptyHeader>
+          </Empty>
         ) : view === "grid" ? (
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {resources.map((resource) => (

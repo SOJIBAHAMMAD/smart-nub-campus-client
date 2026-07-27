@@ -138,6 +138,28 @@ export const resourceService = {
     await serverApi.del(`/resources/comments/${commentId}`);
   },
 
+  async toggleCommentVote(
+    commentId: string,
+    type: "UP" | "DOWN" = "UP",
+  ): Promise<{ action: string; upvoteCount: number; downvoteCount: number }> {
+    const response = await serverApi.post<{ action: string; upvoteCount: number; downvoteCount: number }>(
+      `/resources/comments/${commentId}/upvote`,
+      { type },
+    );
+    return response.data!;
+  },
+
+  async editComment(
+    commentId: string,
+    content: string,
+  ): Promise<Comment> {
+    const response = await serverApi.patch<Comment>(
+      `/resources/comments/${commentId}`,
+      { content },
+    );
+    return response.data!;
+  },
+
   async reportResource(
     resourceId: string,
     data: { reason: string; description?: string },
