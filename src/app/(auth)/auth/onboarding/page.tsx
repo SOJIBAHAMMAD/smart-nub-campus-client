@@ -2,6 +2,7 @@ import { OnboardingFlow } from "./_components/OnboardingFlow";
 import { onboardingService } from "@/services/onboarding.service";
 import ROUTES from "@/constants/routes";
 import type { VerificationRequestData } from "@/types";
+import { Hyperlink } from "@/components/ui/hyperlink";
 
 export default async function OnboardingPage() {
   let step;
@@ -23,12 +24,9 @@ export default async function OnboardingPage() {
           <p className="text-sm text-destructive">
             Failed to load onboarding data. Please try again.
           </p>
-          <a
-            href={ROUTES.ONBOARDING}
-            className="text-sm text-brand underline hover:no-underline"
-          >
+          <Hyperlink href={ROUTES.ONBOARDING} className="text-sm text-brand">
             Retry
-          </a>
+          </Hyperlink>
         </div>
       </div>
     );

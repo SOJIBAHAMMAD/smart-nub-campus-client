@@ -33,7 +33,7 @@ export default function AuthPage() {
 
             <div className="mt-5 sm:mt-8 space-y-4 sm:space-y-6">
               {/* New Student Card */}
-              <Card className="rounded-2xl sm:rounded-3xl bg-brand/5 hover:bg-brand/6 border-border [--card-spacing:--spacing(3)] sm:[--card-spacing:--spacing(6)]">
+              <Card className="rounded-2xl pb-4 sm:rounded-3xl bg-brand/5 hover:bg-brand/6 border-border [--card-spacing:--spacing(3)] sm:[--card-spacing:--spacing(6)]">
                 <CardHeader className="flex flex-row gap-3 sm:gap-5 items-start">
                   <div className="flex h-11 w-11 sm:h-16 sm:w-16 shrink-0 items-center justify-center rounded-full bg-brand-light dark:bg-primary/20">
                     <User className="h-5 w-5 sm:h-8 sm:w-8 text-brand dark:text-primary" />
@@ -61,7 +61,7 @@ export default function AuthPage() {
               </Card>
 
               {/* Verified Student Card */}
-              <Card className="rounded-2xl sm:rounded-3xl bg-success/1 hover:bg-success/4 border-border [--card-spacing:--spacing(3)] sm:[--card-spacing:--spacing(6)]">
+              <Card className="rounded-2xl pb-4 sm:rounded-3xl bg-success/1 hover:bg-success/4 border-border [--card-spacing:--spacing(3)] sm:[--card-spacing:--spacing(6)]">
                 <CardHeader className="flex flex-row gap-3 sm:gap-5 items-start">
                   <div className="flex h-11 w-11 sm:h-16 sm:w-16 shrink-0 items-center justify-center rounded-full bg-success-bg dark:bg-success/20">
                     <ShieldCheck className="h-5 w-5 sm:h-8 sm:w-8 text-success" />

@@ -17,6 +17,7 @@ import {
   type ForgotPasswordFormValues,
 } from "@/schemas/auth/forgot-password.schema";
 import ROUTES from "@/constants/routes";
+import { Hyperlink } from "@/components/ui/hyperlink";
 
 export default function ForgotPasswordPage() {
   const [isPending, setIsPending] = useState(false);
@@ -160,12 +161,10 @@ export default function ForgotPasswordPage() {
               </Button>
 
               <div className="text-center text-sm">
-                <Link
-                  href={ROUTES.LOGIN}
-                  className="text-brand hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm"
-                >
+                Remembered your password?{" "}
+                <Hyperlink href={ROUTES.LOGIN} className="text-brand">
                   Back to Login
-                </Link>
+                </Hyperlink>
               </div>
             </form>
           </div>

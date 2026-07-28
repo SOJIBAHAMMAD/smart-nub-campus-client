@@ -7,6 +7,7 @@ import { ShieldCheck, Loader2 } from "lucide-react";
 import AuthInfo from "../_components/AuthInfo";
 import { VerifyEmailForm } from "../onboarding/_components/VerifyEmailForm";
 import ROUTES from "@/constants/routes";
+import { Hyperlink } from "@/components/ui/hyperlink";
 
 export default function VerifyEmailPage() {
   const router = useRouter();
@@ -79,12 +80,10 @@ export default function VerifyEmailPage() {
             </div>
 
             <div className="mt-6 text-center text-sm">
-              <Link
-                href={ROUTES.LOGIN}
-                className="text-brand hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm"
-              >
+              Already Verified?{" "}
+              <Hyperlink href={ROUTES.LOGIN} className="text-brand">
                 Back to Login
-              </Link>
+              </Hyperlink>
             </div>
           </div>
         </section>

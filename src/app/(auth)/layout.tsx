@@ -12,7 +12,7 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col space-y-4 sm:space-y-8">
+    <div className="flex px-4 py-6 flex-col space-y-4 sm:space-y-8">
       <header className="w-full flex justify-between items-center px-1 sm:px-0">
         <Link href={ROUTES.AUTH} className="flex items-center gap-1.5 sm:gap-2">
           <AcademicCapIcon className="text-brand" size={32} />
@@ -34,12 +34,16 @@ export default function AuthLayout({
           </Link>
           <a
             href="mailto:support@nub.ac.bd"
+            target="_blank"
+            rel="noopener noreferrer"
             className="inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium h-9 px-4 py-2 hover:bg-accent hover:text-accent-foreground sm:hidden"
           >
             <CircleQuestionMark />
           </a>
           <a
             href="mailto:support@nub.ac.bd"
+            target="_blank"
+            rel="noopener noreferrer"
             className="hidden sm:inline-flex items-center justify-center gap-2 rounded-md border border-input bg-background text-sm font-medium h-9 px-4 py-2 hover:bg-accent hover:text-accent-foreground"
           >
             <CircleQuestionMark />
@@ -48,7 +52,7 @@ export default function AuthLayout({
         </div>
       </header>
 
-      <main className="flex-1 min-h-[calc(100vh-120px)] sm:min-h-[calc(100vh-180px)] scroll-auto">
+      <main className="flex-1 min-h-[calc(100vh-120px)] sm:min-h-[calc(100vh-180px)]">
         {children}
       </main>
       <footer className="w-full max-w-3xl mx-auto flex justify-between items-center text-xs text-muted-foreground flex-col sm:flex-row gap-3 sm:gap-4 px-1 sm:px-0">

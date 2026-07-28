@@ -19,6 +19,7 @@ import {
   type ResetPasswordFormValues,
 } from "@/schemas/auth/reset-password.schema";
 import ROUTES from "@/constants/routes";
+import { Hyperlink } from "@/components/ui/hyperlink";
 
 function ResetPasswordFormContent() {
   const [isPending, setIsPending] = useState(false);
@@ -172,12 +173,9 @@ function ResetPasswordFormContent() {
               </Button>
 
               <div className="text-center text-sm">
-                <Link
-                  href={ROUTES.FORGOT_PASSWORD}
-                  className="text-brand hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm"
-                >
+                <Hyperlink href={ROUTES.FORGOT_PASSWORD} className="text-brand">
                   Back to Forgot Password
-                </Link>
+                </Hyperlink>
               </div>
             </form>
           </div>

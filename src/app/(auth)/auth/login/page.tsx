@@ -19,6 +19,7 @@ import { authClient } from "@/lib/auth-client";
 import { getEmailByStudentId } from "@/actions/auth.action";
 import { loginSchema, type LoginFormValues } from "@/schemas/auth/login.schema";
 import ROUTES from "@/constants/routes";
+import { Hyperlink } from "@/components/ui/hyperlink";
 
 function LoginFormContent() {
   const [isPending, setIsPending] = useState(false);
@@ -211,23 +212,37 @@ function LoginFormContent() {
                   disabled={isPending}
                 />
               </div>
-
-              <div className="flex items-center gap-2">
-                <Controller
-                  control={control}
-                  name="remember"
-                  render={({ field }) => (
-                    <Checkbox
-                      id="remember"
-                      checked={field.value}
-                      onCheckedChange={(checked) => field.onChange(checked === true)}
-                      disabled={isPending}
-                    />
-                  )}
-                />
-                <Label htmlFor="remember" className="text-sm font-normal text-muted-foreground cursor-pointer">
-                  Remember me
-                </Label>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Controller
+                    control={control}
+                    name="remember"
+                    render={({ field }) => (
+                      <Checkbox
+                        id="remember"
+                        checked={field.value}
+                        onCheckedChange={(checked) =>
+                          field.onChange(checked === true)
+                        }
+                        disabled={isPending}
+                      />
+                    )}
+                  />
+                  <Label
+                    htmlFor="remember"
+                    className="text-sm font-normal text-muted-foreground cursor-pointer"
+                  >
+                    Remember me
+                  </Label>
+                </div>
+                <div className="text-right text-sm">
+                  <Hyperlink
+                    href={ROUTES.FORGOT_PASSWORD}
+                    className="text-brand"
+                  >
+                    Forgot your password?
+                  </Hyperlink>
+                </div>
               </div>
 
               <Button type="submit" className="w-full" disabled={isPending}>
@@ -241,23 +256,11 @@ function LoginFormContent() {
                 )}
               </Button>
 
-              <div className="text-center text-sm">
-                <Link
-                  href={ROUTES.FORGOT_PASSWORD}
-                  className="text-brand hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm"
-                >
-                  Forgot your password?
-                </Link>
-              </div>
-
               <div className="text-center text-sm text-muted-foreground">
                 Don&apos;t have an account?{" "}
-                <Link
-                  href={ROUTES.ONBOARDING}
-                  className="text-brand font-medium hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm"
-                >
+                <Hyperlink href={ROUTES.ONBOARDING} className="text-brand">
                   Verify your identity
-                </Link>
+                </Hyperlink>
               </div>
             </form>
           </div>
