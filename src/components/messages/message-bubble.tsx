@@ -1,7 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { FileText, Download, Pencil, AlertCircle, RotateCw, Check, CheckCheck } from "lucide-react";
+import {
+  FileText,
+  Download,
+  Pencil,
+  AlertCircle,
+  RotateCw,
+  Check,
+  CheckCheck,
+} from "lucide-react";
 import type { Message } from "@/types/message.types";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
@@ -11,10 +19,7 @@ import {
   MessageContent,
   MessageHeader,
 } from "@/components/ui/message";
-import {
-  Bubble,
-  BubbleContent,
-} from "@/components/ui/bubble";
+import { Bubble, BubbleContent } from "@/components/ui/bubble";
 import { cn } from "@/lib/utils";
 import { formatClockTime, formatFileSize } from "./time";
 import { MessageContextMenu } from "./message-context-menu";
@@ -66,7 +71,11 @@ interface MessageBubbleProps {
   currentUserId: string;
   /** Whether to show read receipts. Respects the recipient's readReceipts preference. */
   showReadReceipts?: boolean;
-  searchHighlight?: { query: string; activeMatchGlobalIndex: number; firstMatchIndexInMessage: number } | null;
+  searchHighlight?: {
+    query: string;
+    activeMatchGlobalIndex: number;
+    firstMatchIndexInMessage: number;
+  } | null;
   onReply?: (message: Message) => void;
   onForward?: (message: Message) => void;
   onEdit?: (message: Message) => void;
@@ -133,18 +142,29 @@ export function MessageBubble({
 
         {isImage && message.fileUrl ? (
           <div className="relative overflow-hidden rounded-lg">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={message.fileUrl}
               alt={message.fileName ?? "Shared image"}
-              onClick={() => onImageClick?.(message.fileUrl!, message.fileName ?? "image")}
+              onClick={() =>
+                onImageClick?.(message.fileUrl!, message.fileName ?? "image")
+              }
               className="max-h-64 w-full cursor-zoom-in object-cover"
               loading="lazy"
             />
             <div className="absolute bottom-1.5 right-1.5 flex items-center gap-1 rounded-md bg-black/50 px-1.5 py-0.5 text-[10px] text-white/90 backdrop-blur-sm">
               <span>{formatClockTime(message.createdAt)}</span>
               {isOwn && showReadReceipts && (
-                <span className={cn(message.isRead ? "text-blue-400" : "text-white/70")}>
-                  {message.isRead ? <CheckCheck className="size-3" /> : <Check className="size-3" />}
+                <span
+                  className={cn(
+                    message.isRead ? "text-blue-400" : "text-white/70",
+                  )}
+                >
+                  {message.isRead ? (
+                    <CheckCheck className="size-3" />
+                  ) : (
+                    <Check className="size-3" />
+                  )}
                 </span>
               )}
             </div>
@@ -162,7 +182,9 @@ export function MessageBubble({
               <FileText className="size-5" />
             </span>
             <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-              <span className="truncate text-sm font-medium">{message.fileName}</span>
+              <span className="truncate text-sm font-medium">
+                {message.fileName}
+              </span>
               <span className="text-[11px] text-muted-foreground">
                 {formatFileSize(message.fileSize)}
               </span>
@@ -170,7 +192,7 @@ export function MessageBubble({
             <Download className="size-4 shrink-0 text-muted-foreground" />
           </a>
         ) : (
-          <p className="whitespace-pre-wrap break-words leading-relaxed">
+          <p className="whitespace-pre-wrap wrap-break-word leading-relaxed">
             {searchHighlight && message.content
               ? highlightText(
                   message.content,
@@ -191,10 +213,21 @@ export function MessageBubble({
                 edited
               </span>
             )}
-            <time dateTime={message.createdAt}>{formatClockTime(message.createdAt)}</time>
+            <time dateTime={message.createdAt}>
+              {formatClockTime(message.createdAt)}
+            </time>
             {isOwn && !isFailed && showReadReceipts && (
-              <span className={cn(message.isRead ? "text-blue-500" : "text-muted-foreground/50")} aria-label={message.isRead ? "Read" : "Sent"}>
-                {message.isRead ? <CheckCheck className="size-3" /> : <Check className="size-3" />}
+              <span
+                className={cn(
+                  message.isRead ? "text-blue-500" : "text-muted-foreground/50",
+                )}
+                aria-label={message.isRead ? "Read" : "Sent"}
+              >
+                {message.isRead ? (
+                  <CheckCheck className="size-3" />
+                ) : (
+                  <Check className="size-3" />
+                )}
               </span>
             )}
           </div>
@@ -227,7 +260,9 @@ export function MessageBubble({
         {/* Sending indicator */}
         {isSending && isOwn && (
           <div className="mt-1 flex items-center gap-1">
-            <span className="text-[10px] text-muted-foreground">Sending...</span>
+            <span className="text-[10px] text-muted-foreground">
+              Sending...
+            </span>
           </div>
         )}
       </BubbleContent>
@@ -248,7 +283,12 @@ export function MessageBubble({
       {!isOwn && (
         <MessageAvatar>
           {showSender && sender && (
-            <Avatar id={sender.id} name={sender.name} src={sender.image} className="size-8" />
+            <Avatar
+              id={sender.id}
+              name={sender.name}
+              src={sender.image}
+              className="size-8"
+            />
           )}
         </MessageAvatar>
       )}
@@ -256,7 +296,9 @@ export function MessageBubble({
       <MessageContent className={isOwn ? "items-end" : "items-start"}>
         {!isOwn && showSender && sender && (
           <MessageHeader>
-            <span className="text-xs font-semibold text-emerald-600">{sender.name}</span>
+            <span className="text-xs font-semibold text-emerald-600">
+              {sender.name}
+            </span>
           </MessageHeader>
         )}
 
@@ -283,10 +325,12 @@ export function MessageBubble({
 
               {/* Quick reaction button on hover */}
               {showReactionPicker && onReaction && !isDeleted && (
-                <div className={cn(
-                  "absolute -top-2 z-20 opacity-0 transition-opacity group-hover/context:opacity-100",
-                  isOwn ? "right-0" : "left-0",
-                )}>
+                <div
+                  className={cn(
+                    "absolute -top-2 z-20 opacity-0 transition-opacity group-hover/context:opacity-100",
+                    isOwn ? "right-0" : "left-0",
+                  )}
+                >
                   <QuickReactionPicker
                     onSelect={(emoji) => {
                       onReaction(message.id, emoji);

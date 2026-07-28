@@ -59,7 +59,6 @@ import {
   ArrowUpDown,
   XCircle,
   Ban,
-  FileIcon as LucideFileIcon,
 } from "lucide-react";
 import type {
   AdminResource,
@@ -71,7 +70,11 @@ import type {
 } from "@/types/admin.types";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
-import { getFileColor, getFileLabel, FileIcon as FileTypeIcon } from "@/components/resources/file-type-utils";
+import {
+  getFileColor,
+  getFileLabel,
+  FileIcon as FileTypeIcon,
+} from "@/components/resources/file-type-utils";
 import {
   Dialog,
   DialogContent,
@@ -119,26 +122,38 @@ export default function ResourcesPage() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   // Detail sheet
-  const [viewingResource, setViewingResource] = useState<AdminResource | null>(null);
+  const [viewingResource, setViewingResource] = useState<AdminResource | null>(
+    null,
+  );
   const [isSheetOpen, setIsSheetOpen] = useState(false);
 
   // Actions
   const [verifyingId, setVerifyingId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
-  const [bulkAction, setBulkAction] = useState<"verify" | "unverify" | "delete" | null>(null);
+  const [bulkAction, setBulkAction] = useState<
+    "verify" | "unverify" | "delete" | null
+  >(null);
 
   // Reports
   const [reports, setReports] = useState<AdminResourceReport[]>([]);
   const [isReportsOpen, setIsReportsOpen] = useState(false);
   const [reportsLoading, setReportsLoading] = useState(false);
-  const [reviewingReportId, setReviewingReportId] = useState<string | null>(null);
+  const [reviewingReportId, setReviewingReportId] = useState<string | null>(
+    null,
+  );
 
   const limit = 10;
 
   // Fetch filter options on mount
   useEffect(() => {
-    adminService.listCourses(1, 200).then((res) => setCourses(res.data)).catch(() => {});
-    adminService.listResourceCategories(1, 200).then((res) => setCategories(res.data)).catch(() => {});
+    adminService
+      .listCourses(1, 200)
+      .then((res) => setCourses(res.data))
+      .catch(() => {});
+    adminService
+      .listResourceCategories(1, 200)
+      .then((res) => setCategories(res.data))
+      .catch(() => {});
   }, []);
 
   const fetchResources = useCallback(async () => {
@@ -148,7 +163,8 @@ export default function ResourcesPage() {
         page,
         limit,
         search: search || undefined,
-        isVerified: verifiedFilter === "all" ? undefined : verifiedFilter === "verified",
+        isVerified:
+          verifiedFilter === "all" ? undefined : verifiedFilter === "verified",
         courseId: courseFilter === "all" ? undefined : courseFilter,
         categoryId: categoryFilter === "all" ? undefined : categoryFilter,
         sort,
@@ -177,7 +193,10 @@ export default function ResourcesPage() {
     if (!data) return;
     const verified = data.data.filter((r) => r.isVerified).length;
     const unverified = data.data.filter((r) => !r.isVerified).length;
-    const totalDownloads = data.data.reduce((sum, r) => sum + r.downloadCount, 0);
+    const totalDownloads = data.data.reduce(
+      (sum, r) => sum + r.downloadCount,
+      0,
+    );
     const totalReports = data.data.reduce((sum, r) => sum + r.reportCount, 0);
     setStats((prev) => ({
       ...prev,
@@ -192,7 +211,9 @@ export default function ResourcesPage() {
     setVerifyingId(id);
     try {
       await adminService.verifyResource(id, !currentVerified);
-      toast.success(currentVerified ? "Resource unverified" : "Resource verified");
+      toast.success(
+        currentVerified ? "Resource unverified" : "Resource verified",
+      );
       fetchResources();
     } catch {
       toast.error("Failed to update resource");
@@ -223,7 +244,12 @@ export default function ResourcesPage() {
     setPage(1);
   };
 
-  const hasActiveFilters = search || verifiedFilter !== "all" || courseFilter !== "all" || categoryFilter !== "all" || sort !== "newest";
+  const hasActiveFilters =
+    search ||
+    verifiedFilter !== "all" ||
+    courseFilter !== "all" ||
+    categoryFilter !== "all" ||
+    sort !== "newest";
 
   const toggleSelection = (id: string) => {
     setSelectedIds((prev) =>
@@ -248,7 +274,11 @@ export default function ResourcesPage() {
       const ext = (resource.fileType.split("/").pop() ?? "")
         .replace(/[^a-z0-9]/gi, "")
         .toLowerCase();
-      const safeTitle = resource.title.replace(/[^a-z0-9\s-]/gi, "").trim().replace(/\s+/g, "-").slice(0, 60);
+      const safeTitle = resource.title
+        .replace(/[^a-z0-9\s-]/gi, "")
+        .trim()
+        .replace(/\s+/g, "-")
+        .slice(0, 60);
       const filename = `${safeTitle || "resource"}${ext ? `.${ext}` : ""}`;
 
       const response = await fetch(resource.fileUrl);
@@ -281,7 +311,10 @@ export default function ResourcesPage() {
     }
   };
 
-  const handleReviewReport = async (id: string, status: "REVIEWED" | "DISMISSED" | "ACTION_TAKEN") => {
+  const handleReviewReport = async (
+    id: string,
+    status: "REVIEWED" | "DISMISSED" | "ACTION_TAKEN",
+  ) => {
     setReviewingReportId(id);
     try {
       await adminService.reviewReport(id, status);
@@ -321,7 +354,7 @@ export default function ResourcesPage() {
         {/* Filters */}
         <div className="space-y-3">
           <div className="relative">
-            <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+            <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] scrollbar-none">
               <div className="relative min-w-0 shrink-0 w-full sm:w-auto sm:flex-1 sm:max-w-sm">
                 <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
@@ -342,7 +375,7 @@ export default function ResourcesPage() {
                   setPage(1);
                 }}
               >
-                <SelectTrigger className="w-[140px] shrink-0">
+                <SelectTrigger className="w-35 shrink-0">
                   <SelectValue placeholder="All statuses" />
                 </SelectTrigger>
                 <SelectContent>
@@ -358,13 +391,19 @@ export default function ResourcesPage() {
                   setPage(1);
                 }}
               >
-                <SelectTrigger className="w-[160px] shrink-0">
+                <SelectTrigger className="w-40 shrink-0">
                   <SelectValue placeholder="All courses" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all" label="All Courses">All Courses</SelectItem>
+                  <SelectItem value="all" label="All Courses">
+                    All Courses
+                  </SelectItem>
                   {courses.map((c) => (
-                    <SelectItem key={c.id} value={c.id} label={`${c.code} — ${c.name}`}>
+                    <SelectItem
+                      key={c.id}
+                      value={c.id}
+                      label={`${c.code} — ${c.name}`}
+                    >
                       {c.code} — {c.name}
                     </SelectItem>
                   ))}
@@ -377,11 +416,13 @@ export default function ResourcesPage() {
                   setPage(1);
                 }}
               >
-                <SelectTrigger className="w-[160px] shrink-0">
+                <SelectTrigger className="w-40 shrink-0">
                   <SelectValue placeholder="All categories" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all" label="All Categories">All Categories</SelectItem>
+                  <SelectItem value="all" label="All Categories">
+                    All Categories
+                  </SelectItem>
                   {categories.map((c) => (
                     <SelectItem key={c.id} value={c.id} label={c.name}>
                       {c.name}
@@ -393,7 +434,7 @@ export default function ResourcesPage() {
                 value={sort}
                 onValueChange={(val) => setSort(val as AdminResourceSort)}
               >
-                <SelectTrigger className="w-[155px] shrink-0">
+                <SelectTrigger className="w-38.75 shrink-0">
                   <ArrowUpDown className="size-3.5 mr-1.5" />
                   <SelectValue />
                 </SelectTrigger>
@@ -457,208 +498,257 @@ export default function ResourcesPage() {
           ) : !data || data.data.length === 0 ? (
             <div className="p-12 sm:p-16 text-center">
               <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-full bg-muted">
-                <FileTypeIcon fileType="" className="size-6 text-muted-foreground" />
+                <FileTypeIcon
+                  fileType=""
+                  className="size-6 text-muted-foreground"
+                />
               </div>
               <p className="text-sm font-medium">No resources found</p>
               <p className="text-xs text-muted-foreground mt-1">
-                {hasActiveFilters ? "Try adjusting your filters" : "Resources will appear here once uploaded"}
+                {hasActiveFilters
+                  ? "Try adjusting your filters"
+                  : "Resources will appear here once uploaded"}
               </p>
               {hasActiveFilters && (
-                <Button variant="ghost" size="sm" className="mt-3" onClick={clearFilters}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="mt-3"
+                  onClick={clearFilters}
+                >
                   Clear filters
                 </Button>
               )}
             </div>
           ) : (
             <div className="w-full overflow-x-auto">
-              <div className="min-w-[800px]">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-gray-50 dark:bg-gray-700/50">
-                    <TableHead className="w-10">
-                      <Checkbox
-                        checked={
-                          data.data.length > 0 &&
-                          data.data.every((r) => selectedIds.includes(r.id))
-                        }
-                        onCheckedChange={toggleSelectAll}
-                      />
-                    </TableHead>
-                    <TableHead>Title</TableHead>
-                    <TableHead>Uploader</TableHead>
-                    <TableHead>Course</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead className="text-center">Stats</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Created</TableHead>
-                    <TableHead className="w-10" />
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {data.data.map((resource) => {
-                    const fileColor = getFileColor(resource.fileType);
-                    const fileLabel = getFileLabel(resource.fileType);
-                    return (
-                      <TableRow
-                        key={resource.id}
-                        className="cursor-pointer"
-                        onClick={() => openDetail(resource)}
-                      >
-                        <TableCell onClick={(e) => e.stopPropagation()}>
-                          <Checkbox
-                            checked={selectedIds.includes(resource.id)}
-                            onCheckedChange={() => toggleSelection(resource.id)}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2.5">
-                            <div className={`flex size-8 shrink-0 items-center justify-center rounded-md ${fileColor}`}>
-                              <FileTypeIcon fileType={resource.fileType} className="size-4" />
-                            </div>
-                            <div className="min-w-0">
-                              <p className="text-sm font-medium max-w-[220px] truncate">
-                                {resource.title}
-                              </p>
-                              <p className="text-[10px] font-mono text-muted-foreground">
-                                {fileLabel} · {resource.fileType.toUpperCase()}
-                              </p>
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Avatar
-                              id={resource.uploader.id}
-                              name={resource.uploader.name}
-                              className="size-6 text-[10px]"
+              <div className="min-w-200">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-gray-50 dark:bg-gray-700/50">
+                      <TableHead className="w-10">
+                        <Checkbox
+                          checked={
+                            data.data.length > 0 &&
+                            data.data.every((r) => selectedIds.includes(r.id))
+                          }
+                          onCheckedChange={toggleSelectAll}
+                        />
+                      </TableHead>
+                      <TableHead>Title</TableHead>
+                      <TableHead>Uploader</TableHead>
+                      <TableHead>Course</TableHead>
+                      <TableHead>Category</TableHead>
+                      <TableHead className="text-center">Stats</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Created</TableHead>
+                      <TableHead className="w-10" />
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {data.data.map((resource) => {
+                      const fileColor = getFileColor(resource.fileType);
+                      const fileLabel = getFileLabel(resource.fileType);
+                      return (
+                        <TableRow
+                          key={resource.id}
+                          className="cursor-pointer"
+                          onClick={() => openDetail(resource)}
+                        >
+                          <TableCell onClick={(e) => e.stopPropagation()}>
+                            <Checkbox
+                              checked={selectedIds.includes(resource.id)}
+                              onCheckedChange={() =>
+                                toggleSelection(resource.id)
+                              }
                             />
-                            <Tooltip>
-                              <TooltipTrigger>
-                                <span className="text-sm truncate max-w-[100px] block">
-                                  {resource.uploader.name}
-                                </span>
-                              </TooltipTrigger>
-                              <TooltipContent>{resource.uploader.email}</TooltipContent>
-                            </Tooltip>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="secondary" className="text-xs font-mono">
-                            {resource.course.code}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <span className="text-sm text-muted-foreground">
-                            {resource.category.name}
-                          </span>
-                        </TableCell>
-                        <TableCell onClick={(e) => e.stopPropagation()}>
-                          <div className="flex items-center justify-center gap-3 text-muted-foreground">
-                            <Tooltip>
-                              <TooltipTrigger>
-                                <span className="inline-flex items-center gap-1 text-xs">
-                                  <Download className="size-3" />
-                                  {resource.downloadCount}
-                                </span>
-                              </TooltipTrigger>
-                              <TooltipContent>Downloads</TooltipContent>
-                            </Tooltip>
-                            <Tooltip>
-                              <TooltipTrigger>
-                                <span className="inline-flex items-center gap-1 text-xs">
-                                  <ThumbsUp className="size-3" />
-                                  {resource.upvoteCount}
-                                </span>
-                              </TooltipTrigger>
-                              <TooltipContent>Upvotes</TooltipContent>
-                            </Tooltip>
-                            <Tooltip>
-                              <TooltipTrigger>
-                                <span className="inline-flex items-center gap-1 text-xs">
-                                  <Eye className="size-3" />
-                                  {resource.viewCount}
-                                </span>
-                              </TooltipTrigger>
-                              <TooltipContent>Views</TooltipContent>
-                            </Tooltip>
-                            {resource.reportCount > 0 && (
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2.5">
+                              <div
+                                className={`flex size-8 shrink-0 items-center justify-center rounded-md ${fileColor}`}
+                              >
+                                <FileTypeIcon
+                                  fileType={resource.fileType}
+                                  className="size-4"
+                                />
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-sm font-medium max-w-55 truncate">
+                                  {resource.title}
+                                </p>
+                                <p className="text-[10px] font-mono text-muted-foreground">
+                                  {fileLabel} ·{" "}
+                                  {resource.fileType.toUpperCase()}
+                                </p>
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Avatar
+                                id={resource.uploader.id}
+                                name={resource.uploader.name}
+                                className="size-6 text-[10px]"
+                              />
                               <Tooltip>
                                 <TooltipTrigger>
-                                  <span className="inline-flex items-center gap-1 text-xs text-red-600">
-                                    <AlertTriangle className="size-3" />
-                                    {resource.reportCount}
+                                  <span className="text-sm truncate max-w-25 block">
+                                    {resource.uploader.name}
                                   </span>
                                 </TooltipTrigger>
-                                <TooltipContent>Reports</TooltipContent>
+                                <TooltipContent>
+                                  {resource.uploader.email}
+                                </TooltipContent>
                               </Tooltip>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          {resource.isVerified ? (
-                            <Badge variant="outline" className="border-green-300 text-green-700">
-                              Verified
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant="secondary"
+                              className="text-xs font-mono"
+                            >
+                              {resource.course.code}
                             </Badge>
-                          ) : (
-                            <Badge variant="outline" className="border-amber-300 text-amber-700">
-                              Unverified
-                            </Badge>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <span className="text-sm text-muted-foreground">
-                            {format(new Date(resource.createdAt), "MMM d, yyyy")}
-                          </span>
-                        </TableCell>
-                        <TableCell onClick={(e) => e.stopPropagation()}>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="size-8" />}>
-                              <MoreHorizontal className="size-4" />
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => handleOpenFile(resource)}>
-                                <ExternalLink className="size-3.5 mr-2" />
-                                Open File
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => openDetail(resource)}>
-                                <Eye className="size-3.5 mr-2" />
-                                View Details
-                              </DropdownMenuItem>
+                          </TableCell>
+                          <TableCell>
+                            <span className="text-sm text-muted-foreground">
+                              {resource.category.name}
+                            </span>
+                          </TableCell>
+                          <TableCell onClick={(e) => e.stopPropagation()}>
+                            <div className="flex items-center justify-center gap-3 text-muted-foreground">
+                              <Tooltip>
+                                <TooltipTrigger>
+                                  <span className="inline-flex items-center gap-1 text-xs">
+                                    <Download className="size-3" />
+                                    {resource.downloadCount}
+                                  </span>
+                                </TooltipTrigger>
+                                <TooltipContent>Downloads</TooltipContent>
+                              </Tooltip>
+                              <Tooltip>
+                                <TooltipTrigger>
+                                  <span className="inline-flex items-center gap-1 text-xs">
+                                    <ThumbsUp className="size-3" />
+                                    {resource.upvoteCount}
+                                  </span>
+                                </TooltipTrigger>
+                                <TooltipContent>Upvotes</TooltipContent>
+                              </Tooltip>
+                              <Tooltip>
+                                <TooltipTrigger>
+                                  <span className="inline-flex items-center gap-1 text-xs">
+                                    <Eye className="size-3" />
+                                    {resource.viewCount}
+                                  </span>
+                                </TooltipTrigger>
+                                <TooltipContent>Views</TooltipContent>
+                              </Tooltip>
                               {resource.reportCount > 0 && (
-                                <DropdownMenuItem onClick={fetchReports}>
-                                  <AlertTriangle className="size-3.5 mr-2" />
-                                  View Reports ({resource.reportCount})
-                                </DropdownMenuItem>
+                                <Tooltip>
+                                  <TooltipTrigger>
+                                    <span className="inline-flex items-center gap-1 text-xs text-red-600">
+                                      <AlertTriangle className="size-3" />
+                                      {resource.reportCount}
+                                    </span>
+                                  </TooltipTrigger>
+                                  <TooltipContent>Reports</TooltipContent>
+                                </Tooltip>
                               )}
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                onClick={() => handleVerifyToggle(resource.id, resource.isVerified)}
-                                disabled={verifyingId === resource.id}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {resource.isVerified ? (
+                              <Badge
+                                variant="outline"
+                                className="border-green-300 text-green-700"
                               >
-                                {verifyingId === resource.id ? (
-                                  <Loader2 className="size-3.5 mr-2 animate-spin" />
-                                ) : resource.isVerified ? (
-                                  <ShieldAlert className="size-3.5 mr-2" />
-                                ) : (
-                                  <ShieldCheck className="size-3.5 mr-2" />
+                                Verified
+                              </Badge>
+                            ) : (
+                              <Badge
+                                variant="outline"
+                                className="border-amber-300 text-amber-700"
+                              >
+                                Unverified
+                              </Badge>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <span className="text-sm text-muted-foreground">
+                              {format(
+                                new Date(resource.createdAt),
+                                "MMM d, yyyy",
+                              )}
+                            </span>
+                          </TableCell>
+                          <TableCell onClick={(e) => e.stopPropagation()}>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger
+                                render={
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="size-8"
+                                  />
+                                }
+                              >
+                                <MoreHorizontal className="size-4" />
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem
+                                  onClick={() => handleOpenFile(resource)}
+                                >
+                                  <ExternalLink className="size-3.5 mr-2" />
+                                  Open File
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => openDetail(resource)}
+                                >
+                                  <Eye className="size-3.5 mr-2" />
+                                  View Details
+                                </DropdownMenuItem>
+                                {resource.reportCount > 0 && (
+                                  <DropdownMenuItem onClick={fetchReports}>
+                                    <AlertTriangle className="size-3.5 mr-2" />
+                                    View Reports ({resource.reportCount})
+                                  </DropdownMenuItem>
                                 )}
-                                {resource.isVerified ? "Unverify" : "Verify"}
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                variant="destructive"
-                                onClick={() => setDeleteTarget(resource.id)}
-                              >
-                                <Trash2 className="size-3.5 mr-2" />
-                                Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  onClick={() =>
+                                    handleVerifyToggle(
+                                      resource.id,
+                                      resource.isVerified,
+                                    )
+                                  }
+                                  disabled={verifyingId === resource.id}
+                                >
+                                  {verifyingId === resource.id ? (
+                                    <Loader2 className="size-3.5 mr-2 animate-spin" />
+                                  ) : resource.isVerified ? (
+                                    <ShieldAlert className="size-3.5 mr-2" />
+                                  ) : (
+                                    <ShieldCheck className="size-3.5 mr-2" />
+                                  )}
+                                  {resource.isVerified ? "Unverify" : "Verify"}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  variant="destructive"
+                                  onClick={() => setDeleteTarget(resource.id)}
+                                >
+                                  <Trash2 className="size-3.5 mr-2" />
+                                  Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
               </div>
             </div>
           )}
@@ -708,17 +798,23 @@ export default function ResourcesPage() {
         {/* Single Delete Confirm */}
         <ConfirmDialog
           open={deleteTarget !== null}
-          onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
+          onOpenChange={(open) => {
+            if (!open) setDeleteTarget(null);
+          }}
           title="Delete Resource"
           description="Are you sure you want to delete this resource? This action cannot be undone."
           confirmLabel="Delete"
-          onConfirm={() => { if (deleteTarget) handleDelete(deleteTarget); }}
+          onConfirm={() => {
+            if (deleteTarget) handleDelete(deleteTarget);
+          }}
         />
 
         {/* Bulk Action Confirm */}
         <ConfirmDialog
           open={bulkAction !== null}
-          onOpenChange={(open) => { if (!open) setBulkAction(null); }}
+          onOpenChange={(open) => {
+            if (!open) setBulkAction(null);
+          }}
           title={
             bulkAction === "delete"
               ? "Delete Resources"
@@ -744,7 +840,9 @@ export default function ResourcesPage() {
               } else {
                 const isVerified = bulkAction === "verify";
                 await adminService.bulkVerifyResources(selectedIds, isVerified);
-                toast.success(`${selectedIds.length} resources ${isVerified ? "verified" : "unverified"}`);
+                toast.success(
+                  `${selectedIds.length} resources ${isVerified ? "verified" : "unverified"}`,
+                );
               }
               setSelectedIds([]);
               setBulkAction(null);
@@ -775,7 +873,9 @@ export default function ResourcesPage() {
                 <div className="py-12 text-center">
                   <AlertTriangle className="size-8 mx-auto mb-2 text-muted-foreground" />
                   <p className="text-sm font-medium">No pending reports</p>
-                  <p className="text-xs text-muted-foreground mt-1">All caught up!</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    All caught up!
+                  </p>
                 </div>
               ) : (
                 <div className="space-y-2 p-1">
@@ -788,17 +888,31 @@ export default function ResourcesPage() {
                       >
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex items-center gap-2 min-w-0">
-                            <div className={`flex size-7 shrink-0 items-center justify-center rounded-md ${fileColor}`}>
-                              <FileTypeIcon fileType={report.resource.fileType} className="size-3.5" />
+                            <div
+                              className={`flex size-7 shrink-0 items-center justify-center rounded-md ${fileColor}`}
+                            >
+                              <FileTypeIcon
+                                fileType={report.resource.fileType}
+                                className="size-3.5"
+                              />
                             </div>
                             <div className="min-w-0">
-                              <p className="text-sm font-medium truncate">{report.resource.title}</p>
+                              <p className="text-sm font-medium truncate">
+                                {report.resource.title}
+                              </p>
                               <p className="text-[10px] text-muted-foreground">
-                                Reported by {report.user.name} · {format(new Date(report.createdAt), "MMM d, yyyy 'at' h:mm a")}
+                                Reported by {report.user.name} ·{" "}
+                                {format(
+                                  new Date(report.createdAt),
+                                  "MMM d, yyyy 'at' h:mm a",
+                                )}
                               </p>
                             </div>
                           </div>
-                          <Badge variant="outline" className="shrink-0 text-[10px] border-amber-300 text-amber-700">
+                          <Badge
+                            variant="outline"
+                            className="shrink-0 text-[10px] border-amber-300 text-amber-700"
+                          >
                             {report.reason.replace(/_/g, " ")}
                           </Badge>
                         </div>
@@ -813,7 +927,9 @@ export default function ResourcesPage() {
                             size="sm"
                             className="h-7 text-[10px]"
                             disabled={reviewingReportId === report.id}
-                            onClick={() => handleReviewReport(report.id, "REVIEWED")}
+                            onClick={() =>
+                              handleReviewReport(report.id, "REVIEWED")
+                            }
                           >
                             <Check className="size-3 mr-1" />
                             Reviewed
@@ -823,7 +939,9 @@ export default function ResourcesPage() {
                             size="sm"
                             className="h-7 text-[10px]"
                             disabled={reviewingReportId === report.id}
-                            onClick={() => handleReviewReport(report.id, "ACTION_TAKEN")}
+                            onClick={() =>
+                              handleReviewReport(report.id, "ACTION_TAKEN")
+                            }
                           >
                             <ShieldCheck className="size-3 mr-1" />
                             Action Taken
@@ -833,7 +951,9 @@ export default function ResourcesPage() {
                             size="sm"
                             className="h-7 text-[10px] text-muted-foreground"
                             disabled={reviewingReportId === report.id}
-                            onClick={() => handleReviewReport(report.id, "DISMISSED")}
+                            onClick={() =>
+                              handleReviewReport(report.id, "DISMISSED")
+                            }
                           >
                             <X className="size-3 mr-1" />
                             Dismiss

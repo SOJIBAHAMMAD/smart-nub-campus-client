@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { MessageCircle, ArrowUpDown, TrendingUp, Clock, History } from "lucide-react";
+import { MessageCircle, TrendingUp, Clock, History } from "lucide-react";
 import { CommentItem } from "@/components/resources/comment-item";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
@@ -14,7 +14,6 @@ import {
   editResourceComment,
 } from "@/actions/resource.actions";
 import type { Comment } from "@/types/resource.types";
-import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import {

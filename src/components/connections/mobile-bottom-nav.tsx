@@ -1,7 +1,6 @@
 "use client";
 
 import { Users, Clock, Send, Ban } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { ConnectionTab } from "./my-network-sidebar";
 
@@ -33,7 +32,7 @@ export function MobileBottomNav({
 }: MobileBottomNavProps) {
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-border/60 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 md:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-border/60 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/80 md:hidden"
       role="tablist"
       aria-label="Network tabs"
     >

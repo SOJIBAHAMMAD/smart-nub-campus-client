@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, Suspense } from "react";
-import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { KeyRound, Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -45,6 +44,7 @@ function ResetPasswordFormContent() {
     },
   });
 
+  // eslint-disable-next-line react-hooks/incompatible-library
   const passwordValue = watch("password") ?? "";
 
   const onSubmit = async (data: ResetPasswordFormValues) => {

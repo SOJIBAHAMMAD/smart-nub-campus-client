@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { apiClient } from "@/lib/api-client";
 import { useSocket, useSocketEvent } from "@/hooks/use-socket";
+import type { Socket } from "socket.io-client";
 import type { UnreadCountResponse } from "@/types/notification.types";
 import type { Notification } from "@/lib/types/socket-events";
 
@@ -11,6 +12,8 @@ interface UseUnreadCountOptions {
   autoFetch?: boolean;
   /** The currently active conversation ID. Notifications for this conversation will not increment the count. */
   activeConversationId?: string | null;
+  /** An external socket instance to share. When provided, useUnreadCount will not create its own connection. */
+  socket?: Socket | null;
 }
 
 interface UseUnreadCountReturn {
@@ -46,10 +49,12 @@ interface UseUnreadCountReturn {
 export function useUnreadCount({
   autoFetch = true,
   activeConversationId,
+  socket: externalSocket,
 }: UseUnreadCountOptions = {}): UseUnreadCountReturn {
   const [count, setCount] = useState(0);
   const [isLoading, setIsLoading] = useState(autoFetch);
-  const { socket } = useSocket();
+  const { socket: ownSocket } = useSocket();
+  const socket = externalSocket ?? ownSocket;
 
   useSocketEvent(socket, "notification:new", (notification: Notification) => {
     if (activeConversationId && notification.link) {

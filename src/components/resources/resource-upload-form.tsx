@@ -101,7 +101,6 @@ export function ResourceUploadForm({
   const [courseSearch, setCourseSearch] = useState("");
 
   const selectedCourse = courses.find((c) => c.id === courseId);
-  const selectedCategory = categories.find((c) => c.id === categoryId);
 
   const courseGroups = useMemo(() => {
     const map = new Map<string, ResourceCourse[]>();
@@ -118,14 +117,17 @@ export function ResourceUploadForm({
     if (!courseSearch) return courseGroups;
     const q = courseSearch.toLowerCase();
     return courseGroups
-      .map(([dept, crs]) => [
-        dept,
-        crs.filter(
-          (c) =>
-            c.code.toLowerCase().includes(q) ||
-            c.name.toLowerCase().includes(q),
-        ),
-      ] as [string, ResourceCourse[]])
+      .map(
+        ([dept, crs]) =>
+          [
+            dept,
+            crs.filter(
+              (c) =>
+                c.code.toLowerCase().includes(q) ||
+                c.name.toLowerCase().includes(q),
+            ),
+          ] as [string, ResourceCourse[]],
+      )
       .filter(([, crs]) => crs.length > 0);
   }, [courseGroups, courseSearch]);
 
@@ -184,7 +186,13 @@ export function ResourceUploadForm({
 
   /** Submits the form. */
   async function handleSubmit() {
-    if (!file || !title.trim() || !courseId || !categoryId || tags.length === 0) {
+    if (
+      !file ||
+      !title.trim() ||
+      !courseId ||
+      !categoryId ||
+      tags.length === 0
+    ) {
       setError("Please fill in all required fields.");
       return;
     }
@@ -345,7 +353,9 @@ export function ResourceUploadForm({
               maxLength={200}
               disabled={isBusy}
             />
-            <p className="text-[10px] text-muted-foreground">{title.length}/200</p>
+            <p className="text-[10px] text-muted-foreground">
+              {title.length}/200
+            </p>
           </div>
 
           {/* Description */}
@@ -355,7 +365,7 @@ export function ResourceUploadForm({
               value={description}
               onChange={setDescription}
               placeholder="Describe what's in this resource..."
-              className="min-h-[120px] text-sm"
+              className="min-h-30 text-sm"
             />
           </div>
 
@@ -410,20 +420,20 @@ export function ResourceUploadForm({
                   !selectedCourse && "text-muted-foreground",
                 )}
               >
-                  {selectedCourse ? (
-                    <span>
-                      <span className="font-medium">{selectedCourse.code}</span>
-                      <span className="ml-1.5 text-muted-foreground">
-                        {selectedCourse.name}
-                      </span>
+                {selectedCourse ? (
+                  <span>
+                    <span className="font-medium">{selectedCourse.code}</span>
+                    <span className="ml-1.5 text-muted-foreground">
+                      {selectedCourse.name}
                     </span>
-                  ) : (
-                    <span>Search courses...</span>
-                  )}
-                  <ChevronDown className="size-4 shrink-0 opacity-50" />
+                  </span>
+                ) : (
+                  <span>Search courses...</span>
+                )}
+                <ChevronDown className="size-4 shrink-0 opacity-50" />
               </PopoverTrigger>
               <PopoverContent
-                className="w-[var(--radix-popover-trigger-width)] p-0"
+                className="w-(--radix-popover-trigger-width) p-0"
                 align="start"
               >
                 <Command shouldFilter={false}>

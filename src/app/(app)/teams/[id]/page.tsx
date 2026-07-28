@@ -1,10 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import Link from "next/link";
-import { ArrowLeft, AlertCircle } from "lucide-react";
 import { getTeamRequest } from "@/actions/team.actions";
 import { TeamDetailWrapper } from "@/components/teams/team-detail-wrapper";
-import { Button } from "@/components/ui/button";
 import type { TeamRequest } from "@/types/team.types";
 
 export const metadata: Metadata = {

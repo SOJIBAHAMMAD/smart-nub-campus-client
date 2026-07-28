@@ -186,14 +186,14 @@ function Splitter({
   }, []);
 
   const handleMouseUp = React.useCallback(
-    (e: MouseEvent): void => {
+    (_e: MouseEvent): void => {
       handleInteractionEnd();
     },
     [handleInteractionEnd],
   );
 
   const handleTouchEnd = React.useCallback(
-    (e: TouchEvent): void => {
+    (_e: TouchEvent): void => {
       handleInteractionEnd();
     },
     [handleInteractionEnd],
@@ -345,7 +345,6 @@ function Splitter({
       {handle ? (
         React.cloneElement(
           handle as React.ReactElement<SplitterHandleProps>,
-          // eslint-disable-next-line react-hooks/refs
           handleProps,
         )
       ) : (

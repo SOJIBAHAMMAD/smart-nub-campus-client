@@ -34,7 +34,7 @@ export function NewMessageModal({
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchPerson[]>([]);
   const [loading, setLoading] = useState(false);
-  const [creatingId, setCreatingId] = useState<string | null>(null);
+  const [_creatingId, setCreatingId] = useState<string | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {

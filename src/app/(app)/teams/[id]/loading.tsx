@@ -1,5 +1,5 @@
 import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 
 export default function TeamDetailLoading() {
   return (
@@ -12,7 +12,7 @@ export default function TeamDetailLoading() {
       </div>
 
       {/* Hero skeleton */}
-      <div className="rounded-xl border bg-gradient-to-br from-card to-muted/50 p-6 ring-1 ring-foreground/10">
+      <div className="rounded-xl border bg-linear-to-br from-card to-muted/50 p-6 ring-1 ring-foreground/10">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex-1 space-y-3">
             <div className="flex items-center gap-2">
@@ -64,7 +64,10 @@ export default function TeamDetailLoading() {
         <Skeleton className="mb-3 h-5 w-24" />
         <div className="space-y-2">
           {Array.from({ length: 2 }).map((_, i) => (
-            <div key={i} className="flex items-center gap-3 rounded-lg border bg-card p-3 ring-1 ring-foreground/10">
+            <div
+              key={i}
+              className="flex items-center gap-3 rounded-lg border bg-card p-3 ring-1 ring-foreground/10"
+            >
               <Skeleton className="size-10 rounded-full" />
               <div className="flex-1">
                 <Skeleton className="h-4 w-24" />

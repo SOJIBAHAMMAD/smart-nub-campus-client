@@ -61,7 +61,7 @@ export default async function ResourcesPage({
           .filter(Boolean)
       : [];
   const sort = typeof params.sort === "string" ? params.sort : "newest";
-  const view = typeof params.view === "string" ? params.view : "grid";
+
 
   let initialResources: Resource[] = [];
   let initialMeta: PaginationMeta | null = null;

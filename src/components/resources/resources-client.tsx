@@ -8,7 +8,7 @@ import { ResourcesSidebar } from "@/components/resources/resources-sidebar";
 import { ResourcesTrending } from "@/components/resources/resources-trending";
 import { ResourceCard } from "@/components/resources/resource-card";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
   Empty,

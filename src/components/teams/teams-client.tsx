@@ -284,7 +284,7 @@ export function TeamsClient({
       }
     }
     return list;
-  }, [teams, tab, currentUserId, selectedSkills, deadline, deadlineTs, nowTs]);
+  }, [teams, tab, selectedSkills, deadline, deadlineTs, nowTs]);
 
   const toggleSkill = useCallback(
     (slug: string) => {

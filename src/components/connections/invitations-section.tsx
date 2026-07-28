@@ -1,18 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Inbox,
-  Send,
-  ChevronDown,
-  ChevronUp,
-} from "lucide-react";
+import { Inbox, Send, ChevronDown, ChevronUp } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
 import {
   acceptConnectionAction,
   rejectConnectionAction,
@@ -47,7 +41,7 @@ export function InvitationsSection({
       transition={{ duration: 0.25 }}
       className="mb-5"
     >
-      <Card className="overflow-hidden border-primary/20 bg-primary/[0.03] border-l-2 border-l-primary/40">
+      <Card className="overflow-hidden border-primary/20 bg-primary/3 border-l-2 border-l-primary/40">
         <CardContent className="p-4">
           <button
             onClick={() => setExpanded((v) => !v)}
@@ -187,9 +181,7 @@ function InvitationRow({
         toast.error(res.message);
       }
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Something went wrong.",
-      );
+      toast.error(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
       setBusy(null);
     }
@@ -237,11 +229,7 @@ function InvitationRow({
         <div className="flex shrink-0 items-center gap-1.5">
           {type === "received" ? (
             <>
-              <Button
-                size="sm"
-                onClick={handleAccept}
-                disabled={busy !== null}
-              >
+              <Button size="sm" onClick={handleAccept} disabled={busy !== null}>
                 Accept
               </Button>
               <Button

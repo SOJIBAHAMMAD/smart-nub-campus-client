@@ -17,7 +17,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   Search,
-  Bell,
   Moon,
   Sun,
   LogOut,

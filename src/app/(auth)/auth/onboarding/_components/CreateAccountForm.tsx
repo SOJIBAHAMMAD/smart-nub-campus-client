@@ -80,6 +80,7 @@ export function CreateAccountForm({
     [setCurrentStep, setVerificationRequest],
   );
 
+  // eslint-disable-next-line react-hooks/incompatible-library
   const passwordValue = watch("password") ?? "";
 
   const handlePublicIdChange = useCallback((publicId: string | null) => {

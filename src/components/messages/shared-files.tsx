@@ -35,6 +35,7 @@ export function SharedFiles({ files, className }: SharedFilesProps) {
           <Attachment key={file.id} size="sm" orientation="horizontal">
             <AttachmentMedia variant={isImage ? "image" : "icon"}>
               {isImage && file.fileUrl ? (
+                /* eslint-disable-next-line @next/next/no-img-element */
                 <img src={file.fileUrl} alt={file.fileName ?? "Image"} className="object-cover" />
               ) : isImage ? (
                 <ImageIcon className="size-4" />

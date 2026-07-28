@@ -23,8 +23,10 @@ export function ImageLightbox({
     (e: KeyboardEvent) => {
       if (!open) return;
       if (e.key === "Escape") onClose();
-      if (e.key === "ArrowLeft" && currentIndex > 0) onNavigate?.(currentIndex - 1);
-      if (e.key === "ArrowRight" && currentIndex < images.length - 1) onNavigate?.(currentIndex + 1);
+      if (e.key === "ArrowLeft" && currentIndex > 0)
+        onNavigate?.(currentIndex - 1);
+      if (e.key === "ArrowRight" && currentIndex < images.length - 1)
+        onNavigate?.(currentIndex + 1);
     },
     [open, currentIndex, images.length, onClose, onNavigate],
   );
@@ -52,7 +54,7 @@ export function ImageLightbox({
   const hasNext = currentIndex < images.length - 1;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm">
+    <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/80 backdrop-blur-sm">
       {/* Close button */}
       <Button
         variant="ghost"
@@ -96,6 +98,7 @@ export function ImageLightbox({
       )}
 
       {/* Image */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={current.url}
         alt={current.alt ?? "Image"}
@@ -110,7 +113,11 @@ export function ImageLightbox({
         download
         className="absolute bottom-4 right-4 z-10"
       >
-        <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="text-white hover:bg-white/10"
+        >
           <Download className="size-5" />
         </Button>
       </a>

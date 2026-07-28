@@ -17,12 +17,6 @@ import { VoteControls } from "@/components/ui/vote-controls";
 import { Avatar } from "@/components/ui/avatar";
 import { CommentSection } from "@/components/resources/comment-section";
 import {
-  Empty,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@/components/ui/empty";
-import {
   FileIcon,
   getFileColor,
   formatFileSize,
