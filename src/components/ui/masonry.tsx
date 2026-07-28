@@ -169,6 +169,7 @@ function Masonry({
       className={cn("flex w-full min-w-0 items-start", className)}
       {...props}
     >
+    {/* eslint-disable-next-line react-hooks/refs */}
       {distribution.map((columnIndices, column) => (
         <div
           key={column}

@@ -28,7 +28,10 @@ export const tagService = {
       "/tags",
       { name },
     );
-    return response.data?.data!;
+    if (!response.data?.data) {
+      throw new Error("Tag not found");
+    }
+    return response.data.data;
   },
 
   async createTags(names: string[]): Promise<TagBasic[]> {

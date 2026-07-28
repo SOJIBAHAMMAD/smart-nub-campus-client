@@ -55,14 +55,14 @@ export function createEffectWithTarget(
   const useEffectWithTarget = (
     effect: EffectCallback,
     deps: DependencyList,
-    target: BasicTarget<any> | BasicTarget<any>[],
+    target: BasicTarget<TargetType> | BasicTarget<TargetType>[],
   ) => {
     const hasInitRef = useRef(false)
 
-    const lastElementRef = useRef<(Element | null)[]>([])
+    const lastElementRef = useRef<(TargetType | null | undefined)[]>([])
     const lastDepsRef = useRef<DependencyList>([])
 
-    const unLoadRef = useRef<any>(undefined)
+    const unLoadRef = useRef<(() => void) | void | undefined>(undefined)
 
     useEffectType(() => {
       const targets = Array.isArray(target) ? target : [target]

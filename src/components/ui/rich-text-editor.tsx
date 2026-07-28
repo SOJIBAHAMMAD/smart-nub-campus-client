@@ -172,12 +172,21 @@ function RichTextEditor({
   const isEditable = editable && !disabled;
 
   const onChangeRef = React.useRef(onChange);
-  onChangeRef.current = onChange;
+  React.useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
   const onFocusRef = React.useRef(onFocus);
-  onFocusRef.current = onFocus;
+  React.useEffect(() => {
+    onFocusRef.current = onFocus;
+  }, [onFocus]);
   const onBlurRef = React.useRef(onBlur);
-  onBlurRef.current = onBlur;
+  React.useEffect(() => {
+    onBlurRef.current = onBlur;
+  }, [onBlur]);
   const placeholderRef = React.useRef(placeholder);
+  React.useEffect(() => {
+    placeholderRef.current = placeholder;
+  }, [placeholder]);
 
   const editor = useEditor({
     extensions: [
@@ -197,6 +206,7 @@ function RichTextEditor({
       }),
       TextAlign.configure({ types: ["heading", "paragraph"] }),
       Highlight.configure({ multicolor: false }),
+      // eslint-disable-next-line react-hooks/refs
       Placeholder.configure({
         placeholder: () => placeholderRef.current,
         emptyEditorClass: "is-editor-empty",
@@ -250,7 +260,7 @@ function RichTextEditor({
             <Skeleton key={i} className="size-7 rounded" />
           ))}
         </div>
-        <div className="min-h-[150px] space-y-2.5 px-3 py-3">
+        <div className="min-h-37.5 space-y-2.5 px-3 py-3">
           <Skeleton className="h-4 w-3/4" />
           <Skeleton className="h-4 w-full" />
           <Skeleton className="h-4 w-5/6" />
@@ -338,7 +348,20 @@ function RichTextEditorButton({
 }: RichTextEditorButtonProps) {
   return (
     <Tooltip>
-      <TooltipTrigger render={<Toggle data-slot="rich-text-editor-button" size="sm" pressed={pressed} onPressedChange={onPressedChange} disabled={disabled} className={className} />}>{children}</TooltipTrigger>
+      <TooltipTrigger
+        render={
+          <Toggle
+            data-slot="rich-text-editor-button"
+            size="sm"
+            pressed={pressed}
+            onPressedChange={onPressedChange}
+            disabled={disabled}
+            className={className}
+          />
+        }
+      >
+        {children}
+      </TooltipTrigger>
       <TooltipContent side="top">{tooltip}</TooltipContent>
     </Tooltip>
   );
@@ -368,6 +391,10 @@ function RichTextEditorLinkPopover() {
     editor,
     selector: ({ editor }) => editor.isActive("link"),
   });
+
+  React.useEffect(() => {
+    if (open) inputRef.current?.focus();
+  }, [open]);
 
   const handleOpen = (nextOpen: boolean) => {
     if (nextOpen) {
@@ -404,7 +431,22 @@ function RichTextEditorLinkPopover() {
   return (
     <Popover open={open} onOpenChange={handleOpen}>
       <Tooltip>
-        <TooltipTrigger render={<PopoverTrigger render={<Toggle data-slot="rich-text-editor-link-trigger" size="sm" pressed={isLink} onPressedChange={() => handleOpen(!open)} />} />}><LinkIcon className="size-4" /></TooltipTrigger>
+        <TooltipTrigger
+          render={
+            <PopoverTrigger
+              render={
+                <Toggle
+                  data-slot="rich-text-editor-link-trigger"
+                  size="sm"
+                  pressed={isLink}
+                  onPressedChange={() => handleOpen(!open)}
+                />
+              }
+            />
+          }
+        >
+          <LinkIcon className="size-4" />
+        </TooltipTrigger>
         <TooltipContent side="top">Link</TooltipContent>
       </Tooltip>
 
@@ -412,10 +454,6 @@ function RichTextEditorLinkPopover() {
         data-slot="rich-text-editor-link-popover"
         className="w-80 p-3"
         align="start"
-        onOpenAutoFocus={(e) => {
-          e.preventDefault();
-          inputRef.current?.focus();
-        }}
       >
         <form
           className="flex items-center gap-2"

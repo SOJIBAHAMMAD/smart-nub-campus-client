@@ -288,7 +288,7 @@ function AudioPlayerSeek({ className, ...props }: React.ComponentProps<"div">) {
       <div
         aria-hidden
         data-slot="audio-player-buffered"
-        className="pointer-events-none absolute start-0 top-1/2 h-1 -translate-y-1/2 rounded-sm bg-primary/20"
+        className="pointer-events-none absolute inset-s-0 top-1/2 h-1 -translate-y-1/2 rounded-sm bg-primary/20"
         style={{ width: `${bufferedPct}%` }}
       />
       <Slider
@@ -298,9 +298,9 @@ function AudioPlayerSeek({ className, ...props }: React.ComponentProps<"div">) {
         step={0.1}
         disabled={!hasDuration}
         aria-label="Seek"
-        onValueChange={(values) => setScrub(values[0] ?? 0)}
-        onValueCommit={(values) => {
-          seek(values[0] ?? 0);
+        onValueChange={(values) => setScrub(Array.isArray(values) ? values[0] ?? 0 : values)}
+        onValueCommitted={(values) => {
+          seek(Array.isArray(values) ? values[0] ?? 0 : values);
           setScrub(null);
         }}
       />
@@ -372,7 +372,7 @@ function AudioPlayerVolume({
         max={1}
         step={0.01}
         aria-label="Volume"
-        onValueChange={(values) => setVolume(values[0] ?? 0)}
+        onValueChange={(values) => setVolume(Array.isArray(values) ? values[0] ?? 0 : values)}
         className="w-16"
       />
     </div>

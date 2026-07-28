@@ -159,7 +159,7 @@ export function RadialFlow({
       className='w-full h-full  relative overflow-hidden min-h-75'
     >
       <div className='absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20 mb-8'>
-        <Badge variant='default' shiny={true}>
+        <Badge variant='default'>
           {badgeName}
         </Badge>
       </div>

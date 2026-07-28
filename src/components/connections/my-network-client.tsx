@@ -278,7 +278,7 @@ export function MyNetworkClient({
   }, [tab, subTab, search, filters, page]);
 
   const loadDataRef = useRef(loadData);
-  loadDataRef.current = loadData;
+  useEffect(() => { loadDataRef.current = loadData; }, [loadData]);
 
   const handleChanged = useCallback(() => {
     void refreshMeta();
@@ -287,7 +287,7 @@ export function MyNetworkClient({
   }, [refreshMeta]);
 
   const handleChangedRef = useRef(handleChanged);
-  handleChangedRef.current = handleChanged;
+  useEffect(() => { handleChangedRef.current = handleChanged; }, [handleChanged]);
 
   useEffect(() => {
     void loadData();

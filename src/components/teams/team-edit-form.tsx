@@ -160,11 +160,6 @@ export function TeamEditForm({ team, tags: _tags, onSuccess }: TeamEditFormProps
     }
   }
 
-  const FieldError = ({ field }: { field: string }) => {
-    if (!touched[field] || !errors[field]) return null;
-    return <p className="text-[11px] text-destructive">{errors[field]}</p>;
-  };
-
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       {/* Breadcrumb */}
@@ -199,7 +194,9 @@ export function TeamEditForm({ team, tags: _tags, onSuccess }: TeamEditFormProps
           className={cn(errors.title && touched.title && "border-destructive")}
         />
         <div className="flex items-center justify-between">
-          <FieldError field="title" />
+          {touched.title && errors.title && (
+            <p className="text-[11px] text-destructive">{errors.title}</p>
+          )}
           <p className="ml-auto text-[10px] text-muted-foreground">{title.length}/200</p>
         </div>
       </div>
@@ -214,7 +211,9 @@ export function TeamEditForm({ team, tags: _tags, onSuccess }: TeamEditFormProps
           onChange={setDescription}
           placeholder="Describe your project, what you're building, and what kind of teammates you need..."
         />
-        <FieldError field="description" />
+        {touched.description && errors.description && (
+          <p className="text-[11px] text-destructive">{errors.description}</p>
+        )}
       </div>
 
       {/* Project Name */}
@@ -249,7 +248,9 @@ export function TeamEditForm({ team, tags: _tags, onSuccess }: TeamEditFormProps
             disabled={submitting}
             className={cn(errors.lookingForCount && touched.lookingForCount && "border-destructive")}
           />
-          <FieldError field="lookingForCount" />
+          {touched.lookingForCount && errors.lookingForCount && (
+            <p className="text-[11px] text-destructive">{errors.lookingForCount}</p>
+          )}
         </div>
 
         <div className="space-y-1.5">

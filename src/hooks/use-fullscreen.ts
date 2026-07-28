@@ -55,10 +55,12 @@ type FullscreenElementProperty =
   | 'mozFullScreenElement'
   | 'msFullscreenElement'
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function getTargetElement(target: BasicTarget<any>) {
   return getTargetElementUtil(target, document.documentElement)
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function getProperties(target: BasicTarget<any>) {
   const targetElement = getTargetElement(target)
 
@@ -137,6 +139,7 @@ function getProperties(target: BasicTarget<any>) {
 }
 
 function getIsSupported(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   target: BasicTarget<any>,
   properties: ReturnType<typeof getProperties>,
 ) {
@@ -159,6 +162,7 @@ function getIsSupported(
  * @param options - Configuration options
  */
 export function useFullscreen(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   target?: BasicTarget<any>,
   options: UseFullscreenOptions = {},
 ) {
@@ -187,14 +191,14 @@ export function useFullscreen(
     if (!isSupported || !isFullscreen) return
 
     const element = getTargetElement(target)
-    const doc = document as any
+    const doc = document as unknown as Record<string, (...args: unknown[]) => unknown>
 
     if (exitMethod) {
       if (doc[exitMethod] != null) {
         await doc[exitMethod]()
-      } else if (element && (element as any)[exitMethod] != null) {
+      } else if (element && (element as unknown as Record<string, unknown>)[exitMethod] != null) {
         // Fallback for Safari iOS
-        await (element as any)[exitMethod]()
+        await (element as unknown as Record<string, (...args: unknown[]) => unknown>)[exitMethod]()
       }
     }
 
@@ -229,15 +233,15 @@ export function useFullscreen(
     if (!fullscreenEnabledProperty || !isBrowser) return false
 
     const element = getTargetElement(target)
-    const doc = document as any
+    const doc = document as unknown as Record<string, unknown>
 
     if (doc[fullscreenEnabledProperty] != null) {
       return Boolean(doc[fullscreenEnabledProperty])
     }
 
     // Fallback for WebKit and iOS Safari browsers
-    if (element && (element as any)[fullscreenEnabledProperty] != null) {
-      return Boolean((element as any)[fullscreenEnabledProperty])
+    if (element && (element as unknown as Record<string, unknown>)[fullscreenEnabledProperty] != null) {
+      return Boolean((element as unknown as Record<string, unknown>)[fullscreenEnabledProperty])
     }
 
     return false
@@ -252,8 +256,8 @@ export function useFullscreen(
     }
 
     const element = getTargetElement(target)
-    if (requestMethod && element && (element as any)[requestMethod] != null) {
-      await (element as any)[requestMethod]()
+    if (requestMethod && element && (element as unknown as Record<string, unknown>)[requestMethod] != null) {
+      await (element as unknown as Record<string, (...args: unknown[]) => unknown>)[requestMethod]()
       setIsFullscreen(true)
     }
   })
@@ -275,13 +279,13 @@ export function useFullscreen(
 
   const listenerOptions = { capture: false, passive: true }
   // Listen to fullscreen change events on document
-  useEventListener(eventHandlers as any, handlerCallback, {
+  useEventListener(eventHandlers as unknown as string[], handlerCallback, {
     target: () => document,
     ...listenerOptions,
   })
 
   // Listen to fullscreen change events on target element
-  useEventListener(eventHandlers as any, handlerCallback, {
+  useEventListener(eventHandlers as unknown as string[], handlerCallback, {
     target: () => getTargetElement(target),
     ...listenerOptions,
   })

@@ -46,7 +46,7 @@ export function EmojiPickerPopover({
         className={cn("w-fit p-0", className)}
       >
         <EmojiPicker.Root
-          className="isolate flex h-[326px] w-fit flex-col"
+          className="isolate flex h-81.5 w-fit flex-col"
           onEmojiSelect={({ emoji }: { emoji: string }) => {
             onSelect(emoji);
             setOpen(false);
@@ -63,7 +63,7 @@ export function EmojiPickerPopover({
             <EmojiPicker.List
               className="select-none pb-1.5"
               components={{
-                CategoryHeader: ({ category, ...props }: { category: { label: string }; [key: string]: unknown }) => (
+                CategoryHeader: ({ category, ...props }) => (
                   <div
                     className="bg-background px-3 pt-3 pb-1.5 text-xs font-medium text-muted-foreground"
                     {...props}
@@ -71,14 +71,14 @@ export function EmojiPickerPopover({
                     {category.label}
                   </div>
                 ),
-                Row: ({ children, ...props }: { children: React.ReactNode; [key: string]: unknown }) => (
+                Row: ({ children, ...props }) => (
                   <div className="scroll-my-1.5 px-1.5" {...props}>
                     {children}
                   </div>
                 ),
-                Emoji: ({ emoji, ...props }: { emoji: { emoji: string }; [key: string]: unknown }) => (
+                Emoji: ({ emoji, ...props }) => (
                   <button
-                    className="flex size-8 items-center justify-center rounded-md text-lg data-[active]:bg-muted"
+                    className="flex size-8 items-center justify-center rounded-md text-lg data-active:bg-muted"
                     {...props}
                   >
                     {emoji.emoji}
@@ -151,18 +151,21 @@ export function MessageReactionBar({
 }: MessageReactionBarProps) {
   if (!reactions || reactions.length === 0) return null;
 
-  const grouped = reactions.reduce<Record<string, { count: number; hasOwn: boolean }>>(
-    (acc, r) => {
-      if (!acc[r.emoji]) acc[r.emoji] = { count: 0, hasOwn: false };
-      acc[r.emoji].count++;
-      if (r.userId === currentUserId) acc[r.emoji].hasOwn = true;
-      return acc;
-    },
-    {},
-  );
+  const grouped = reactions.reduce<
+    Record<string, { count: number; hasOwn: boolean }>
+  >((acc, r) => {
+    if (!acc[r.emoji]) acc[r.emoji] = { count: 0, hasOwn: false };
+    acc[r.emoji].count++;
+    if (r.userId === currentUserId) acc[r.emoji].hasOwn = true;
+    return acc;
+  }, {});
 
   return (
-    <div className="mt-1 flex flex-wrap gap-1" role="group" aria-label="Message reactions">
+    <div
+      className="mt-1 flex flex-wrap gap-1"
+      role="group"
+      aria-label="Message reactions"
+    >
       {Object.entries(grouped).map(([emoji, { count, hasOwn }]) => (
         <button
           key={emoji}

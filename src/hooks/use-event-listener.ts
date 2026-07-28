@@ -3,6 +3,7 @@ import { useLatest } from '@/hooks/use-latest'
 import { getTargetElement } from '@/lib/create-effect-with-target'
 import type { BasicTarget } from '@/lib/create-effect-with-target'
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type noop = (...p: any) => void
 
 export type Target = BasicTarget<HTMLElement | Element | Window | Document>

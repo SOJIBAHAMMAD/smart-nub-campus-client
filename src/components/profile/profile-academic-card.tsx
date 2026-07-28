@@ -122,7 +122,7 @@ export function ProfileAcademicCard({ profileData, isOwnProfile, onProfileUpdate
           ) : (profile?.currentSemester || isOwnProfile) ? (
             <div className="flex items-center gap-2">
               <BookOpen className="size-3.5" />
-              <span>Current Semester: {ordinal(profile.currentSemester)}</span>
+              <span>Current Semester: {ordinal(profile?.currentSemester ?? 0)}</span>
             </div>
           ) : null}
           {profile?.batchYear && (

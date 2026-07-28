@@ -1,18 +1,17 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Plus,
   ChevronRight,
   Users,
   CalendarClock,
-  TrendingUp,
   Timer,
   Flame,
   Sparkles,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { TagPill } from "@/components/ui/tag-pill";
 import { cn } from "@/lib/utils";
 import { AvatarGroup } from "@/components/ui/avatar-group";
 import { DIFFICULTY_BADGE } from "@/constants/team";
@@ -53,9 +52,15 @@ const RANK_STYLES = [
 ];
 
 export function TeamsTrending({ suggested }: TeamsTrendingProps) {
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 60_000);
+    return () => clearInterval(id);
+  }, []);
+
   const endingSoon = suggested.filter((t) => {
     if (t.status !== "OPEN" || !t.deadline) return false;
-    const diffMs = new Date(t.deadline).getTime() - Date.now();
+    const diffMs = new Date(t.deadline).getTime() - now.getTime();
     const diffDay = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
     return diffDay > 0 && diffDay <= 7;
   });
@@ -72,7 +77,9 @@ export function TeamsTrending({ suggested }: TeamsTrendingProps) {
             <div className="flex size-6 items-center justify-center rounded-lg bg-primary/10">
               <Flame className="size-3.5 text-primary" />
             </div>
-            <h3 className="text-sm font-semibold text-foreground">Most Active</h3>
+            <h3 className="text-sm font-semibold text-foreground">
+              Most Active
+            </h3>
           </div>
 
           {topThree.map((team, idx) => {
@@ -87,7 +94,7 @@ export function TeamsTrending({ suggested }: TeamsTrendingProps) {
             const urgentDeadline =
               team.deadline &&
               Math.ceil(
-                (new Date(team.deadline).getTime() - Date.now()) /
+                (new Date(team.deadline).getTime() - now.getTime()) /
                   (1000 * 60 * 60 * 24),
               ) <= 3;
 
@@ -140,10 +147,14 @@ export function TeamsTrending({ suggested }: TeamsTrendingProps) {
                       <Users className="size-3" />
                       {spotsLeft > 0 ? (
                         <>
-                          <span className={cn(spotsLeft <= 2 && "text-destructive font-medium")}>
+                          <span
+                            className={cn(
+                              spotsLeft <= 2 && "text-destructive font-medium",
+                            )}
+                          >
                             {spotsLeft}
-                          </span>
-                          {" "}slot{spotsLeft !== 1 && "s"}
+                          </span>{" "}
+                          slot{spotsLeft !== 1 && "s"}
                         </>
                       ) : (
                         <span className="font-medium">Full</span>
@@ -162,8 +173,10 @@ export function TeamsTrending({ suggested }: TeamsTrendingProps) {
                     )}
                     {team._count && team._count.teamApplications > 0 && (
                       <span className="flex items-center gap-0.5">
-                        <span className="font-medium">{team._count.teamApplications}</span>
-                        {" "}app{team._count.teamApplications !== 1 && "s"}
+                        <span className="font-medium">
+                          {team._count.teamApplications}
+                        </span>{" "}
+                        app{team._count.teamApplications !== 1 && "s"}
                       </span>
                     )}
                   </div>
@@ -190,7 +203,7 @@ export function TeamsTrending({ suggested }: TeamsTrendingProps) {
             const urgentDeadline =
               team.deadline &&
               Math.ceil(
-                (new Date(team.deadline).getTime() - Date.now()) /
+                (new Date(team.deadline).getTime() - now.getTime()) /
                   (1000 * 60 * 60 * 24),
               ) <= 3;
 
@@ -214,7 +227,11 @@ export function TeamsTrending({ suggested }: TeamsTrendingProps) {
                     {spotsLeft > 0 ? `${spotsLeft}s` : "Full"}
                   </span>
                   {deadlineText && (
-                    <span className={cn(urgentDeadline && "text-destructive font-medium")}>
+                    <span
+                      className={cn(
+                        urgentDeadline && "text-destructive font-medium",
+                      )}
+                    >
                       {deadlineText}
                     </span>
                   )}
@@ -232,13 +249,15 @@ export function TeamsTrending({ suggested }: TeamsTrendingProps) {
             <div className="flex size-6 items-center justify-center rounded-lg bg-destructive/10">
               <Timer className="size-3.5 text-destructive" />
             </div>
-            <h3 className="text-sm font-semibold text-foreground">Ending Soon</h3>
+            <h3 className="text-sm font-semibold text-foreground">
+              Ending Soon
+            </h3>
           </div>
 
           <div className="space-y-1.5">
             {endingSoon.map((team) => {
               const spotsLeft = team.lookingForCount - team.currentMemberCount;
-              const diffMs = new Date(team.deadline!).getTime() - Date.now();
+              const diffMs = new Date(team.deadline!).getTime() - now.getTime();
               const diffDay = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
 
               return (
@@ -248,7 +267,9 @@ export function TeamsTrending({ suggested }: TeamsTrendingProps) {
                   className="group flex items-center gap-2.5 rounded-lg p-2 transition-colors hover:bg-muted/80"
                 >
                   <div className="flex size-6 shrink-0 items-center justify-center rounded-md bg-destructive/10">
-                    <span className="text-[10px] font-bold text-destructive">{diffDay}</span>
+                    <span className="text-[10px] font-bold text-destructive">
+                      {diffDay}
+                    </span>
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="line-clamp-1 text-xs font-medium text-foreground group-hover:text-primary transition-colors">
@@ -291,7 +312,9 @@ export function TeamsTrending({ suggested }: TeamsTrendingProps) {
         <CardContent className="p-4 ring-1 ring-foreground/10">
           <div className="flex items-center gap-2">
             <Plus className="size-4 text-primary" />
-            <h3 className="text-sm font-semibold text-foreground">Start a Team</h3>
+            <h3 className="text-sm font-semibold text-foreground">
+              Start a Team
+            </h3>
           </div>
           <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
             Looking for teammates? Create a request and find the right people.

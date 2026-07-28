@@ -102,6 +102,18 @@ function ConfirmProvider({ children, defaultOptions }: ConfirmProviderProps) {
     });
   }, []);
 
+  const options: ConfirmOptions = {
+    confirmText: "Confirm",
+    cancelText: "Cancel",
+    tone: "default",
+    dismissible: true,
+    ...defaultOptions,
+    ...active?.options,
+  };
+  const tone = options.tone ?? "default";
+  const dismissible = options.dismissible ?? true;
+  const hasDescription = options.description != null;
+
   const settle = React.useCallback((value: boolean) => {
     const current = activeRef.current;
     if (!current || closingRef.current) return;
@@ -139,23 +151,11 @@ function ConfirmProvider({ children, defaultOptions }: ConfirmProviderProps) {
 
   const handleOpenChange = React.useCallback(
     (next: boolean) => {
-      if (next || pending) return;
+      if (next || pending || !dismissible) return;
       settle(false);
     },
-    [pending, settle],
+    [pending, dismissible, settle],
   );
-
-  const options: ConfirmOptions = {
-    confirmText: "Confirm",
-    cancelText: "Cancel",
-    tone: "default",
-    dismissible: true,
-    ...defaultOptions,
-    ...active?.options,
-  };
-  const tone = options.tone ?? "default";
-  const dismissible = options.dismissible ?? true;
-  const hasDescription = options.description != null;
 
   return (
     <ConfirmContext.Provider value={confirm}>
@@ -163,9 +163,6 @@ function ConfirmProvider({ children, defaultOptions }: ConfirmProviderProps) {
       <AlertDialog open={open} onOpenChange={handleOpenChange}>
         <AlertDialogContent
           data-tone={tone}
-          onEscapeKeyDown={(event) => {
-            if (!dismissible || pending) event.preventDefault();
-          }}
           {...(hasDescription ? {} : { "aria-describedby": undefined })}
         >
           <AlertDialogHeader>

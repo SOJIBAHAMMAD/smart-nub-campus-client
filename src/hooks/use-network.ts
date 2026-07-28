@@ -12,6 +12,7 @@ export interface NetworkState {
 }
 
 function getConnection() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const nav = navigator as any
   if (typeof nav !== 'object') {
     return null

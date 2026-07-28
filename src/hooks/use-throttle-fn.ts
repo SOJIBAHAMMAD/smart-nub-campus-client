@@ -6,6 +6,7 @@ import type { ThrottleOptions } from 'es-toolkit'
 
 export type { ThrottleOptions }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function useThrottleFn<Fn extends (...args: any[]) => any>(
   fn: Fn,
   throttleMs?: number,
@@ -16,10 +17,12 @@ export function useThrottleFn<Fn extends (...args: any[]) => any>(
   const throttledFn = useMemo(
     () =>
       throttle(
+        // eslint-disable-next-line react-hooks/refs
         (...args: Parameters<Fn>) => fnRef.current(...args),
         throttleMs ?? 1000,
         options,
       ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   )
 
