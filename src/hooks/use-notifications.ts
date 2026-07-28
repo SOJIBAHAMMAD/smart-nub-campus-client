@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { apiClient } from "@/lib/api-client";
 import type {
   Notification,
@@ -42,6 +42,11 @@ export function useNotifications({
   const [isLoading, setIsLoading] = useState(autoFetch);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+
+  const notificationsRef = useRef(notifications);
+  useEffect(() => {
+    notificationsRef.current = notifications;
+  });
 
   const fetchPage = useCallback(
     async (pageNum: number, append = false) => {
@@ -143,7 +148,7 @@ export function useNotifications({
   }, []);
 
   const deleteNotification = useCallback(async (id: string) => {
-    const deleted = notifications.find((n) => n.id === id);
+    const deleted = notificationsRef.current.find((n) => n.id === id);
     setNotifications((prev) => prev.filter((n) => n.id !== id));
     try {
       await apiClient.del(`/notifications/${id}`);
@@ -152,7 +157,7 @@ export function useNotifications({
         setNotifications((prev) => [deleted, ...prev]);
       }
     }
-  }, [notifications]);
+  }, []);
 
   const bulkMarkAsRead = useCallback(async (ids: string[]) => {
     const idSet = new Set(ids);
@@ -170,14 +175,14 @@ export function useNotifications({
 
   const bulkDelete = useCallback(async (ids: string[]) => {
     const idSet = new Set(ids);
-    const deleted = notifications.filter((n) => idSet.has(n.id));
+    const deleted = notificationsRef.current.filter((n) => idSet.has(n.id));
     setNotifications((prev) => prev.filter((n) => !idSet.has(n.id)));
     try {
       await apiClient.del("/notifications/bulk", { ids });
     } catch {
       setNotifications((prev) => [...deleted, ...prev]);
     }
-  }, [notifications]);
+  }, []);
 
   const prependNotification = useCallback((notification: Notification) => {
     setNotifications((prev) => [notification, ...prev]);

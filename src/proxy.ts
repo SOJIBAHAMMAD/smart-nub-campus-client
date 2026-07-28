@@ -4,7 +4,7 @@ import ROUTES from "@/constants/routes";
 import { UserRole } from "./constants/enums";
 
 /** Routes that must never be intercepted by this proxy. */
-const EXCLUDED_PREFIXES = ["/api", "/_next", "/favicon.ico"];
+const EXCLUDED_PREFIXES = ["/api", "/_next", "/favicon.ico", "/images", "/about", "/privacy", "/terms"];
 
 function isExcluded(pathname: string): boolean {
   return EXCLUDED_PREFIXES.some((prefix) => pathname.startsWith(prefix));
@@ -149,7 +149,7 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Match all request paths except API routes, static assets, and files
-    "/((?!api|_next/static|_next/image|favicon.ico).*)",
+    // Match all request paths except API routes, static assets, and public info pages
+    "/((?!api|_next/static|_next/image|favicon.ico|images|about|privacy|terms).*)",
   ],
 };

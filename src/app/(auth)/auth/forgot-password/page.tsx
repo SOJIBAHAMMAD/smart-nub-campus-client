@@ -90,7 +90,7 @@ export default function ForgotPasswordPage() {
 
   return (
     <main>
-      <div className="grid overflow-hidden rounded-2xl sm:rounded-[32px] border bg-[url('/images/nub-campus.png')] dark:bg-[url('/images/nub-campus-night.png')] bg-cover bg-center bg-no-repeat text-card-foreground shadow-xl lg:grid-cols-2">
+      <div className="grid overflow-hidden rounded-2xl sm:rounded-[32px] border bg-campus text-card-foreground shadow-xl lg:grid-cols-2">
         <AuthInfo variant="forgot-password" />
 
         <section className="flex items-center justify-center py-5 sm:py-8 px-4 sm:px-6">

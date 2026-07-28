@@ -13,7 +13,7 @@ import ROUTES from "@/constants/routes";
 export default function AuthPage() {
   return (
     <main>
-      <div className="grid overflow-hidden rounded-2xl sm:rounded-[32px] border bg-[url('/images/nub-campus.png')] dark:bg-[url('/images/nub-campus-night.png')] bg-cover bg-center bg-no-repeat text-card-foreground shadow-xl lg:grid-cols-2">
+      <div className="grid overflow-hidden rounded-2xl sm:rounded-[32px] border bg-campus text-card-foreground shadow-xl lg:grid-cols-2">
         {/* Left Section: Branding & Features */}
         <AuthInfo variant="default" />
         {/* Right Section: Interactive Onboarding Actions */}

@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { InformationCircleIcon } from "@/components/ui/icons/information-circle";
 import { AcademicCapIcon } from "@/components/ui/icons/academic-cap";
-import { CircleQuestionMark } from "lucide-react";
 import { ModeToggle } from "@/components/theme/mode-toggle";
 import { Hyperlink } from "@/components/ui/hyperlink";
+import { HelpPopover } from "./_components/help-popover";
 import ROUTES from "@/constants/routes";
 
 export default function AuthLayout({
@@ -32,23 +32,7 @@ export default function AuthLayout({
             <InformationCircleIcon />
             About Smart NUB Campus
           </Link>
-          <a
-            href="mailto:support@nub.ac.bd"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium h-9 px-4 py-2 hover:bg-accent hover:text-accent-foreground sm:hidden"
-          >
-            <CircleQuestionMark />
-          </a>
-          <a
-            href="mailto:support@nub.ac.bd"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hidden sm:inline-flex items-center justify-center gap-2 rounded-md border border-input bg-background text-sm font-medium h-9 px-4 py-2 hover:bg-accent hover:text-accent-foreground"
-          >
-            <CircleQuestionMark />
-            Need Help?
-          </a>
+          <HelpPopover />
         </div>
       </header>
 

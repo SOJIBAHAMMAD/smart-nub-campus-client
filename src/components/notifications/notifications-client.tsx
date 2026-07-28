@@ -52,14 +52,63 @@ const TAB_CONFIG: {
   types?: NotificationType[];
 }[] = [
   { value: "all", label: "All", icon: Inbox },
-  { value: "messages", label: "Messages", icon: MessageCircle, types: ["MESSAGE", "MESSAGE_REQUEST"] },
-  { value: "connections", label: "Connections", icon: Users, types: ["CONNECTION_REQUEST", "CONNECTION_ACCEPTED"] },
-  { value: "teams", label: "Teams", icon: Trophy, types: ["TEAM_APPLICATION", "TEAM_APPLICATION_ACCEPTED", "TEAM_APPLICATION_REJECTED"] },
-  { value: "resources", label: "Resources", icon: BookOpen, types: ["RESOURCE_UPVOTE", "RESOURCE_DOWNVOTE", "RESOURCE_COMMENT", "RESOURCE_REPORT_REVIEWED"] },
-  { value: "qa", label: "Q&A", icon: HelpCircle, types: ["QUESTION_ANSWER", "QUESTION_ACCEPTED"] },
-  { value: "discussions", label: "Discussions", icon: MessageSquare, types: ["DISCUSSION_REPLY", "DISCUSSION_MENTION"] },
-  { value: "events", label: "Events", icon: Calendar, types: ["EVENT_REMINDER"] },
-  { value: "system", label: "System", icon: Settings, types: ["BADGE_UNLOCKED", "SYSTEM"] },
+  {
+    value: "messages",
+    label: "Messages",
+    icon: MessageCircle,
+    types: ["MESSAGE", "MESSAGE_REQUEST"],
+  },
+  {
+    value: "connections",
+    label: "Connections",
+    icon: Users,
+    types: ["CONNECTION_REQUEST", "CONNECTION_ACCEPTED"],
+  },
+  {
+    value: "teams",
+    label: "Teams",
+    icon: Trophy,
+    types: [
+      "TEAM_APPLICATION",
+      "TEAM_APPLICATION_ACCEPTED",
+      "TEAM_APPLICATION_REJECTED",
+    ],
+  },
+  {
+    value: "resources",
+    label: "Resources",
+    icon: BookOpen,
+    types: [
+      "RESOURCE_UPVOTE",
+      "RESOURCE_DOWNVOTE",
+      "RESOURCE_COMMENT",
+      "RESOURCE_REPORT_REVIEWED",
+    ],
+  },
+  {
+    value: "qa",
+    label: "Q&A",
+    icon: HelpCircle,
+    types: ["QUESTION_ANSWER", "QUESTION_ACCEPTED"],
+  },
+  {
+    value: "discussions",
+    label: "Discussions",
+    icon: MessageSquare,
+    types: ["DISCUSSION_REPLY", "DISCUSSION_MENTION"],
+  },
+  {
+    value: "events",
+    label: "Events",
+    icon: Calendar,
+    types: ["EVENT_REMINDER"],
+  },
+  {
+    value: "system",
+    label: "System",
+    icon: Settings,
+    types: ["BADGE_UNLOCKED", "SYSTEM"],
+  },
 ];
 
 interface TimeGroup {
@@ -126,20 +175,17 @@ function getEmptyStateContent(tab: TabValue): {
     connections: {
       icon: Users,
       title: "No connection notifications",
-      description:
-        "Connection requests and acceptances will show up here.",
+      description: "Connection requests and acceptances will show up here.",
     },
     teams: {
       icon: Trophy,
       title: "No team notifications",
-      description:
-        "Team applications and updates will be notified here.",
+      description: "Team applications and updates will be notified here.",
     },
     resources: {
       icon: BookOpen,
       title: "No resource notifications",
-      description:
-        "Upvotes, comments, and resource reviews will appear here.",
+      description: "Upvotes, comments, and resource reviews will appear here.",
     },
     qa: {
       icon: HelpCircle,
@@ -150,20 +196,17 @@ function getEmptyStateContent(tab: TabValue): {
     discussions: {
       icon: MessageSquare,
       title: "No discussion notifications",
-      description:
-        "Replies and mentions in discussions will appear here.",
+      description: "Replies and mentions in discussions will appear here.",
     },
     events: {
       icon: Calendar,
       title: "No event notifications",
-      description:
-        "Event reminders and updates will be notified here.",
+      description: "Event reminders and updates will be notified here.",
     },
     system: {
       icon: Settings,
       title: "No system notifications",
-      description:
-        "Badge unlocks and system announcements will show up here.",
+      description: "Badge unlocks and system announcements will show up here.",
     },
   };
   return states[tab];
@@ -188,8 +231,12 @@ export function NotificationsClient() {
     prependNotification,
   } = useNotifications();
 
-  const { count: unreadCount, decrement, refresh: refreshCount } = useUnreadCount();
   const { socket } = useSocket();
+  const {
+    count: unreadCount,
+    decrement,
+    refresh: refreshCount,
+  } = useUnreadCount({ socket });
 
   // Listen for real-time notifications
   useSocketEvent(socket, "notification:new", (data) => {
@@ -314,7 +361,7 @@ export function NotificationsClient() {
   const selectionCount = selectedIds.size;
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6">
+    <div className="mx-auto max-w-3xl w-full px-4 py-6 sm:px-6">
       {/* Page header */}
       <div className="flex items-start justify-between gap-4">
         <div>
@@ -386,7 +433,9 @@ export function NotificationsClient() {
                 className="gap-1.5 px-3 text-xs"
               >
                 <TabIcon className="size-3.5" />
-                <span className="hidden sm:inline">{tab.label}</span>
+                {activeTab === tab.value && (
+                  <span className="hidden sm:inline">{tab.label}</span>
+                )}
               </TabsTrigger>
             );
           })}
