@@ -21,6 +21,7 @@ type UploadContext =
 interface UseUploadOptions {
   context: UploadContext;
   type?: "image" | "video" | "raw";
+  isOnboarding?: boolean;
 }
 
 interface UseUploadResult {

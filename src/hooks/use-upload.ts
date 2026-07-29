@@ -12,17 +12,17 @@ export function useUpload(options: UseUploadOptions): {
 
   const upload = useCallback(
     async (file: File): Promise<UploadResult> => {
-      console.log(`[useUpload] Starting upload for:`, file.name, options.context);
       setIsUploading(true);
       setError(null);
 
       try {
-        const result = await uploadService.upload(
-          file,
-          options.context,
-          options.type,
-        );
-        console.log(`[useUpload] Upload result:`, result);
+        const result = options.isOnboarding
+          ? await uploadService.uploadForOnboarding(
+              file,
+              options.context,
+              options.type,
+            )
+          : await uploadService.upload(file, options.context, options.type);
         return result;
       } catch (err) {
         const errorMessage =
@@ -34,7 +34,7 @@ export function useUpload(options: UseUploadOptions): {
         setIsUploading(false);
       }
     },
-    [options.context, options.type],
+    [options.context, options.type, options.isOnboarding],
   );
 
   return { upload, isUploading, error };

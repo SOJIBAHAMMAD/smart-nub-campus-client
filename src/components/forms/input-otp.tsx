@@ -325,7 +325,8 @@ function InputOTPSlot({
           inputsRef.current[index] = el;
         }}
         type="text"
-        inputMode="text"
+        inputMode="numeric"
+        pattern="[0-9]*"
         maxLength={1}
         value={visibleValues[index]}
         onChange={(e) => handleChange(e.target.value, index)}

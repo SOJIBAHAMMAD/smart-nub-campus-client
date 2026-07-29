@@ -17,12 +17,14 @@ import {
 } from "@/components/forms/password-input";
 
 interface PasswordFieldOwnProps {
-  label?: string;
+  label?: React.ReactNode;
   description?: string;
   containerClassName?: string;
   showToggle?: boolean;
   showStrength?: boolean;
   toggleLabel?: { show: string; hide: string };
+  placeholder?: string;
+  autoComplete?: string;
   disabled?: boolean;
 }
 
@@ -40,6 +42,8 @@ export function PasswordField<TFieldValues extends FieldValues>({
   showToggle,
   showStrength = false,
   toggleLabel,
+  placeholder,
+  autoComplete,
   disabled,
 }: PasswordFieldProps<TFieldValues>) {
   const {
@@ -59,7 +63,7 @@ export function PasswordField<TFieldValues extends FieldValues>({
     >
       <Field className={containerClassName}>
         {label && <FieldLabel htmlFor={name}>{label}</FieldLabel>}
-        <PasswordInputField showToggle={showToggle} toggleLabel={toggleLabel} />
+        <PasswordInputField showToggle={showToggle} toggleLabel={toggleLabel} placeholder={placeholder} autoComplete={autoComplete} />
         {showStrength && <PasswordInputStrength className="mt-2" />}
         {description && <FieldDescription>{description}</FieldDescription>}
         <FieldError errors={[error].filter(Boolean)} />

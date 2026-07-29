@@ -237,7 +237,7 @@ export function useEmailVerification(options: UseEmailVerificationOptions = {}) 
         } else {
           sessionStorage.removeItem("pending_verification_email");
           sessionStorage.removeItem("pending_verification_source");
-          onSuccess?.();
+          await onSuccess?.();
         }
       } catch {
         otpForm.setValue("otp", "");

@@ -1,8 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
-import { Mail } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Mail, Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
@@ -11,10 +10,13 @@ import { Button } from "@/components/ui/button";
 import { TextField } from "@/components/forms/fields/text-field";
 import AuthInfo from "../_components/AuthInfo";
 import { requestPasswordResetByIdentifier } from "@/actions/auth.action";
+import { maskEmail } from "@/hooks/use-email-verification";
 import {
   forgotPasswordSchema,
   type ForgotPasswordFormValues,
 } from "@/schemas/auth/forgot-password.schema";
+import ROUTES from "@/constants/routes";
+import { Hyperlink } from "@/components/ui/hyperlink";
 
 export default function ForgotPasswordPage() {
   const [isPending, setIsPending] = useState(false);
@@ -22,13 +24,32 @@ export default function ForgotPasswordPage() {
     success: boolean;
     error: string | null;
     message: string | null;
+    identifier: string | null;
   }>({
     success: false,
     error: null,
     message: null,
+    identifier: null,
   });
+  const [countdown, setCountdown] = useState(0);
   const router = useRouter();
   const isSubmitting = isPending || state.success;
+
+  useEffect(() => {
+    if (!state.success || countdown <= 0) return;
+
+    const timer = setTimeout(() => {
+      if (countdown <= 1) {
+        router.push(
+          `${ROUTES.RESET_PASSWORD}?identifier=${encodeURIComponent(state.identifier ?? "")}`,
+        );
+      } else {
+        setCountdown((c) => c - 1);
+      }
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [state.success, countdown, state.identifier, router]);
 
   const { control, handleSubmit } = useForm<ForgotPasswordFormValues>({
     resolver: zodResolver(forgotPasswordSchema),
@@ -39,7 +60,7 @@ export default function ForgotPasswordPage() {
 
   const onSubmit = async (data: ForgotPasswordFormValues) => {
     setIsPending(true);
-    setState({ success: false, error: null, message: null });
+    setState({ success: false, error: null, message: null, identifier: null });
 
     try {
       const message = await requestPasswordResetByIdentifier(data.identifier);
@@ -48,13 +69,10 @@ export default function ForgotPasswordPage() {
         success: true,
         error: null,
         message,
+        identifier: data.identifier,
       });
 
-      setTimeout(() => {
-        router.push(
-          `/auth/reset-password?identifier=${encodeURIComponent(data.identifier)}`,
-        );
-      }, 1500);
+      setCountdown(3);
     } catch (error) {
       setState({
         success: false,
@@ -63,6 +81,7 @@ export default function ForgotPasswordPage() {
             ? error.message
             : "Something went wrong. Please try again.",
         message: null,
+        identifier: null,
       });
     } finally {
       setIsPending(false);
@@ -71,7 +90,7 @@ export default function ForgotPasswordPage() {
 
   return (
     <main>
-      <div className="grid overflow-hidden rounded-2xl sm:rounded-[32px] border bg-[url('/images/nub-campus.png')] dark:bg-[url('/images/nub-campus-night.png')] bg-cover bg-center bg-no-repeat text-card-foreground shadow-xl lg:grid-cols-2">
+      <div className="grid overflow-hidden rounded-2xl sm:rounded-[32px] border bg-campus text-card-foreground shadow-xl lg:grid-cols-2">
         <AuthInfo variant="forgot-password" />
 
         <section className="flex items-center justify-center py-5 sm:py-8 px-4 sm:px-6">
@@ -92,7 +111,17 @@ export default function ForgotPasswordPage() {
             <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-6">
               {state.success && state.message && (
                 <div className="rounded-lg border border-green-500/50 bg-green-500/10 p-3 text-sm text-green-600 dark:text-green-400 font-medium">
-                  {state.message}
+                  <p>
+                    We sent a verification code to{" "}
+                    <span className="font-semibold">
+                      {maskEmail(state.identifier ?? "")}
+                    </span>
+                  </p>
+                  {countdown > 0 && (
+                    <span className="block mt-1 text-xs opacity-75">
+                      Redirecting to reset password in {countdown}s...
+                    </span>
+                  )}
                 </div>
               )}
 
@@ -113,21 +142,28 @@ export default function ForgotPasswordPage() {
                     </>
                   }
                   placeholder="Enter your email or student ID"
+                  autoComplete="username"
+                  inputMode="email"
                   disabled={isSubmitting}
                 />
               </div>
 
               <Button type="submit" className="w-full" disabled={isSubmitting}>
-                {isPending ? "Sending..." : "Send Reset Code"}
+                {isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  "Send Reset Code"
+                )}
               </Button>
 
               <div className="text-center text-sm">
-                <Link
-                  href="/auth/login"
-                  className="text-brand hover:underline"
-                >
+                Remembered your password?{" "}
+                <Hyperlink href={ROUTES.LOGIN} className="text-brand">
                   Back to Login
-                </Link>
+                </Hyperlink>
               </div>
             </form>
           </div>

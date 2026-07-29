@@ -11,26 +11,6 @@ export const authService = {
     }
     return response.data.email;
   },
-  /**
-   * Send email verification OTP
-   */
-  // async sendVerificationOTP(email: string): Promise<void> {
-  //   await serverApi.post("/auth/email-otp/send-verification-otp", { email });
-  // },
-
-  /**
-   * Verify email with OTP
-   */
-  // async verifyEmail(email: string, otp: string): Promise<void> {
-  //   await serverApi.post("/auth/email-otp/verify-email", { email, otp });
-  // },
-
-  /**
-   * Request password reset OTP
-   */
-  async forgotPassword(email: string): Promise<void> {
-    await serverApi.post("/auth/email-otp/request-password-reset", { email });
-  },
 
   /**
    * Request password reset via identifier (email or student ID)

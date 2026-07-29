@@ -7,11 +7,19 @@ export const accountService = {
    * Only password is sent — email and name come from the verification request on the backend.
    * Matches backend POST /account/create response
    */
-  createAccount: async (password: string): Promise<CreateAccountResponse> => {
+  createAccount: async (
+    password: string,
+    gender?: string,
+    image?: string,
+    imagePublicId?: string,
+  ): Promise<CreateAccountResponse> => {
     const response = await serverApi.post<CreateAccountResponse>(
       "/account/create",
       {
         password,
+        gender,
+        image,
+        imagePublicId,
       },
     );
 

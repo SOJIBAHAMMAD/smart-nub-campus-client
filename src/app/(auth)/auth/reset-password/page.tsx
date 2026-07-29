@@ -1,9 +1,8 @@
 "use client";
 
 import { useState, Suspense } from "react";
-import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
-import { KeyRound } from "lucide-react";
+import { KeyRound, Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -11,12 +10,15 @@ import { Button } from "@/components/ui/button";
 import { TextField } from "@/components/forms/fields/text-field";
 import { OTPField } from "@/components/forms/fields/otp-field";
 import { PasswordField } from "@/components/forms/fields/password-field";
+import { PasswordRequirements } from "@/components/forms/password-requirements";
 import AuthInfo from "../_components/AuthInfo";
 import { resetPasswordByIdentifier } from "@/actions/auth.action";
 import {
   resetPasswordSchema,
   type ResetPasswordFormValues,
 } from "@/schemas/auth/reset-password.schema";
+import ROUTES from "@/constants/routes";
+import { Hyperlink } from "@/components/ui/hyperlink";
 
 function ResetPasswordFormContent() {
   const [isPending, setIsPending] = useState(false);
@@ -32,7 +34,7 @@ function ResetPasswordFormContent() {
   const prefilledIdentifier = params.get("identifier") ?? "";
   const isSubmitting = isPending || state.success;
 
-  const { control, handleSubmit } = useForm<ResetPasswordFormValues>({
+  const { control, handleSubmit, watch } = useForm<ResetPasswordFormValues>({
     resolver: zodResolver(resetPasswordSchema),
     defaultValues: {
       identifier: prefilledIdentifier,
@@ -42,6 +44,9 @@ function ResetPasswordFormContent() {
     },
   });
 
+  // eslint-disable-next-line react-hooks/incompatible-library
+  const passwordValue = watch("password") ?? "";
+
   const onSubmit = async (data: ResetPasswordFormValues) => {
     setIsPending(true);
     setState({ success: false, error: null });
@@ -50,7 +55,9 @@ function ResetPasswordFormContent() {
       await resetPasswordByIdentifier(data.identifier, data.otp, data.password);
 
       setState({ success: true, error: null });
-      router.push("/auth/login?passwordReset=true");
+      setTimeout(() => {
+        router.push(`${ROUTES.LOGIN}?passwordReset=true`);
+      }, 1500);
     } catch (error) {
       setState({
         success: false,
@@ -66,7 +73,7 @@ function ResetPasswordFormContent() {
 
   return (
     <main>
-      <div className="grid overflow-hidden rounded-2xl sm:rounded-[32px] border bg-[url('/images/nub-campus.png')] dark:bg-[url('/images/nub-campus-night.png')] bg-cover bg-center bg-no-repeat text-card-foreground shadow-xl lg:grid-cols-2">
+      <div className="grid overflow-hidden rounded-2xl sm:rounded-[32px] border bg-campus text-card-foreground shadow-xl lg:grid-cols-2">
         <AuthInfo variant="reset-password" />
 
         <section className="flex items-center justify-center py-5 sm:py-8 px-4 sm:px-6">
@@ -107,6 +114,7 @@ function ResetPasswordFormContent() {
                     </>
                   }
                   placeholder="Enter your email or student ID"
+                  autoComplete="username"
                   disabled={true}
                 />
 
@@ -126,30 +134,48 @@ function ResetPasswordFormContent() {
                 <PasswordField
                   control={control}
                   name="password"
-                  label="New Password *"
+                  label={
+                    <>
+                      New Password <span className="text-destructive">*</span>
+                    </>
+                  }
+                  autoComplete="new-password"
+                  placeholder="Enter new password"
                   showStrength
                   disabled={isSubmitting}
                 />
+                <PasswordRequirements password={passwordValue} />
 
                 <PasswordField
                   control={control}
                   name="confirmPassword"
-                  label="Confirm Password *"
+                  label={
+                    <>
+                      Confirm Password{" "}
+                      <span className="text-destructive">*</span>
+                    </>
+                  }
+                  autoComplete="new-password"
+                  placeholder="Confirm your new password"
                   disabled={isSubmitting}
                 />
               </div>
 
               <Button type="submit" className="w-full" disabled={isSubmitting}>
-                {isPending ? "Resetting..." : "Reset Password"}
+                {isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Resetting...
+                  </>
+                ) : (
+                  "Reset Password"
+                )}
               </Button>
 
               <div className="text-center text-sm">
-                <Link
-                  href="/auth/forgot-password"
-                  className="text-brand hover:underline"
-                >
+                <Hyperlink href={ROUTES.FORGOT_PASSWORD} className="text-brand">
                   Back to Forgot Password
-                </Link>
+                </Hyperlink>
               </div>
             </form>
           </div>

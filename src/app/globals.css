@@ -1,8 +1,16 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+@plugin "@tailwindcss/typography";
 
 @custom-variant dark (&:is(.dark *));
+
+@utility bg-campus {
+  background-image: var(--campus-bg);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
 
 @theme inline {
   --color-background: var(--background);
@@ -67,6 +75,14 @@
 
   --color-info: var(--info);
   --color-info-bg: var(--info-bg);
+  @keyframes shine {
+  0% {
+    background-position: 100%;
+    }
+  100% {
+    background-position: -100%;
+    }
+  }
 }
 
 /* ========================================================================== */
@@ -150,6 +166,9 @@
 
   --radius: 0.5rem;
 
+  /* Campus background image */
+  --campus-bg: url('/images/nub-campus.png');
+
   /* ==========================================================================
      Backgrounds
      ========================================================================== */
@@ -225,12 +244,23 @@
   --sidebar-border: oklch(92% 0.01 280);
 
   --sidebar-ring: var(--ring);
+
+  /* ==========================================================================
+     Card Redesign Tokens
+     ========================================================================== */
+  --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
+  --card-shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04);
+  --card-border: oklch(93% 0.01 280);
+  --card-surface: oklch(100% 0 0);
+  --card-accent: oklch(58% 0.24 285);
 }
 
 .dark {
   /* ==========================================================================
      Smart NUB Campus Dark Theme
      ========================================================================== */
+
+  --campus-bg: url('/images/nub-campus-night.png');
 
   --background: oklch(18% 0.015 280);
 
@@ -289,6 +319,15 @@
   --sidebar-border: oklch(30% 0.01 280);
 
   --sidebar-ring: var(--ring);
+
+  /* ==========================================================================
+     Card Redesign Tokens (Dark)
+     ========================================================================== */
+  --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(0, 0, 0, 0.3);
+  --card-shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2);
+  --card-border: oklch(31% 0.01 280);
+  --card-surface: oklch(22% 0.015 280);
+  --card-accent: oklch(70% 0.2 285);
 }
 
 @layer base {
@@ -300,5 +339,60 @@
   }
   html {
     @apply font-sans;
+  }
+  /* Focus-visible styles for keyboard navigation */
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-ring;
+  }
+  /* Remove outline for mouse users */
+  :focus:not(:focus-visible) {
+    @apply outline-none;
+  }
+}
+
+/* ── Typing indicator animation ─────────────────────────────────────── */
+@keyframes typing-dot {
+  0%, 60%, 100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  30% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}
+
+/* ── Search highlight flash animation ──────────────────────────────── */
+@keyframes search-flash {
+  0%, 100% { background-color: transparent; }
+  15%, 45% { background-color: oklch(0.85 0.16 85 / 0.35); }
+  30% { background-color: oklch(0.85 0.16 85 / 0.5); }
+}
+.search-flash {
+  animation: search-flash 1.5s ease-in-out;
+  border-radius: 0.5rem;
+}
+
+@layer utilities {
+  .animate-shine {
+    animation: shine 5s linear infinite;
+  }
+
+  /* Discussion card hover accent pulse */
+  @keyframes accent-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+  .animate-accent-pulse {
+    animation: accent-pulse 2s ease-in-out infinite;
+  }
+
+  /* Smooth height transition for collapsible elements */
+  .grid-rows-collapse {
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.3s ease;
+  }
+  .grid-rows-collapse.open {
+    grid-template-rows: 1fr;
   }
 }

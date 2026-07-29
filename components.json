@@ -25,6 +25,7 @@
     "@stepper": "https://francozeta-stepper.vercel.app/{name}.json",
     "@heroicons-animated": "https://www.heroicons-animated.com/r/{name}.json",
     "@scrollxui": "https://www.scrollxui.dev/registry/{name}.json",
-    "@diceui": "https://diceui.com/r/{style}/{name}.json"
+    "@diceui": "https://diceui.com/r/{style}/{name}.json",
+    "@shadcnhooks": "https://shadcn-hooks.com/r/{name}.json"
   }
 }
