@@ -52,7 +52,7 @@ export function MessageSearch({
     };
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
-  }, [open, onSearch, resultCount, onNavigateNext, onNavigatePrev]);
+  }, [open, onSearch, resultCount, onNavigateNext, onNavigatePrev, onOpenChange]);
 
   const handleChange = (value: string) => {
     setQuery(value);

@@ -98,10 +98,7 @@ export function DiscussionsClient({
     setDiscussions((prev) =>
       prev.map((d) => {
         if (d.id !== data.discussionId) return d;
-        return {
-          ...d,
-          replyCount: (d.replyCount ?? 0) + 1,
-        };
+        return { ...d, replyCount: data.replyCount };
       }),
     );
   });

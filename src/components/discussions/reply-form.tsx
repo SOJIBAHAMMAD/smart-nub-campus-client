@@ -1,71 +1,89 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Send, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor, RichTextEditorToolbar, RichTextEditorContent } from "@/components/ui/rich-text-editor";
+import { cn } from "@/lib/utils";
 
 interface ReplyFormProps {
   parentId?: string;
   placeholder?: string;
   autoFocus?: boolean;
   compact?: boolean;
+  initialContent?: string;
   onSubmit: (content: string) => Promise<void>;
   onCancel?: () => void;
 }
 
-/**
- * Form to post a reply (or nested reply) to a discussion.
- * Triggers the parent's submit handler and resets on success.
- */
 export function ReplyForm({
   parentId,
   placeholder = "Add a reply...",
   autoFocus,
   compact,
+  initialContent,
   onSubmit,
   onCancel,
 }: ReplyFormProps) {
-  const [content, setContent] = useState("");
+  const [content, setContent] = useState(initialContent ?? "");
   const [submitting, setSubmitting] = useState(false);
 
-  async function handleSubmit() {
-    if (!content.trim()) return;
+  const handleSubmit = useCallback(async () => {
+    const trimmed = content.replace(/<[^>]*>?/gm, "").trim();
+    if (!trimmed) return;
     setSubmitting(true);
     try {
-      await onSubmit(content.trim());
+      await onSubmit(content);
       setContent("");
     } finally {
       setSubmitting(false);
     }
-  }
+  }, [content, onSubmit]);
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+        e.preventDefault();
+        handleSubmit();
+      }
+    },
+    [handleSubmit],
+  );
 
   return (
-    <div className={compact ? "mt-2" : "mt-4"}>
-      <Textarea
+    <div className={compact ? "mt-2" : "mt-4"} onKeyDown={handleKeyDown}>
+      <RichTextEditor
         value={content}
-        onChange={(e) => setContent(e.target.value)}
+        onChange={setContent}
         placeholder={placeholder}
-        rows={compact ? 2 : 3}
-        autoFocus={autoFocus}
-        maxLength={3000}
-        disabled={submitting}
-        className="w-full resize-none"
-      />
-      <div className="mt-2 flex items-center justify-end gap-2">
-        {onCancel && (
-          <Button variant="ghost" size="sm" onClick={onCancel} disabled={submitting}>
-            Cancel
-          </Button>
-        )}
-        <Button size="sm" onClick={handleSubmit} disabled={submitting || !content.trim()}>
-          {submitting ? (
-            <Loader2 className="size-4 animate-spin" />
-          ) : (
-            <Send className="size-4" />
+        className="min-h-0"
+      >
+        {!compact && <RichTextEditorToolbar />}
+        <RichTextEditorContent
+          className={cn(
+            compact ? "min-h-[80px]" : "min-h-[120px]",
           )}
-          {parentId ? "Reply" : "Submit Reply"}
-        </Button>
+        />
+      </RichTextEditor>
+      <div className="mt-2 flex items-center justify-between gap-2">
+        <span className="text-[10px] text-muted-foreground">
+          {parentId ? "Replying to comment" : "Posting a reply"}
+        </span>
+        <div className="flex items-center gap-2">
+          {onCancel && (
+            <Button variant="ghost" size="sm" onClick={onCancel} disabled={submitting}>
+              Cancel
+            </Button>
+          )}
+          <Button size="sm" onClick={handleSubmit} disabled={submitting || !content.replace(/<[^>]*>?/gm, "").trim()}>
+            {submitting ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <Send className="size-4" />
+            )}
+            {parentId ? "Reply" : "Submit Reply"}
+          </Button>
+        </div>
       </div>
     </div>
   );

@@ -95,7 +95,7 @@ export function MessageInput({
   };
 
   const replySender = replyTo
-    ? participants.find((p) => p.id === replyTo.senderId)?.name ?? "Someone"
+    ? (participants.find((p) => p.id === replyTo.senderId)?.name ?? "Someone")
     : "";
 
   return (
@@ -163,7 +163,7 @@ export function MessageInput({
             rows={1}
             placeholder="Type a message..."
             aria-label="Type a message"
-            className="min-h-10 resize-none rounded-xl bg-muted/50 py-2.5 pr-3"
+            className="min-h-10 resize-none rounded-xl bg-muted/50 py-2.5 pr-3 scrollbar-none [&::-webkit-scrollbar]:hidden"
           />
         </div>
 

@@ -24,6 +24,7 @@ export interface Discussion {
   author?: DiscussionAuthor;
   courseId?: string | null;
   course?: { id: string; code: string; name: string } | null;
+  solutionReplyId?: string | null;
   replyCount: number;
   viewCount: number;
   upvoteCount: number;
@@ -50,7 +51,9 @@ export interface DiscussionReply {
   replies?: DiscussionReply[];
   upvoteCount: number;
   userVote?: "UP" | "DOWN" | null;
+  isEdited: boolean;
   isDeleted: boolean;
+  isAccepted?: boolean;
   createdAt: string;
   updatedAt: string;
 }

@@ -78,6 +78,21 @@ export async function bookmarkDiscussion(
   }
 }
 
+/** Update a discussion (title, content, tags). */
+export async function updateDiscussion(
+  id: string,
+  data: { title?: string; content?: string; tagIds?: string[] },
+): Promise<ApiResponse> {
+  try {
+    const result = await discussionService.updateDiscussion(id, data);
+    return { success: true, message: "Discussion updated.", data: result };
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to update discussion.";
+    return { success: false, message };
+  }
+}
+
 /** List bookmarked discussions for the current user. */
 export async function listBookmarks(): Promise<ApiResponse> {
   try {
@@ -200,6 +215,53 @@ export async function markSolved(
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to toggle solved.";
+    return { success: false, message };
+  }
+}
+
+/** Edit a reply. */
+export async function editReply(
+  discussionId: string,
+  replyId: string,
+  content: string,
+): Promise<ApiResponse> {
+  try {
+    const data = await discussionService.updateReply(discussionId, replyId, { content });
+    return { success: true, message: "Reply updated.", data };
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to update reply.";
+    return { success: false, message };
+  }
+}
+
+/** Accept a reply as the solution. */
+export async function acceptAnswer(
+  discussionId: string,
+  replyId: string,
+): Promise<ApiResponse> {
+  try {
+    const data = await discussionService.acceptAnswer(discussionId, replyId);
+    return { success: true, message: data.message, data };
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to accept answer.";
+    return { success: false, message };
+  }
+}
+
+/** Report a reply. */
+export async function reportReply(
+  discussionId: string,
+  replyId: string,
+  data: { reason: string; details?: string },
+): Promise<ApiResponse> {
+  try {
+    await discussionService.reportReply(replyId, data);
+    return { success: true, message: "Reply reported." };
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to report reply.";
     return { success: false, message };
   }
 }

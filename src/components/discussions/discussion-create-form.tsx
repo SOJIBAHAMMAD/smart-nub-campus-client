@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor, RichTextEditorToolbar, RichTextEditorContent } from "@/components/ui/rich-text-editor";
 import { TagInput, type TagInputTag } from "@/components/ui/tag-input";
 import { createDiscussion } from "@/actions/discussion.actions";
 import type {
@@ -15,6 +15,8 @@ import type {
 } from "@/types/discussion.types";
 import type { Tag } from "@/types/resource.types";
 import { toast } from "sonner";
+
+const DRAFT_KEY = "discussion-create-draft";
 
 interface DiscussionCreateFormProps {
   categories: (DiscussionCategory & { _count: { discussions: number } })[];
@@ -28,11 +30,6 @@ const VISIBILITY_OPTIONS: { value: DiscussionVisibility; label: string; hint: st
   { value: "BATCH", label: "Batch Only", hint: "Students in your batch year" },
 ];
 
-/**
- * Form to create a new discussion.
- * Fields: title, content (rich text / textarea), category, course (optional),
- * tags (multi-select, max 5), visibility. Submits and redirects to the detail page.
- */
 export function DiscussionCreateForm({
   categories,
   tags: _tags,
@@ -49,7 +46,35 @@ export function DiscussionCreateForm({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function handleSubmit() {
+  // Restore draft on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(DRAFT_KEY);
+      if (saved) {
+        const draft = JSON.parse(saved);
+        if (draft.title) setTitle(draft.title);
+        if (draft.content) setContent(draft.content);
+        if (draft.categoryId) setCategoryId(draft.categoryId);
+        if (draft.courseId) setCourseId(draft.courseId);
+        if (draft.visibility) setVisibility(draft.visibility);
+        toast.info("Draft restored from your last session.");
+      }
+    } catch {}
+  }, []);
+
+  // Auto-save draft every 5 seconds
+  useEffect(() => {
+    if (submitting) return;
+    const timer = setTimeout(() => {
+      localStorage.setItem(
+        DRAFT_KEY,
+        JSON.stringify({ title, content, categoryId, courseId, visibility }),
+      );
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [title, content, categoryId, courseId, visibility, submitting]);
+
+  const handleSubmit = useCallback(async () => {
     setError(null);
 
     if (!title.trim()) {
@@ -60,7 +85,8 @@ export function DiscussionCreateForm({
       setError("Title must be at most 200 characters.");
       return;
     }
-    if (!content.trim()) {
+    const textContent = content.replace(/<[^>]*>?/gm, "").trim();
+    if (!textContent) {
       setError("Content is required.");
       return;
     }
@@ -73,7 +99,7 @@ export function DiscussionCreateForm({
     try {
       const result = await createDiscussion({
         title: title.trim(),
-        content: content.trim(),
+        content,
         categoryId,
         courseId: courseId || undefined,
         visibility,
@@ -82,6 +108,7 @@ export function DiscussionCreateForm({
 
       if (result.success && result.data) {
         const discussion = result.data as { id?: string };
+        localStorage.removeItem(DRAFT_KEY);
         toast.success("Discussion created successfully!");
         router.push(discussion.id ? `/discussions/${discussion.id}` : "/discussions");
       } else {
@@ -93,7 +120,7 @@ export function DiscussionCreateForm({
     } finally {
       setSubmitting(false);
     }
-  }
+  }, [title, content, categoryId, courseId, visibility, selectedTagIds, router]);
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
@@ -125,16 +152,15 @@ export function DiscussionCreateForm({
         <Label htmlFor="content">
           Content <span className="text-destructive">*</span>
         </Label>
-        <Textarea
-          id="content"
+        <RichTextEditor
           value={content}
-          onChange={(e) => setContent(e.target.value)}
+          onChange={setContent}
           placeholder="Share the details of your discussion..."
-          rows={8}
-          maxLength={5000}
           disabled={submitting}
-        />
-        <p className="text-[10px] text-muted-foreground">{content.length}/5000</p>
+        >
+          <RichTextEditorToolbar />
+          <RichTextEditorContent />
+        </RichTextEditor>
       </div>
 
       {/* Category */}
@@ -222,7 +248,10 @@ export function DiscussionCreateForm({
       <div className="flex items-center justify-end gap-2">
         <Button
           variant="ghost"
-          onClick={() => router.push("/discussions")}
+          onClick={() => {
+            localStorage.removeItem(DRAFT_KEY);
+            router.push("/discussions");
+          }}
           disabled={submitting}
         >
           Cancel

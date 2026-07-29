@@ -1,7 +1,15 @@
 "use client";
 
 import { useRef, useMemo, useState, useCallback, useEffect } from "react";
-import { ArrowLeft, MoreVertical, Info, Trash2, MessageSquare, Bell, BellOff } from "lucide-react";
+import {
+  ArrowLeft,
+  MoreVertical,
+  Info,
+  Trash2,
+  MessageSquare,
+  Bell,
+  BellOff,
+} from "lucide-react";
 import type { Conversation, Message } from "@/types/message.types";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -131,7 +139,9 @@ export function ChatArea({
   searchResultIds = [],
 }: ChatAreaProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [lightboxImages, setLightboxImages] = useState<{ url: string; alt?: string }[]>([]);
+  const [lightboxImages, setLightboxImages] = useState<
+    { url: string; alt?: string }[]
+  >([]);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -142,7 +152,9 @@ export function ChatArea({
 
   const otherId =
     !isGroup && conversation
-      ? conversation.conversationParticipants?.find((p) => p.userId !== currentUserId)?.userId
+      ? conversation.conversationParticipants?.find(
+          (p) => p.userId !== currentUserId,
+        )?.userId
       : undefined;
   const isOnline = otherId ? onlineUsers.has(otherId) : false;
 
@@ -159,7 +171,8 @@ export function ChatArea({
 
   // Map: message ID → index of its first match in the global match list
   const messageMatchMap = useMemo(() => {
-    if (!searchQuery || searchResultIds.length === 0) return new Map<string, number>();
+    if (!searchQuery || searchResultIds.length === 0)
+      return new Map<string, number>();
     const map = new Map<string, number>();
     let runningIndex = 0;
     const lowerQuery = searchQuery.toLowerCase();
@@ -174,22 +187,6 @@ export function ChatArea({
       }
     }
     return map;
-  }, [searchQuery, searchResultIds, messages]);
-
-  // Total number of individual text matches across all result messages
-  const totalMatchCount = useMemo(() => {
-    if (!searchQuery || searchResultIds.length === 0) return 0;
-    const lowerQuery = searchQuery.toLowerCase();
-    let total = 0;
-    for (const id of searchResultIds) {
-      const msg = messages.find((m) => m.id === id);
-      if (msg?.content) {
-        total += Math.max(msg.content.toLowerCase().split(lowerQuery).length - 1, 1);
-      } else {
-        total += 1;
-      }
-    }
-    return total;
   }, [searchQuery, searchResultIds, messages]);
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
@@ -226,7 +223,7 @@ export function ChatArea({
     return (
       <div className="flex h-full flex-col items-center justify-center gap-6 px-4 text-center">
         <div className="relative">
-          <div className="flex size-24 items-center justify-center rounded-3xl bg-gradient-to-br from-primary/10 to-primary/5">
+          <div className="flex size-24 items-center justify-center rounded-3xl bg-linear-to-br from-primary/10 to-primary/5">
             <MessageSquare className="size-12 text-primary/30" />
           </div>
           <div className="absolute -top-2 -right-2 flex size-8 items-center justify-center rounded-full bg-primary/10">
@@ -236,9 +233,12 @@ export function ChatArea({
           </div>
         </div>
         <div className="space-y-2">
-          <h3 className="text-lg font-semibold text-foreground">Welcome to Messages</h3>
+          <h3 className="text-lg font-semibold text-foreground">
+            Welcome to Messages
+          </h3>
           <p className="max-w-sm text-sm text-muted-foreground">
-            Select a conversation from the sidebar to start chatting, or create a new one.
+            Select a conversation from the sidebar to start chatting, or create
+            a new one.
           </p>
         </div>
         <div className="flex gap-3">
@@ -299,7 +299,12 @@ export function ChatArea({
             />
           ) : (
             <>
-              <Avatar id={conversation.id} name={name} src={image} className="size-10 shrink-0" />
+              <Avatar
+                id={conversation.id}
+                name={name}
+                src={image}
+                className="size-10 shrink-0"
+              />
               <div className="min-w-0">
                 <p className="truncate font-semibold text-foreground">{name}</p>
                 <OnlineStatus online={isOnline} showLabel />
@@ -334,7 +339,11 @@ export function ChatArea({
             </DropdownMenuItem>
             {onToggleMute && (
               <DropdownMenuItem onClick={onToggleMute}>
-                {isMuted ? <Bell className="size-4" /> : <BellOff className="size-4" />}
+                {isMuted ? (
+                  <Bell className="size-4" />
+                ) : (
+                  <BellOff className="size-4" />
+                )}
                 {isMuted ? "Unmute" : "Mute"}
               </DropdownMenuItem>
             )}
@@ -359,8 +368,11 @@ export function ChatArea({
           ) : (
             <>
               Found{" "}
-              <span className="font-medium text-foreground">{searchResultCount}</span>{" "}
-              result{searchResultCount !== 1 ? "s" : ""} for &ldquo;{searchQuery}&rdquo;
+              <span className="font-medium text-foreground">
+                {searchResultCount}
+              </span>{" "}
+              result{searchResultCount !== 1 ? "s" : ""} for &ldquo;
+              {searchQuery}&rdquo;
             </>
           )}
         </div>
@@ -388,13 +400,18 @@ export function ChatArea({
                   {[1, 2, 3, 4].map((i) => (
                     <div
                       key={i}
-                      className={cn("flex gap-2", i % 2 === 0 && "flex-row-reverse")}
+                      className={cn(
+                        "flex gap-2",
+                        i % 2 === 0 && "flex-row-reverse",
+                      )}
                     >
                       <Skeleton className="size-8 rounded-full" />
                       <Skeleton
                         className={cn(
                           "h-12 rounded-2xl",
-                          i % 2 === 0 ? "w-1/2 rounded-br-sm" : "w-2/3 rounded-bl-sm",
+                          i % 2 === 0
+                            ? "w-1/2 rounded-br-sm"
+                            : "w-2/3 rounded-bl-sm",
                         )}
                       />
                     </div>
@@ -411,7 +428,10 @@ export function ChatArea({
                     </MessageScrollerItem>
                   )}
                   {groups.map((bucket) => (
-                    <div key={`day-group-${bucket.label}`} className="flex flex-col">
+                    <div
+                      key={`day-group-${bucket.label}`}
+                      className="flex flex-col"
+                    >
                       <MessageScrollerItem messageId={`day-${bucket.label}`}>
                         <Marker variant="separator">
                           <MarkerContent>{bucket.label}</MarkerContent>
@@ -455,8 +475,10 @@ export function ChatArea({
                                   searchQuery && searchResultIds.includes(m.id)
                                     ? {
                                         query: searchQuery,
-                                        activeMatchGlobalIndex: searchHighlightIndex,
-                                        firstMatchIndexInMessage: messageMatchMap.get(m.id) ?? 0,
+                                        activeMatchGlobalIndex:
+                                          searchHighlightIndex,
+                                        firstMatchIndexInMessage:
+                                          messageMatchMap.get(m.id) ?? 0,
                                       }
                                     : null
                                 }

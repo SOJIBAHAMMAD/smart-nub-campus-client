@@ -4,6 +4,8 @@ import ROUTES from "@/constants/routes";
 import type { VerificationRequestData } from "@/types";
 import { Hyperlink } from "@/components/ui/hyperlink";
 
+export const dynamic = "force-dynamic";
+
 export default async function OnboardingPage() {
   let step;
   let verificationRequest: VerificationRequestData | null = null;

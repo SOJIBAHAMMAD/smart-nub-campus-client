@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import {
   ChevronLeft,
@@ -12,8 +12,9 @@ import {
   Eye,
   MessageCircle,
   Loader2,
-  AlertCircle,
   ChevronDown,
+  CheckCheck,
+  Edit3,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -24,6 +25,8 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { ReplyCard } from "@/components/discussions/reply-card";
 import { ReplyForm } from "@/components/discussions/reply-form";
+import { ReportDialog } from "@/components/discussions/report-dialog";
+import { DiscussionEditForm } from "@/components/discussions/discussion-edit-form";
 import {
   voteDiscussion,
   bookmarkDiscussion,
@@ -32,11 +35,15 @@ import {
   listReplies,
   togglePin,
   toggleLock,
+  acceptAnswer,
+  reportReply,
 } from "@/actions/discussion.actions";
 import type {
   Discussion,
   DiscussionReply,
 } from "@/types/discussion.types";
+import { useSocket, useSocketEvent } from "@/hooks/use-socket";
+import { env } from "@/env";
 
 type ReplySort = "upvotes" | "newest" | "oldest";
 
@@ -62,12 +69,6 @@ function categoryColor(slug?: string): string {
   return (slug && CATEGORY_COLORS[slug]) || CATEGORY_COLORS.general;
 }
 
-/**
- * Full-width discussion detail view (no PageLayout).
- * Shows breadcrumb, header, category, rendered content, tags, actions
- * (upvote / bookmark / share), author info, view count, status indicators,
- * replies with threading, sort options, and a reply form.
- */
 export function DiscussionDetail({
   discussionId,
   initialDiscussion,
@@ -79,21 +80,103 @@ export function DiscussionDetail({
   const [loadingReplies, setLoadingReplies] = useState(true);
   const [replySort, setReplySort] = useState<ReplySort>("upvotes");
   const [showReplyForm, setShowReplyForm] = useState(false);
-  const [_actionBusy, setActionBusy] = useState(false);
+  const [showAdminMenu, setShowAdminMenu] = useState(false);
+  const [editingDiscussion, setEditingDiscussion] = useState(false);
+  const hasJoinedRoom = useRef(false);
 
   const isAuthor = currentUserId != null && discussion.authorId === currentUserId;
   const bookmarked = discussion.isBookmarked ?? false;
+  const socketUrl = env.NEXT_PUBLIC_BACKEND_URL.replace(/\/+$/, "");
+  const { socket } = useSocket({ url: socketUrl });
 
-  // Fetch replies (parent-level) on mount.
+  // Join discussion room for real-time updates
+  useEffect(() => {
+    if (socket && !hasJoinedRoom.current) {
+      hasJoinedRoom.current = true;
+      socket.emit("discussion:join", { discussionId });
+    }
+    return () => {
+      if (socket && hasJoinedRoom.current) {
+        socket.emit("discussion:leave", { discussionId });
+      }
+    };
+  }, [socket, discussionId]);
+
+  // Real-time: new reply
+  useSocketEvent(socket, "discussion:reply:new", (data) => {
+    if (data.discussionId !== discussionId) return;
+    const socketReply = data.reply;
+    const newReply: DiscussionReply = {
+      id: socketReply.id,
+      content: socketReply.content,
+      discussionId: socketReply.discussionId,
+      authorId: socketReply.authorId,
+      parentId: socketReply.parentId,
+      isEdited: false,
+      isDeleted: false,
+      upvoteCount: 0,
+      replies: [],
+      createdAt: socketReply.createdAt,
+      updatedAt: socketReply.createdAt,
+    };
+    setReplies((prev) => {
+      if (socketReply.parentId) {
+        return prev.map((r) =>
+          r.id === socketReply.parentId
+            ? { ...r, replies: [...(r.replies ?? []), newReply] }
+            : r,
+        );
+      }
+      return [...prev, newReply];
+    });
+    setDiscussion((prev) => ({ ...prev, replyCount: prev.replyCount + 1 }));
+  });
+
+  // Real-time: vote update
+  useSocketEvent(socket, "discussion:vote:update", (data) => {
+    if (data.entityType === "discussion" && data.discussionId === discussionId) {
+      setDiscussion((prev) => ({ ...prev, upvoteCount: data.upvoteCount }));
+    }
+    if (data.entityType === "reply" && data.replyId) {
+      setReplies((prev) =>
+        prev.map((r) => {
+          if (r.id === data.replyId) {
+            return { ...r, upvoteCount: data.upvoteCount };
+          }
+          return {
+            ...r,
+            replies: (r.replies ?? []).map((c) =>
+              c.id === data.replyId ? { ...c, upvoteCount: data.upvoteCount } : c,
+            ),
+          };
+        }),
+      );
+    }
+  });
+
+  // Real-time: reply edited
+  useSocketEvent(socket, "discussion:reply:edited", (data) => {
+    if (data.discussionId !== discussionId) return;
+    const updateReplyInList = (list: DiscussionReply[]): DiscussionReply[] =>
+      list.map((r) => {
+        if (r.id === data.replyId) {
+          return { ...r, content: data.content, isEdited: data.isEdited };
+        }
+        if (r.replies) {
+          return { ...r, replies: updateReplyInList(r.replies) };
+        }
+        return r;
+      });
+    setReplies((prev) => updateReplyInList(prev));
+  });
+
+  // Fetch replies
   const loadReplies = useCallback(async () => {
     try {
       const res = await listReplies(discussionId, 1, 100);
       if (res.success && res.data) {
-        const data = res.data as {
-          replies?: DiscussionReply[];
-        };
+        const data = res.data as { replies?: DiscussionReply[] };
         const list = data.replies ?? [];
-        // Attach nested replies (1 level) for display.
         const byParent = new Map<string, DiscussionReply[]>();
         for (const r of list) {
           if (r.parentId) {
@@ -106,25 +189,34 @@ export function DiscussionDetail({
           .filter((r) => !r.parentId)
           .map((r) => ({
             ...r,
-            replies: (byParent.get(r.id) ?? []).sort(
-              (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
-            ),
+            isAccepted: discussion.solutionReplyId === r.id,
+            replies: (byParent.get(r.id) ?? [])
+              .sort(
+                (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+              )
+              .map((c) => ({ ...c, isAccepted: discussion.solutionReplyId === c.id })),
           }));
         setReplies(topLevel);
       }
     } catch {
-      // Empty state handles errors
     } finally {
       setLoadingReplies(false);
     }
-  }, [discussionId]);
+  }, [discussionId, discussion.solutionReplyId]);
 
   useEffect(() => {
     void loadReplies();
   }, [loadReplies]);
 
+  // Sort replies: accepted answer always first
   const sortedReplies = useCallback(() => {
     const copy = [...replies];
+    // Pin accepted answer to top
+    const acceptedIdx = copy.findIndex((r) => r.isAccepted);
+    if (acceptedIdx > 0) {
+      const [accepted] = copy.splice(acceptedIdx, 1);
+      copy.unshift(accepted);
+    }
     switch (replySort) {
       case "newest":
         return copy.sort(
@@ -195,7 +287,6 @@ export function DiscussionDetail({
       setReplies((prev) =>
         prev.map((r) => {
           if (r.id !== replyId) {
-            // Also update nested
             return {
               ...r,
               replies: (r.replies ?? []).map((c) =>
@@ -234,7 +325,6 @@ export function DiscussionDetail({
             ),
           );
         } else {
-          // Revert optimistic change
           setReplies((prev) =>
             prev.map((r) => {
               if (r.id !== replyId) {
@@ -242,21 +332,13 @@ export function DiscussionDetail({
                   ...r,
                   replies: (r.replies ?? []).map((c) =>
                     c.id === replyId
-                      ? {
-                          ...c,
-                          userVote: currentVote,
-                          upvoteCount: c.upvoteCount + (currentVote === "UP" ? -1 : 1),
-                        }
+                      ? { ...c, userVote: currentVote, upvoteCount: c.upvoteCount + (currentVote === "UP" ? -1 : 1) }
                       : c,
                   ),
                 };
               }
               const wasUp = currentVote === "UP";
-              return {
-                ...r,
-                userVote: currentVote,
-                upvoteCount: r.upvoteCount + (wasUp ? -1 : 1),
-              };
+              return { ...r, userVote: currentVote, upvoteCount: r.upvoteCount + (wasUp ? -1 : 1) };
             }),
           );
           toast.error(result.message || "Failed to record vote.");
@@ -269,21 +351,13 @@ export function DiscussionDetail({
                 ...r,
                 replies: (r.replies ?? []).map((c) =>
                   c.id === replyId
-                    ? {
-                        ...c,
-                        userVote: currentVote,
-                        upvoteCount: c.upvoteCount + (currentVote === "UP" ? -1 : 1),
-                      }
+                    ? { ...c, userVote: currentVote, upvoteCount: c.upvoteCount + (currentVote === "UP" ? -1 : 1) }
                     : c,
                 ),
               };
             }
             const wasUp = currentVote === "UP";
-            return {
-              ...r,
-              userVote: currentVote,
-              upvoteCount: r.upvoteCount + (wasUp ? -1 : 1),
-            };
+            return { ...r, userVote: currentVote, upvoteCount: r.upvoteCount + (wasUp ? -1 : 1) };
           }),
         );
         toast.error(err instanceof Error ? err.message : "Failed to record vote.");
@@ -294,40 +368,79 @@ export function DiscussionDetail({
 
   const handlePostReply = useCallback(
     async (content: string, parentId?: string) => {
-      setActionBusy(true);
       try {
-        const result = await postDiscussionReply(discussionId, {
-          content,
-          parentId,
-        });
+        const result = await postDiscussionReply(discussionId, { content, parentId });
         if (result.success && result.data) {
           const newReply = result.data as DiscussionReply;
           setReplies((prev) => {
             if (parentId) {
               return prev.map((r) =>
                 r.id === parentId
-                  ? { ...r, replies: [...(r.replies ?? []), newReply] }
+                  ? { ...r, replies: [...(r.replies ?? []), { ...newReply, isAccepted: false }] }
                   : r,
               );
             }
-            return [...prev, newReply];
+            return [...prev, { ...newReply, isAccepted: false }];
           });
           setDiscussion((prev) => ({ ...prev, replyCount: prev.replyCount + 1 }));
         } else {
           throw new Error(result.message || "Failed to post reply.");
         }
-      } finally {
-        setActionBusy(false);
+      } catch {
       }
     },
     [discussionId],
   );
 
-  const [showAdminMenu, setShowAdminMenu] = useState(false);
+  const handleAcceptAnswer = useCallback(
+    async (replyId: string) => {
+      const result = await acceptAnswer(discussionId, replyId);
+      if (result.success && result.data) {
+        const data = result.data as { isSolved: boolean; solutionReplyId: string | null };
+        setDiscussion((prev) => ({
+          ...prev,
+          isSolved: data.isSolved,
+          solutionReplyId: data.solutionReplyId,
+        }));
+        setReplies((prev) =>
+          prev.map((r) => ({
+            ...r,
+            isAccepted: r.id === data.solutionReplyId,
+            replies: (r.replies ?? []).map((c) => ({ ...c, isAccepted: c.id === data.solutionReplyId })),
+          })),
+        );
+        toast.success(data.isSolved ? "Answer accepted!" : "Solution unmarked.");
+      } else {
+        toast.error(result.message || "Failed to accept answer.");
+      }
+    },
+    [discussionId],
+  );
+
+  const handleReportReply = useCallback(
+    async (replyId: string, reason: string, details?: string) => {
+      try {
+        await reportReply(discussionId, replyId, { reason, details });
+        toast.success("Reply reported.");
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Failed to report reply.");
+      }
+    },
+    [discussionId],
+  );
+
+  const handleShare = useCallback(() => {
+    if (typeof navigator !== "undefined" && navigator.share) {
+      navigator.share({ title: discussion.title, url: window.location.href });
+    } else if (typeof window !== "undefined") {
+      navigator.clipboard?.writeText(window.location.href);
+      toast.success("Link copied to clipboard!");
+    }
+  }, [discussion.title]);
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 px-4 py-6 sm:px-6">
-      {/* ── Breadcrumb ──────────────────────────────────────────── */}
+      {/* Breadcrumb */}
       <nav className="flex items-center gap-1 text-sm text-muted-foreground">
         <Link href="/discussions" className="transition-colors hover:text-primary">
           Discussions
@@ -336,14 +449,13 @@ export function DiscussionDetail({
         <span className="truncate text-foreground">{discussion.title}</span>
       </nav>
 
-      {/* ── Header ──────────────────────────────────────────────── */}
+      {/* Header */}
       <div className="flex flex-col gap-3">
         <div className="flex items-start gap-2">
           {discussion.isPinned && <Pin className="mt-1 size-5 shrink-0 text-primary" />}
-          <h1 className="text-xl font-bold text-foreground">
-            {discussion.isPinned && <span className="mr-1">📌</span>}
-            {discussion.title}
-          </h1>
+          <div className="flex-1">
+            <h1 className="text-xl font-bold text-foreground">{discussion.title}</h1>
+          </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -375,67 +487,88 @@ export function DiscussionDetail({
         </div>
       </div>
 
-      {/* ── Content (markdown rendered) ─────────────────────────── */}
-      <Card>
-        <CardContent className="p-5">
-          <div className="prose prose-sm max-w-none dark:prose-invert">
-            {discussion.content}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* ── Tags ───────────────────────────────────────────────── */}
-      {discussion.discussionTags && discussion.discussionTags.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
-          {discussion.discussionTags.map((dt) => (
-            <TagPill
-              key={dt.id}
-              name={dt.tag?.name ?? "tag"}
-              href={`/discussions?tag=${dt.tag?.slug ?? ""}`}
-              size="sm"
+      {editingDiscussion ? (
+        <Card>
+          <CardContent className="p-5">
+            <DiscussionEditForm
+              discussion={discussion}
+              onSaved={(updated) => {
+                setDiscussion(updated);
+                setEditingDiscussion(false);
+              }}
+              onCancel={() => setEditingDiscussion(false)}
             />
-          ))}
-        </div>
-      )}
+          </CardContent>
+        </Card>
+      ) : (
+        <>
+          {/* Content — rendered as HTML */}
+          <Card>
+            <CardContent className="p-5">
+              <div
+                className="prose prose-sm max-w-none dark:prose-invert"
+                dangerouslySetInnerHTML={{ __html: discussion.content }}
+              />
+            </CardContent>
+          </Card>
 
-      {/* ── Actions ─────────────────────────────────────────────── */}
-      <div className="flex flex-wrap items-center gap-2">
-        <VoteControls
-          upvotes={discussion.upvoteCount}
-          activeVote={(discussion.userVote ?? null) as "UP" | "DOWN" | null}
-          onVote={handleVote}
-          orientation="horizontal"
-        />
-
-        <button
-          onClick={handleBookmark}
-          className={cn(
-            "flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
-            bookmarked
-              ? "bg-primary/10 text-primary"
-              : "bg-muted text-muted-foreground hover:bg-muted/70",
+          {/* Tags */}
+          {discussion.discussionTags && discussion.discussionTags.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {discussion.discussionTags.map((dt) => (
+                <TagPill
+                  key={dt.id}
+                  name={dt.tag?.name ?? "tag"}
+                  href={`/discussions?tag=${dt.tag?.slug ?? ""}`}
+                  size="sm"
+                />
+              ))}
+            </div>
           )}
-        >
-          <Bookmark className={cn("size-4", bookmarked && "fill-current")} />
-          {bookmarked ? "Bookmarked" : "Bookmark"}
-        </button>
 
-        <button
-          onClick={() => {
-            if (typeof navigator !== "undefined" && navigator.share) {
-              navigator.share({ title: discussion.title, url: window.location.href });
-            } else if (typeof window !== "undefined") {
-              navigator.clipboard?.writeText(window.location.href);
-            }
-          }}
-          className="flex items-center gap-1 rounded-lg bg-muted px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted/70"
-        >
-          <Share2 className="size-4" />
-          Share
-        </button>
+          {/* Actions */}
+          <div className="flex flex-wrap items-center gap-2">
+            <VoteControls
+              upvotes={discussion.upvoteCount}
+              activeVote={(discussion.userVote ?? null) as "UP" | "DOWN" | null}
+              onVote={handleVote}
+              orientation="horizontal"
+            />
 
-        {/* ── Admin actions: pin / lock ──────────────────────── */}
-        {isAdmin && (
+            <button
+              onClick={handleBookmark}
+              className={cn(
+                "flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
+                bookmarked
+                  ? "bg-primary/10 text-primary"
+                  : "bg-muted text-muted-foreground hover:bg-muted/70",
+              )}
+            >
+              <Bookmark className={cn("size-4", bookmarked && "fill-current")} />
+              {bookmarked ? "Bookmarked" : "Bookmark"}
+            </button>
+
+            <button
+              onClick={handleShare}
+              className="flex items-center gap-1 rounded-lg bg-muted px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted/70"
+            >
+              <Share2 className="size-4" />
+              Share
+            </button>
+
+            {/* Author can edit discussion */}
+            {isAuthor && (
+              <button
+                onClick={() => setEditingDiscussion(true)}
+                className="flex items-center gap-1 rounded-lg bg-muted px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted/70"
+              >
+                <Edit3 className="size-4" />
+                Edit
+              </button>
+            )}
+
+            {/* Admin actions */}
+            {isAdmin && (
           <div className="relative">
             <Button
               variant="outline"
@@ -466,8 +599,10 @@ export function DiscussionDetail({
           </div>
         )}
       </div>
+        </>
+      )}
 
-      {/* ── Author info + views ──────────────────────────────── */}
+      {/* Author info + stats */}
       <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
         <AuthorInfo
           user={discussion.author ?? { id: "", name: "Unknown" }}
@@ -486,7 +621,7 @@ export function DiscussionDetail({
         </div>
       </div>
 
-      {/* ── Replies section ────────────────────────────────────── */}
+      {/* Replies section */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-foreground">
@@ -525,23 +660,26 @@ export function DiscussionDetail({
               <ReplyCard
                 key={reply.id}
                 reply={reply}
+                discussionId={discussionId}
                 isAuthor={isAuthor}
                 isAdmin={!!isAdmin}
+                isSolved={discussion.isSolved}
+                solutionReplyId={discussion.solutionReplyId ?? null}
+                currentUserId={currentUserId}
                 onVote={handleReplyVote}
                 onReply={async (parentId, content) => {
                   await handlePostReply(content, parentId);
                 }}
-                onReport={async (replyId) => {
-                  // Reporting handled server-side; simple toast feedback.
-                  void replyId;
-                }}
+                onAccept={handleAcceptAnswer}
+                onReport={handleReportReply}
+                onReplyUpdated={() => loadReplies()}
               />
             ))}
           </div>
         )}
       </div>
 
-      {/* ── Reply form ────────────────────────────────────────── */}
+      {/* Reply form */}
       {discussion.isLocked ? (
         <div className="flex items-center gap-2 rounded-xl border bg-muted/40 p-4 text-sm text-muted-foreground">
           <Lock className="size-4" />
@@ -556,7 +694,6 @@ export function DiscussionDetail({
             </Button>
           ) : (
             <ReplyForm
-              
               placeholder="Write your reply..."
               onSubmit={async (content) => {
                 await handlePostReply(content);
@@ -592,7 +729,7 @@ function AdminToggle({
       disabled={busy}
       className="flex w-full items-center gap-1.5 rounded-md px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-muted"
     >
-      {busy ? <Loader2 className="size-3.5 animate-spin" /> : <AlertCircle className="size-3.5" />}
+      {busy ? <Loader2 className="size-3.5 animate-spin" /> : <CheckCheck className="size-3.5" />}
       {label}
     </button>
   );

@@ -81,6 +81,7 @@ export function DiscussionCard({
               user={discussion.author ?? { id: "", name: "Unknown" }}
               timestamp={discussion.createdAt}
               size="sm"
+              linked={false}
             />
           </div>
 

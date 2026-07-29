@@ -190,4 +190,39 @@ export const discussionService = {
     );
     return response.data!;
   },
+
+  async updateReply(
+    discussionId: string,
+    replyId: string,
+    data: { content: string },
+  ): Promise<DiscussionReply> {
+    const response = await serverApi.put<DiscussionReply>(
+      `/discussions/${discussionId}/replies/${replyId}`,
+      data,
+      { invalidatesTags: [...DISCUSSION_MUTATION_TAGS] },
+    );
+    return response.data!;
+  },
+
+  async acceptAnswer(
+    discussionId: string,
+    replyId: string,
+  ): Promise<{ message: string; isSolved: boolean; solutionReplyId: string | null }> {
+    const response = await serverApi.put<{ message: string; isSolved: boolean; solutionReplyId: string | null }>(
+      `/discussions/${discussionId}/accept`,
+      { replyId },
+      { invalidatesTags: [...DISCUSSION_MUTATION_TAGS] },
+    );
+    return response.data!;
+  },
+
+  async reportReply(
+    replyId: string,
+    data: { reason: string; details?: string },
+  ): Promise<void> {
+    // We need the discussionId for the route; we'll find the discussion from context
+    // The route is /discussions/:id/replies/:replyId/report
+    // We pass it differently — the action will handle it
+    await serverApi.post(`/discussions/replies/${replyId}/report`, data);
+  },
 };

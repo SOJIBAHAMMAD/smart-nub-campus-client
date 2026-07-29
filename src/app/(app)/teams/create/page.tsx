@@ -6,6 +6,8 @@ import { CreateTeamWrapper } from "@/components/teams/create-team-wrapper";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Tag } from "@/types/resource.types";
 
+export const dynamic = "force-dynamic";
+
 function CreateTeamSkeleton() {
   return (
     <div className="space-y-4">

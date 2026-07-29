@@ -53,7 +53,7 @@ export default function RootLayout({
           href="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/devicon.min.css"
         />
       </head>
-      <body className="h-full">
+      <body className="h-full" suppressHydrationWarning>
         <ThemeProvider
           attribute="class"
           defaultTheme="light"
