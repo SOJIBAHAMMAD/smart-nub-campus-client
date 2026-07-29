@@ -22,6 +22,25 @@ export async function createQuestion(data: {
   }
 }
 
+/** Update an existing question. */
+export async function updateQuestion(
+  id: string,
+  data: {
+    title?: string;
+    content?: string;
+    tagIds?: string[];
+  },
+): Promise<ApiResponse> {
+  try {
+    const result = await qaService.updateQuestion(id, data);
+    return { success: true, message: "Question updated.", data: result };
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to update question.";
+    return { success: false, message };
+  }
+}
+
 /** List questions with pagination and filtering. */
 export async function listQuestions(
   params: ListQuestionsParams = {},

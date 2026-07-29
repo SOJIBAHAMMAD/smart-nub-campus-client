@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import {
   ChevronLeft,
+  Pencil,
   Bookmark,
   Share2,
   Eye,
@@ -351,6 +352,19 @@ export function QuestionDetail({
                 disabled={!canVoteQuestion}
               />
             </div>
+
+            {isAuthor && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1"
+                nativeButton={false}
+                render={<Link href={`/qa/${question.id}/edit`} />}
+              >
+                <Pencil className="size-4" />
+                Edit
+              </Button>
+            )}
 
             <Button
               variant={bookmarked ? "default" : "outline"}

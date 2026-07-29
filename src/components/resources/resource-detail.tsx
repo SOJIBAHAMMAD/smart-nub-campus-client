@@ -47,7 +47,6 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { cn } from "@/lib/utils";
 
 const REPORT_REASONS = [
   { value: "SPAM", label: "Spam" },
@@ -323,13 +322,22 @@ export function ResourceDetail({
           <span className="hidden sm:inline">Report</span>
         </Button>
 
-        <Button variant="ghost" size="sm" onClick={handleShare} className="text-muted-foreground">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleShare}
+          className="text-muted-foreground"
+        >
           <Share2 className="size-4" />
           <span className="hidden sm:inline">Share</span>
         </Button>
 
         {currentUserId && currentUserId === resource.uploaderId && (
-          <Button variant="ghost" size="sm" render={<Link href={`/resources/${resource.id}/edit`} />}>
+          <Button
+            variant="ghost"
+            size="sm"
+            render={<Link href={`/resources/${resource.id}/edit`} />}
+          >
             <Pencil className="size-4" />
             <span className="hidden sm:inline">Edit</span>
           </Button>
@@ -338,12 +346,14 @@ export function ResourceDetail({
 
       {/* Description (rich text) */}
       {resource.description && (
-          <div className="rounded-xl border bg-card p-5 ring-1 ring-foreground/5">
-            <h3 className="mb-3 text-sm font-semibold text-foreground">Description</h3>
-            <div
-              className="prose prose-sm max-w-none dark:prose-invert [&>pre]:border [&>pre]:border-border [&>mark]:rounded-sm [&>mark]:bg-warm/40 [&>mark]:px-0.5 [&>mark]:text-warm-foreground max-sm:[&>pre]:text-xs"
-              dangerouslySetInnerHTML={{ __html: resource.description }}
-            />
+        <div className="rounded-xl border bg-card p-5 ring-1 ring-foreground/5">
+          <h3 className="mb-3 text-sm font-semibold text-foreground">
+            Description
+          </h3>
+          <div
+            className="prose prose-sm max-w-none dark:prose-invert [&>pre]:border [&>pre]:border-border [&>mark]:rounded-sm [&>mark]:bg-warm/40 [&>mark]:px-0.5 [&>mark]:text-warm-foreground max-sm:[&>pre]:text-xs"
+            dangerouslySetInnerHTML={{ __html: resource.description }}
+          />
         </div>
       )}
 

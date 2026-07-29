@@ -144,6 +144,20 @@ export const qaService = {
     return response.data!;
   },
 
+  async updateQuestion(
+    id: string,
+    data: {
+      title?: string;
+      content?: string;
+      tagIds?: string[];
+    },
+  ): Promise<Question> {
+    const response = await serverApi.put<Question>(`/qa/${id}`, data, {
+      invalidatesTags: [...QA_MUTATION_TAGS],
+    });
+    return response.data!;
+  },
+
   async createAnswer(
     questionId: string,
     data: { content: string },
