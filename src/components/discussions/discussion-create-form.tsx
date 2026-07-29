@@ -6,6 +6,13 @@ import { Plus, Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { RichTextEditor, RichTextEditorToolbar, RichTextEditorContent } from "@/components/ui/rich-text-editor";
 import { TagInput, type TagInputTag } from "@/components/ui/tag-input";
 import { createDiscussion } from "@/actions/discussion.actions";
@@ -15,6 +22,8 @@ import type {
 } from "@/types/discussion.types";
 import type { Tag } from "@/types/resource.types";
 import { toast } from "sonner";
+import { Separator } from "@/components/ui/separator";
+import { Card, CardContent } from "@/components/ui/card";
 
 const DRAFT_KEY = "discussion-create-draft";
 
@@ -46,7 +55,6 @@ export function DiscussionCreateForm({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Restore draft on mount
   useEffect(() => {
     try {
       const saved = localStorage.getItem(DRAFT_KEY);
@@ -62,7 +70,6 @@ export function DiscussionCreateForm({
     } catch {}
   }, []);
 
-  // Auto-save draft every 5 seconds
   useEffect(() => {
     if (submitting) return;
     const timer = setTimeout(() => {
@@ -127,116 +134,124 @@ export function DiscussionCreateForm({
       <div>
         <h1 className="text-2xl font-bold text-foreground">Start a Discussion</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Pose a question or start a conversation with the community.
+          Share your thoughts, ask questions, and start conversations with the community.
         </p>
       </div>
 
-      {/* Title */}
-      <div className="space-y-1.5">
-        <Label htmlFor="title">
-          Title <span className="text-destructive">*</span>
-        </Label>
-        <Input
-          id="title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="e.g., Best resources for DSA?"
-          maxLength={200}
-          disabled={submitting}
-        />
-        <p className="text-[10px] text-muted-foreground">{title.length}/200</p>
-      </div>
-
-      {/* Content */}
-      <div className="space-y-1.5">
-        <Label htmlFor="content">
-          Content <span className="text-destructive">*</span>
-        </Label>
-        <RichTextEditor
-          value={content}
-          onChange={setContent}
-          placeholder="Share the details of your discussion..."
-          disabled={submitting}
-        >
-          <RichTextEditorToolbar />
-          <RichTextEditorContent />
-        </RichTextEditor>
-      </div>
-
-      {/* Category */}
-      <div className="space-y-1.5">
-        <Label htmlFor="category">
-          Category <span className="text-destructive">*</span>
-        </Label>
-        <select
-          id="category"
-          value={categoryId}
-          onChange={(e) => setCategoryId(e.target.value)}
-          disabled={submitting}
-          className="h-9 w-full rounded-md border bg-transparent px-2.5 text-sm outline-none ring-1 ring-foreground/10 transition-colors focus:border-ring focus:ring-2 focus:ring-ring/50 disabled:opacity-50"
-        >
-          <option value="">Select a category</option>
-          {categories.map((cat) => (
-            <option key={cat.id} value={cat.id}>
-              {cat.name}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* Course (optional) */}
-      <div className="space-y-1.5">
-        <Label htmlFor="course">Course (optional)</Label>
-        <select
-          id="course"
-          value={courseId}
-          onChange={(e) => setCourseId(e.target.value)}
-          disabled={submitting}
-          className="h-9 w-full rounded-md border bg-transparent px-2.5 text-sm outline-none ring-1 ring-foreground/10 transition-colors focus:border-ring focus:ring-2 focus:ring-ring/50 disabled:opacity-50"
-        >
-          <option value="">None</option>
-          {courses.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.code} — {c.name}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* Tags */}
-      <TagInput
-        value={selectedTagIds}
-        onChange={setSelectedTagIds}
-        maxTags={5}
-        placeholder="Search or create tags..."
-        label="Tags"
-      />
-
-      {/* Visibility */}
-      <div className="space-y-1.5">
-        <Label>Visibility</Label>
-        <div className="grid gap-2 sm:grid-cols-3">
-          {VISIBILITY_OPTIONS.map((opt) => (
-            <button
-              key={opt.value}
-              type="button"
-              onClick={() => setVisibility(opt.value)}
+      <Card>
+        <CardContent className="space-y-5 p-5 sm:p-6">
+          <div className="space-y-1.5">
+            <Label htmlFor="title">
+              Title <span className="text-destructive">*</span>
+            </Label>
+            <Input
+              id="title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="e.g., Best resources for DSA?"
+              maxLength={200}
               disabled={submitting}
-              className={
-                "rounded-lg border p-3 text-left transition-colors " +
-                (visibility === opt.value
-                  ? "border-primary bg-primary/5 ring-1 ring-primary/30"
-                  : "hover:bg-muted")
-              }
-            >
-              <p className="text-sm font-medium text-foreground">{opt.label}</p>
-              <p className="mt-0.5 text-[10px] text-muted-foreground">{opt.hint}</p>
-            </button>
-          ))}
-        </div>
-      </div>
+            />
+            <p className="text-[10px] text-muted-foreground">{title.length}/200</p>
+          </div>
 
-      {/* Error */}
+          <div className="space-y-1.5">
+            <Label htmlFor="content">
+              Content <span className="text-destructive">*</span>
+            </Label>
+            <RichTextEditor
+              value={content}
+              onChange={setContent}
+              placeholder="Share the details of your discussion..."
+              disabled={submitting}
+            >
+              <RichTextEditorToolbar />
+              <RichTextEditorContent />
+            </RichTextEditor>
+          </div>
+
+          <Separator />
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="category">
+                Category <span className="text-destructive">*</span>
+              </Label>
+              <Select
+                value={categoryId}
+                onValueChange={(v) => setCategoryId(v ?? "")}
+                disabled={submitting}
+              >
+                <SelectTrigger id="category" className="w-full">
+                  <SelectValue placeholder="Select a category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="course">Course (optional)</Label>
+              <Select
+                value={courseId}
+                onValueChange={(v) => setCourseId(v ?? "")}
+                disabled={submitting}
+              >
+                <SelectTrigger id="course" className="w-full">
+                  <SelectValue placeholder="None" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">None</SelectItem>
+                  {courses.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.code} &mdash; {c.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>Tags</Label>
+            <TagInput
+              value={selectedTagIds}
+              onChange={setSelectedTagIds}
+              maxTags={5}
+              placeholder="Search or create tags..."
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>Visibility</Label>
+            <div className="grid gap-2 sm:grid-cols-3">
+              {VISIBILITY_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setVisibility(opt.value)}
+                  disabled={submitting}
+                  className={
+                    "rounded-lg border p-3 text-left transition-all " +
+                    (visibility === opt.value
+                      ? "border-primary bg-primary/5 ring-1 ring-primary/30"
+                      : "hover:bg-muted hover:border-border")
+                  }
+                >
+                  <p className="text-sm font-medium text-foreground">{opt.label}</p>
+                  <p className="mt-0.5 text-[10px] text-muted-foreground">{opt.hint}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {error && (
         <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
           <AlertCircle className="size-4 shrink-0" />
@@ -244,7 +259,6 @@ export function DiscussionCreateForm({
         </div>
       )}
 
-      {/* Submit */}
       <div className="flex items-center justify-end gap-2">
         <Button
           variant="ghost"
@@ -256,7 +270,7 @@ export function DiscussionCreateForm({
         >
           Cancel
         </Button>
-        <Button onClick={handleSubmit} disabled={submitting}>
+        <Button onClick={handleSubmit} disabled={submitting} size="lg">
           {submitting ? (
             <>
               <Loader2 className="size-4 animate-spin" />

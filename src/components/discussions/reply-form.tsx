@@ -51,7 +51,7 @@ export function ReplyForm({
   );
 
   return (
-    <div className={compact ? "mt-2" : "mt-4"} onKeyDown={handleKeyDown}>
+    <div className={cn(compact ? "" : "")} onKeyDown={handleKeyDown}>
       <RichTextEditor
         value={content}
         onChange={setContent}
@@ -67,7 +67,10 @@ export function ReplyForm({
       </RichTextEditor>
       <div className="mt-2 flex items-center justify-between gap-2">
         <span className="text-[10px] text-muted-foreground">
-          {parentId ? "Replying to comment" : "Posting a reply"}
+          {parentId ? "Replying to a comment" : "Share your thoughts"}
+          <kbd className="ml-1.5 rounded border bg-muted px-1 py-0.5 text-[9px] font-mono text-muted-foreground">
+            {typeof navigator !== "undefined" && navigator.platform?.includes("Mac") ? "⌘" : "Ctrl"}+Enter
+          </kbd>
         </span>
         <div className="flex items-center gap-2">
           {onCancel && (
@@ -81,7 +84,7 @@ export function ReplyForm({
             ) : (
               <Send className="size-4" />
             )}
-            {parentId ? "Reply" : "Submit Reply"}
+            {parentId ? "Reply" : "Submit"}
           </Button>
         </div>
       </div>

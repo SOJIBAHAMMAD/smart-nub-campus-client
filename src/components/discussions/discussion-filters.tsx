@@ -3,6 +3,13 @@
 import { Search, X, SlidersHorizontal } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import type { DiscussionCategory } from "@/types/discussion.types";
 import { cn } from "@/lib/utils";
 
@@ -25,16 +32,10 @@ interface DiscussionFiltersProps {
   onSortChange: (sort: SortOption) => void;
   categories: (DiscussionCategory & { _count: { discussions: number } })[];
   tags: { id: string; name: string; slug: string }[];
-  onClearMobile?: () => void;
   showMobileFilters: boolean;
   onToggleMobileFilters: () => void;
 }
 
-/**
- * Filter bar for the Discussions list.
- * Provides search input, category/tag dropdowns, and sort tabs
- * (Latest / Popular / Unanswered). A mobile filter toggle is included.
- */
 export function DiscussionFilters({
   search,
   onSearchChange,
@@ -51,7 +52,6 @@ export function DiscussionFilters({
 }: DiscussionFiltersProps) {
   return (
     <div className="space-y-3">
-      {/* ── Search + mobile toggle ──────────────────────────────── */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="relative flex-1">
           <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -71,32 +71,46 @@ export function DiscussionFilters({
           )}
         </div>
 
+        <div className="hidden items-center gap-2 sm:flex">
+          <Select
+            value={sort}
+            onValueChange={(v) => onSortChange((v ?? "latest") as SortOption)}
+          >
+            <SelectTrigger className="h-9 w-[130px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {SORT_OPTIONS.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Button
+            variant="outline"
+            size="sm"
+            className="lg:hidden"
+            onClick={onToggleMobileFilters}
+          >
+            <SlidersHorizontal className="size-4" />
+            Filters
+          </Button>
+        </div>
+
         <Button
           variant="outline"
           size="sm"
-          className="lg:hidden"
+          className="sm:hidden"
           onClick={onToggleMobileFilters}
         >
           <SlidersHorizontal className="size-4" />
           Filters
         </Button>
-
-        {/* ── Sort dropdown (desktop) ──────────────────────────── */}
-        <select
-          value={sort}
-          onChange={(e) => onSortChange(e.target.value as SortOption)}
-          className="hidden h-9 rounded-md border bg-transparent px-2.5 text-sm outline-none ring-1 ring-foreground/10 sm:block"
-        >
-          {SORT_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
       </div>
 
-      {/* ── Sort tabs (mobile) ─────────────────────────────────── */}
-      <div className="flex gap-2 lg:hidden">
+      <div className="flex gap-2 sm:hidden">
         {SORT_OPTIONS.map((opt) => (
           <button
             key={opt.value}
@@ -113,9 +127,8 @@ export function DiscussionFilters({
         ))}
       </div>
 
-      {/* ── Mobile filter panel ─────────────────────────────────── */}
       {showMobileFilters && (
-        <div className="rounded-xl border bg-card p-4 ring-1 ring-foreground/10 lg:hidden">
+        <div className="rounded-xl border bg-card p-4 sm:hidden">
           <div className="space-y-3">
             <div>
               <label className="text-xs font-semibold text-muted-foreground">Category</label>

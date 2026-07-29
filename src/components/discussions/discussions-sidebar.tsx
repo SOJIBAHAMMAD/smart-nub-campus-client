@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Plus, Bookmark, MessageCircle, Pin, ChevronDown } from "lucide-react";
+import { Plus, Bookmark, MessageCircle, Pin, ChevronDown, Sparkles } from "lucide-react";
 import type { DiscussionCategory } from "@/types/discussion.types";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { TagPill } from "@/components/ui/tag-pill";
 
@@ -24,17 +26,12 @@ interface DiscussionsSidebarProps {
 }
 
 const TABS: { id: DiscussionTab; label: string; icon: React.ReactNode }[] = [
-  { id: "all", label: "All", icon: <MessageCircle className="size-4" /> },
+  { id: "all", label: "All Discussions", icon: <MessageCircle className="size-4" /> },
   { id: "mine", label: "My Discussions", icon: <Pin className="size-4" /> },
   { id: "bookmarks", label: "Bookmarks", icon: <Bookmark className="size-4" /> },
   { id: "replies", label: "My Replies", icon: <MessageCircle className="size-4" /> },
 ];
 
-/**
- * Left sidebar for the Discussions page.
- * Contains the Start button, tab navigation, category list with counts,
- * and a "Have a topic?" call-to-action.
- */
 export function DiscussionsSidebar({
   activeTab,
   onTabChange,
@@ -53,16 +50,11 @@ export function DiscussionsSidebar({
 
   return (
     <div className="space-y-6">
-      {/* ── Start button ─────────────────────────────────────────── */}
-      <Link
-        href="/discussions/create"
-        className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-brand px-10 py-2.5 text-sm font-medium text-white transition-all hover:bg-brand/90 active:translate-y-px"
-      >
+      <Button className="w-full gap-1.5" render={<Link href="/discussions/create" />} nativeButton={false}>
         <Plus className="size-4" />
-        Start
-      </Link>
+        Start Discussion
+      </Button>
 
-      {/* ── Tabs ─────────────────────────────────────────────────── */}
       <nav className="space-y-1">
         {TABS.map((tab) => (
           <button
@@ -81,7 +73,6 @@ export function DiscussionsSidebar({
         ))}
       </nav>
 
-      {/* ── Categories ───────────────────────────────────────────── */}
       <div>
         <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           Categories
@@ -100,30 +91,34 @@ export function DiscussionsSidebar({
               >
                 <span>All Categories</span>
               </button>
-              {visibleCategories.map((cat) => (
-                <button
-                  key={cat.id}
-                  onClick={() => onCategoryChange(cat.slug)}
-                  className={cn(
-                    "flex w-full items-center justify-between rounded-lg px-3 py-1.5 text-sm transition-colors",
-                    selectedCategorySlug === cat.slug
-                      ? "bg-primary/10 text-primary font-medium"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground",
-                  )}
-                >
-                  <span className="truncate">{cat.name}</span>
-                  <span className="ml-auto rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium tabular-nums text-muted-foreground">
-                    {cat._count.discussions}
-                  </span>
-                </button>
-              ))}
+              <ScrollArea className="max-h-[300px]">
+                <div className="space-y-0.5">
+                  {visibleCategories.map((cat) => (
+                    <button
+                      key={cat.id}
+                      onClick={() => onCategoryChange(cat.slug)}
+                      className={cn(
+                        "flex w-full items-center justify-between rounded-lg px-3 py-1.5 text-sm transition-colors",
+                        selectedCategorySlug === cat.slug
+                          ? "bg-primary/10 text-primary font-medium"
+                          : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                      )}
+                    >
+                      <span className="truncate">{cat.name}</span>
+                      <span className="ml-auto rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium tabular-nums text-muted-foreground">
+                        {cat._count.discussions}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </ScrollArea>
             </nav>
             {categories.length > COLLAPSED_LIMIT && (
               <button
                 onClick={() => setShowAllCategories((v) => !v)}
                 className="mt-1 flex w-full items-center justify-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               >
-                {showAllCategories ? "Show less" : "Show more"}
+                {showAllCategories ? "Show less" : `Show all (${categories.length})`}
                 <ChevronDown
                   className={cn(
                     "size-3.5 transition-transform",
@@ -138,7 +133,6 @@ export function DiscussionsSidebar({
         )}
       </div>
 
-      {/* ── Tags (multi-select, AND) ───────────────────────────── */}
       {tags.length > 0 && (
         <div>
           <div className="mb-2 flex items-center justify-between">
@@ -169,7 +163,6 @@ export function DiscussionsSidebar({
                         : [...selectedTags, tag.slug],
                     )
                   }
-
                 />
               );
             })}
@@ -177,19 +170,20 @@ export function DiscussionsSidebar({
         </div>
       )}
 
-      {/* ── Have a topic? CTA ───────────────────────────────────── */}
       <Card>
-        <CardContent className="p-4 ring-1 ring-foreground/10">
-          <h3 className="text-sm font-semibold text-foreground">Have a topic?</h3>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Click Start above to create a discussion and get the conversation going.
-          </p>
-          <Link
-            href="/discussions/create"
-            className="mt-3 flex w-full items-center justify-center gap-1 rounded-xl border border-success bg-success/2 px-2.5 py-1.5 text-xs font-medium text-success/90 transition-colors hover:bg-success/5"
-          >
+        <CardContent className="flex flex-col items-start gap-3 p-4">
+          <div className="flex size-8 items-center justify-center rounded-full bg-primary/10">
+            <Sparkles className="size-4 text-primary" />
+          </div>
+          <div>
+            <h3 className="text-sm font-semibold text-foreground">Have a topic?</h3>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Start a discussion and get the community talking.
+            </p>
+          </div>
+          <Button variant="outline" size="sm" className="w-full" render={<Link href="/discussions/create" />} nativeButton={false}>
             Start Discussion
-          </Link>
+          </Button>
         </CardContent>
       </Card>
     </div>

@@ -377,4 +377,22 @@
   .animate-shine {
     animation: shine 5s linear infinite;
   }
+
+  /* Discussion card hover accent pulse */
+  @keyframes accent-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+  .animate-accent-pulse {
+    animation: accent-pulse 2s ease-in-out infinite;
+  }
+
+  /* Smooth height transition for collapsible elements */
+  .grid-rows-collapse {
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.3s ease;
+  }
+  .grid-rows-collapse.open {
+    grid-template-rows: 1fr;
+  }
 }

@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
-import { AlertCircle, X } from "lucide-react";
+import Link from "next/link";
+import { AlertCircle, Plus, X } from "lucide-react";
 import { PageLayout } from "@/components/layout/page-layout";
 import {
   DiscussionsSidebar,
@@ -13,6 +14,15 @@ import { DiscussionCard } from "@/components/discussions/discussion-card";
 import { DiscussionFilters, type SortOption } from "@/components/discussions/discussion-filters";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationPrevious,
+  PaginationNext,
+  PaginationEllipsis,
+} from "@/components/ui/pagination";
 import { toast } from "sonner";
 import {
   listDiscussions,
@@ -42,14 +52,24 @@ interface DiscussionsClientProps {
 
 function DiscussionCardSkeleton() {
   return (
-    <div className="animate-pulse rounded-xl border bg-card p-4 ring-1 ring-foreground/10">
+    <div className="rounded-xl border bg-card p-4">
       <div className="flex items-start gap-3">
-        <div className="flex-1 space-y-2">
-          <div className="h-4 w-3/4 rounded bg-muted" />
-          <div className="h-3 w-1/2 rounded bg-muted" />
+        <div className="flex-1 space-y-3">
+          <Skeleton className="h-5 w-3/4" />
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-5 w-16 rounded-full" />
+            <Skeleton className="h-3 w-24" />
+          </div>
           <div className="flex gap-2">
-            <div className="h-5 w-12 rounded-full bg-muted" />
-            <div className="h-5 w-16 rounded-full bg-muted" />
+            <Skeleton className="h-5 w-12 rounded-full" />
+            <Skeleton className="h-5 w-16 rounded-full" />
+          </div>
+          <div className="flex items-center justify-between pt-1">
+            <div className="flex gap-3">
+              <Skeleton className="h-4 w-12" />
+              <Skeleton className="h-4 w-12" />
+            </div>
+            <Skeleton className="h-6 w-16 rounded-md" />
           </div>
         </div>
       </div>
@@ -57,12 +77,6 @@ function DiscussionCardSkeleton() {
   );
 }
 
-/**
- * Interactive Discussions list page.
- * Uses PageLayout with DiscussionsSidebar (left) and DiscussionsTrending (right).
- * Supports tabs (All / My Discussions / Bookmarks / My Replies), search,
- * category + tag filters, sort tabs, voting, bookmarks, and pagination.
- */
 export function DiscussionsClient({
   initialDiscussions,
   initialMeta,
@@ -89,11 +103,9 @@ export function DiscussionsClient({
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const hasFetched = useRef(false);
 
-  // ── Socket.IO for real-time discussion updates ──────────────────────────
   const socketUrl = env.NEXT_PUBLIC_BACKEND_URL.replace(/\/+$/, "");
   const { socket } = useSocket({ url: socketUrl });
 
-  // When someone replies to a discussion, update the reply count
   useSocketEvent(socket, "discussion:reply", (data) => {
     setDiscussions((prev) =>
       prev.map((d) => {
@@ -123,7 +135,6 @@ export function DiscussionsClient({
     [searchParams, router, pathname],
   );
 
-  // Debounced search → update URL
   useEffect(() => {
     const timer = setTimeout(() => {
       if (searchInput !== search) {
@@ -133,7 +144,6 @@ export function DiscussionsClient({
     return () => clearTimeout(timer);
   }, [searchInput, search, updateParams]);
 
-  // Fetch when URL params change (skip the first render — data comes from server)
   const loadDiscussions = useCallback(async () => {
     setLoading(true);
     try {
@@ -168,7 +178,6 @@ export function DiscussionsClient({
           setMeta(null);
         }
       } else {
-        // mine / replies via dedicated server actions
         const res =
           tab === "mine"
             ? await myDiscussions(page, 12)
@@ -184,7 +193,6 @@ export function DiscussionsClient({
         }
       }
     } catch {
-      // Empty state handles errors
     } finally {
       setLoading(false);
     }
@@ -198,7 +206,6 @@ export function DiscussionsClient({
     void loadDiscussions();
   }, [loadDiscussions]);
 
-  // ── Optimistic vote toggle ─────────────────────────────────────
   const handleVote = useCallback(
     async (discussionId: string, currentVote: Discussion["userVote"]) => {
       const original = discussions.find((d) => d.id === discussionId);
@@ -250,7 +257,6 @@ export function DiscussionsClient({
     [discussions],
   );
 
-  // ── Optimistic bookmark toggle ─────────────────────────────────
   const handleBookmark = useCallback(
     async (discussionId: string, currentBookmarked: boolean) => {
       setDiscussions((prev) =>
@@ -282,6 +288,76 @@ export function DiscussionsClient({
 
   const activeFilters = search || categorySlug || tagSlug;
 
+  const renderPagination = () => {
+    if (!meta || meta.totalPages <= 1) return null;
+    const current = page;
+    const total = meta.totalPages;
+
+    return (
+      <Pagination className="pt-4">
+        <PaginationContent>
+          <PaginationItem>
+            <PaginationPrevious
+              href="#"
+              onClick={(e) => {
+                e.preventDefault();
+                updateParams({ page: String(current - 1) });
+              }}
+              className={current <= 1 ? "pointer-events-none opacity-50" : ""}
+              aria-disabled={current <= 1}
+            />
+          </PaginationItem>
+
+          {Array.from({ length: total }, (_, i) => i + 1)
+            .filter((p) => {
+              if (p === 1 || p === total) return true;
+              if (Math.abs(p - current) <= 1) return true;
+              return false;
+            })
+            .map((p, idx, arr) => {
+              const items: React.ReactNode[] = [];
+              if (idx > 0 && arr[idx - 1] !== p - 1) {
+                items.push(
+                  <PaginationItem key={`ellipsis-${p}`}>
+                    <PaginationEllipsis />
+                  </PaginationItem>,
+                );
+              }
+              items.push(
+                <PaginationItem key={p}>
+                  <Button
+                    variant={p === current ? "outline" : "ghost"}
+                    size="icon"
+                    className="size-9 text-sm"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      updateParams({ page: String(p) });
+                    }}
+                  >
+                    {p}
+                  </Button>
+                </PaginationItem>,
+              );
+              return items;
+            })
+            .flat()}
+
+          <PaginationItem>
+            <PaginationNext
+              href="#"
+              onClick={(e) => {
+                e.preventDefault();
+                updateParams({ page: String(current + 1) });
+              }}
+              className={current >= total ? "pointer-events-none opacity-50" : ""}
+              aria-disabled={current >= total}
+            />
+          </PaginationItem>
+        </PaginationContent>
+      </Pagination>
+    );
+  };
+
   return (
     <PageLayout
       leftSidebar={
@@ -305,15 +381,24 @@ export function DiscussionsClient({
       }
     >
       <div className="space-y-4">
-        {/* ── Page Header ───────────────────────────────────────── */}
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Discussions</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Join the conversation with fellow students.
-          </p>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Discussions</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Join the conversation with fellow students.
+            </p>
+          </div>
+          <Button
+            render={<Link href="/discussions/create" />}
+            nativeButton={false}
+            size="sm"
+            className="shrink-0 lg:hidden"
+          >
+            <Plus className="size-4" />
+            New
+          </Button>
         </div>
 
-        {/* ── Filters ──────────────────────────────────────────── */}
         <DiscussionFilters
           search={searchInput}
           onSearchChange={setSearchInput}
@@ -329,7 +414,6 @@ export function DiscussionsClient({
           onToggleMobileFilters={() => setShowMobileFilters((v) => !v)}
         />
 
-        {/* ── Active filters ───────────────────────────────────── */}
         {activeFilters && (
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs text-muted-foreground">Active filters:</span>
@@ -360,7 +444,6 @@ export function DiscussionsClient({
           </div>
         )}
 
-        {/* ── List heading ─────────────────────────────────────── */}
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-medium text-muted-foreground">
             {tab === "all" && "All Discussions"}
@@ -375,7 +458,6 @@ export function DiscussionsClient({
           )}
         </div>
 
-        {/* ── Discussion Cards ──────────────────────────────────── */}
         {loading ? (
           <div className="space-y-3">
             {[1, 2, 3, 4, 5].map((i) => (
@@ -384,12 +466,21 @@ export function DiscussionsClient({
           </div>
         ) : discussions.length === 0 ? (
           <Card>
-            <CardContent className="p-12 text-center ring-1 ring-foreground/10">
-              <AlertCircle className="mx-auto size-10 text-muted-foreground/40" />
-              <p className="mt-3 text-sm font-medium text-foreground">No discussions found</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Try adjusting your search or filters, or start a new discussion.
+            <CardContent className="flex flex-col items-center justify-center p-12 text-center">
+              <div className="mb-4 flex size-12 items-center justify-center rounded-full bg-muted">
+                <AlertCircle className="size-6 text-muted-foreground/60" />
+              </div>
+              <p className="text-sm font-medium text-foreground">No discussions found</p>
+              <p className="mt-1 text-xs text-muted-foreground max-w-sm">
+                {search || categorySlug || tagSlug
+                  ? "Try adjusting your search or filters to find what you're looking for."
+                  : "Be the first to start a discussion and get the conversation going."}
               </p>
+              {!search && !categorySlug && !tagSlug && (
+                <Button render={<a href="/discussions/create" />} nativeButton={false} className="mt-4" size="sm">
+                  Start a Discussion
+                </Button>
+              )}
             </CardContent>
           </Card>
         ) : (
@@ -405,30 +496,7 @@ export function DiscussionsClient({
           </div>
         )}
 
-        {/* ── Pagination ──────────────────────────────────────── */}
-        {meta && meta.totalPages > 1 && (
-          <div className="flex items-center justify-center gap-2 pt-4">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => updateParams({ page: String(page - 1) })}
-              disabled={page <= 1}
-            >
-              Previous
-            </Button>
-            <span className="text-sm text-muted-foreground">
-              Page {page} of {meta.totalPages}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => updateParams({ page: String(page + 1) })}
-              disabled={page >= meta.totalPages}
-            >
-              Next
-            </Button>
-          </div>
-        )}
+        {renderPagination()}
       </div>
     </PageLayout>
   );

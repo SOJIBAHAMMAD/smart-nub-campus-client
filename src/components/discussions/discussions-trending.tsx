@@ -1,12 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { TrendingUp, Tag, Users } from "lucide-react";
+import { TrendingUp, Tag, Users, Sparkles } from "lucide-react";
 import type { Discussion } from "@/types/discussion.types";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { TagPill } from "@/components/ui/tag-pill";
+import { Avatar } from "@/components/ui/avatar";
+import { cn } from "@/lib/utils";
 
 export interface TopContributor {
   rank: number;
@@ -21,11 +23,6 @@ interface DiscussionsTrendingProps {
   contributors: TopContributor[];
 }
 
-/**
- * Right sidebar for the Discussions page.
- * Shows trending discussions (top 3 by activity), popular tag chips,
- * and top contributors.
- */
 export function DiscussionsTrending({
   trendingDiscussions,
   popularTags,
@@ -52,11 +49,12 @@ export function DiscussionsTrending({
 
   return (
     <div className="space-y-6">
-      {/* ── Trending Discussions ───────────────────────────────── */}
       <div>
         <div className="mb-3 flex items-center gap-2">
-          <TrendingUp className="size-4 text-primary" />
-          <h3 className="text-sm font-semibold text-foreground">Trending Discussions</h3>
+          <div className="flex size-6 items-center justify-center rounded-full bg-primary/10">
+            <TrendingUp className="size-3.5 text-primary" />
+          </div>
+          <h3 className="text-sm font-semibold text-foreground">Trending</h3>
         </div>
         {trendingDiscussions.length > 0 ? (
           <div className="space-y-2">
@@ -64,33 +62,36 @@ export function DiscussionsTrending({
               <Link
                 key={d.id}
                 href={`/discussions/${d.id}`}
-                className="flex items-start gap-3 rounded-lg border bg-card p-2.5 ring-1 ring-foreground/10 transition-all hover:shadow-sm"
+                className="group flex items-start gap-3 rounded-lg border bg-card p-3 transition-all hover:border-primary/20 hover:shadow-sm"
               >
-                <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+                <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary transition-colors group-hover:bg-primary/20">
                   {idx + 1}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <h4 className="line-clamp-1 text-xs font-medium text-foreground">
+                  <h4 className="line-clamp-1 text-xs font-medium text-foreground transition-colors group-hover:text-primary">
                     {d.title}
                   </h4>
                   <p className="mt-0.5 text-[10px] text-muted-foreground">
-                    {d.replyCount} replies · {d.viewCount} views
+                    {d.replyCount} replies &middot; {d.viewCount} views
                   </p>
                 </div>
               </Link>
             ))}
           </div>
         ) : (
-          <p className="rounded-lg border bg-card p-3 text-center text-xs text-muted-foreground ring-1 ring-foreground/10">
-            No trending discussions yet.
-          </p>
+          <Card>
+            <CardContent className="p-4 text-center">
+              <p className="text-xs text-muted-foreground">No trending discussions yet.</p>
+            </CardContent>
+          </Card>
         )}
       </div>
 
-      {/* ── Popular Tags ─────────────────────────────────────────── */}
       <div>
         <div className="mb-3 flex items-center gap-2">
-          <Tag className="size-4 text-primary" />
+          <div className="flex size-6 items-center justify-center rounded-full bg-primary/10">
+            <Tag className="size-3.5 text-primary" />
+          </div>
           <h3 className="text-sm font-semibold text-foreground">Popular Tags</h3>
         </div>
         {popularTags.length > 0 ? (
@@ -103,7 +104,6 @@ export function DiscussionsTrending({
                   name={tag.name}
                   active={active}
                   onClick={() => toggleTag(tag.slug)}
-
                 />
               );
             })}
@@ -113,10 +113,11 @@ export function DiscussionsTrending({
         )}
       </div>
 
-      {/* ── Top Contributors ─────────────────────────────────────── */}
       <div>
         <div className="mb-3 flex items-center gap-2">
-          <Users className="size-4 text-primary" />
+          <div className="flex size-6 items-center justify-center rounded-full bg-primary/10">
+            <Users className="size-3.5 text-primary" />
+          </div>
           <h3 className="text-sm font-semibold text-foreground">Top Contributors</h3>
         </div>
         {contributors.length > 0 ? (
@@ -124,54 +125,49 @@ export function DiscussionsTrending({
             {contributors.map((entry) => (
               <div
                 key={entry.rank}
-                className="flex items-center gap-2.5 rounded-lg bg-card p-2 ring-1 ring-foreground/10"
+                className="flex items-center gap-2.5 rounded-lg border bg-card p-2.5 transition-all hover:border-primary/20"
               >
                 <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[10px] font-bold text-primary">
                   {entry.rank}
                 </span>
-                {entry.image ? (
-                  <Image
-                    src={entry.image}
-                    alt={entry.name ?? "Contributor"}
-                    width={24}
-                    height={24}
-                    unoptimized
-                    className="size-6 rounded-full object-cover"
-                  />
-                ) : (
-                  <div className="flex size-6 items-center justify-center rounded-full bg-muted text-[10px] font-medium text-muted-foreground">
-                    {entry.name?.charAt(0) ?? "?"}
-                  </div>
-                )}
-                <span className="truncate text-xs font-medium text-foreground">
+                <Avatar
+                  id={entry.name}
+                  name={entry.name ?? "?"}
+                  src={entry.image}
+                  className="size-6"
+                />
+                <span className="min-w-0 flex-1 truncate text-xs font-medium text-foreground">
                   {entry.name ?? "Unknown"}
                 </span>
-                <span className="ml-auto text-[10px] text-muted-foreground">
+                <span className="shrink-0 text-[10px] text-muted-foreground">
                   {entry.discussionCount}
                 </span>
               </div>
             ))}
           </div>
         ) : (
-          <p className="rounded-lg border bg-card p-3 text-center text-xs text-muted-foreground ring-1 ring-foreground/10">
-            No contributors yet.
-          </p>
+          <Card>
+            <CardContent className="p-4 text-center">
+              <p className="text-xs text-muted-foreground">No contributors yet.</p>
+            </CardContent>
+          </Card>
         )}
       </div>
 
-      {/* ── Have a topic? CTA ──────────────────────────────────── */}
-      <Card>
-        <CardContent className="p-4 ring-1 ring-foreground/10">
-          <h3 className="text-sm font-semibold text-foreground">Have a topic?</h3>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Start a discussion and get the community talking.
-          </p>
-          <Link
-            href="/discussions/create"
-            className="mt-3 flex w-full items-center justify-center gap-1 rounded-xl border border-success bg-success/2 px-2.5 py-1.5 text-xs font-medium text-success/90 transition-colors hover:bg-success/5"
-          >
-            Start Discussion
-          </Link>
+      <Card className="bg-primary/5 border-primary/10">
+        <CardContent className="flex flex-col items-start gap-3 p-4">
+          <div className="flex size-8 items-center justify-center rounded-full bg-primary/10">
+            <Sparkles className="size-4 text-primary" />
+          </div>
+          <div>
+            <h3 className="text-sm font-semibold text-foreground">Share your knowledge</h3>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Start a discussion and earn contributor points.
+            </p>
+          </div>
+          <Button variant="default" size="sm" className="w-full" render={<Link href="/discussions/create" />} nativeButton={false}>
+            Write a Post
+          </Button>
         </CardContent>
       </Card>
     </div>

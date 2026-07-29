@@ -4,7 +4,6 @@ import Link from "next/link";
 import {
   MessageCircle,
   Eye,
-  Pin,
   Lock,
   CheckCircle,
   ChevronUp,
@@ -12,19 +11,17 @@ import {
 } from "lucide-react";
 import type { Discussion } from "@/types/discussion.types";
 import { cn } from "@/lib/utils";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { TagPill } from "@/components/ui/tag-pill";
 import { AuthorInfo } from "@/components/ui/author-info";
+import { Badge } from "@/components/ui/badge";
 import { Metric } from "@/components/ui/metric";
 import { categoryColor } from "@/constants/card-constants";
 
 interface DiscussionCardProps {
   discussion: Discussion;
   onVote?: (discussionId: string, currentVote: Discussion["userVote"]) => void;
-  onBookmark?: (
-    discussionId: string,
-    currentBookmarked: boolean,
-  ) => void;
+  onBookmark?: (discussionId: string, currentBookmarked: boolean) => void;
 }
 
 export function DiscussionCard({
@@ -34,43 +31,66 @@ export function DiscussionCard({
 }: DiscussionCardProps) {
   const upvoted = discussion.userVote === "UP";
   const bookmarked = discussion.isBookmarked ?? false;
-  const stop = (e: React.MouseEvent) => e.preventDefault();
 
   const tags = discussion.discussionTags ?? [];
 
   return (
-    <Card data-interactive className="group">
-      <Link href={`/discussions/${discussion.id}`} className="contents">
-        <CardContent className="flex flex-col gap-2.5 py-4">
-          {/* Header: pinned + title + status */}
+    <Link href={`/discussions/${discussion.id}`} className="contents">
+      <Card
+        interactive
+        className={cn(
+          "relative overflow-hidden transition-all duration-200",
+          discussion.isPinned && "ring-1 ring-primary/20",
+        )}
+      >
+        {discussion.isPinned && (
+          <div className="absolute left-0 top-0 h-full w-0.5 bg-primary" />
+        )}
+        <CardContent className="flex flex-col gap-3 py-4">
           <div className="flex items-start gap-2">
-            {discussion.isPinned && (
-              <Pin className="mt-0.5 size-4 shrink-0 text-primary" />
-            )}
-            <h3 className="flex-1 text-[15px] font-semibold text-foreground transition-colors group-hover/link:text-primary line-clamp-2">
-              {discussion.title}
-            </h3>
+            <div className="flex-1 min-w-0">
+              <h3
+                className={cn(
+                  "text-[15px] font-semibold leading-snug text-foreground line-clamp-2 transition-colors group-hover/card:text-primary",
+                  discussion.isPinned && "text-primary",
+                )}
+              >
+                {discussion.title}
+              </h3>
+            </div>
             <div className="flex shrink-0 items-center gap-1.5">
               {discussion.isLocked && (
-                <Lock className="size-3.5 text-muted-foreground" />
+                <Badge
+                  variant="outline"
+                  className="h-5 gap-1 px-1.5 text-[10px] text-muted-foreground"
+                >
+                  <Lock className="size-2.5" />
+                  Locked
+                </Badge>
               )}
               {discussion.isSolved && (
-                <CheckCircle className="size-3.5 text-success" />
+                <Badge
+                  variant="outline"
+                  className="h-5 gap-1 border-success/30 px-1.5 text-[10px] text-success"
+                >
+                  <CheckCircle className="size-2.5" />
+                  Solved
+                </Badge>
               )}
             </div>
           </div>
 
-          {/* Category + course + author row */}
           <div className="flex flex-wrap items-center gap-2">
             {discussion.category && (
-              <span
+              <Badge
+                variant="secondary"
                 className={cn(
-                  "rounded-full px-2 py-0.5 text-[10px] font-semibold",
+                  "h-5 px-2 text-[10px] font-semibold",
                   categoryColor(discussion.category.slug),
                 )}
               >
                 {discussion.category.name}
-              </span>
+              </Badge>
             )}
             {discussion.course && (
               <span className="text-[10px] text-muted-foreground">
@@ -85,7 +105,6 @@ export function DiscussionCard({
             />
           </div>
 
-          {/* Tags (max 3) */}
           {tags.length > 0 && (
             <div className="flex flex-wrap gap-1.5">
               {tags.slice(0, 3).map((dt) => (
@@ -93,9 +112,13 @@ export function DiscussionCard({
               ))}
             </div>
           )}
+        </CardContent>
 
-          {/* Footer: metrics + actions */}
-          <div className="flex items-center justify-between border-t border-border/40 pt-3">
+        <CardFooter
+          onClick={(e) => e.preventDefault()}
+          className="relative z-10"
+        >
+          <div className="flex w-full items-center justify-between">
             <div className="flex items-center gap-3">
               <Metric icon={MessageCircle} value={discussion.replyCount} />
               <Metric icon={Eye} value={discussion.viewCount} />
@@ -103,11 +126,15 @@ export function DiscussionCard({
                 {discussion.visibility}
               </span>
             </div>
-            <div className="flex items-center gap-1">
+            <div
+              className="flex items-center gap-1"
+              onClick={(e) => e.stopPropagation()}
+            >
               {onVote && (
                 <button
                   onClick={(e) => {
-                    stop(e);
+                    e.preventDefault();
+                    e.stopPropagation();
                     onVote(discussion.id, discussion.userVote);
                   }}
                   className={cn(
@@ -125,7 +152,8 @@ export function DiscussionCard({
               {onBookmark && (
                 <button
                   onClick={(e) => {
-                    stop(e);
+                    e.preventDefault();
+                    e.stopPropagation();
                     onBookmark(discussion.id, bookmarked);
                   }}
                   className={cn(
@@ -143,8 +171,8 @@ export function DiscussionCard({
               )}
             </div>
           </div>
-        </CardContent>
-      </Link>
-    </Card>
+        </CardFooter>
+      </Card>
+    </Link>
   );
 }

@@ -15,12 +15,36 @@ import {
   ChevronDown,
   CheckCheck,
   Edit3,
+  Flag,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { TagPill } from "@/components/ui/tag-pill";
 import { VoteControls } from "@/components/ui/vote-controls";
 import { AuthorInfo } from "@/components/ui/author-info";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { ReplyCard } from "@/components/discussions/reply-card";
@@ -79,8 +103,6 @@ export function DiscussionDetail({
   const [replies, setReplies] = useState<DiscussionReply[]>([]);
   const [loadingReplies, setLoadingReplies] = useState(true);
   const [replySort, setReplySort] = useState<ReplySort>("upvotes");
-  const [showReplyForm, setShowReplyForm] = useState(false);
-  const [showAdminMenu, setShowAdminMenu] = useState(false);
   const [editingDiscussion, setEditingDiscussion] = useState(false);
   const hasJoinedRoom = useRef(false);
 
@@ -89,7 +111,6 @@ export function DiscussionDetail({
   const socketUrl = env.NEXT_PUBLIC_BACKEND_URL.replace(/\/+$/, "");
   const { socket } = useSocket({ url: socketUrl });
 
-  // Join discussion room for real-time updates
   useEffect(() => {
     if (socket && !hasJoinedRoom.current) {
       hasJoinedRoom.current = true;
@@ -102,7 +123,6 @@ export function DiscussionDetail({
     };
   }, [socket, discussionId]);
 
-  // Real-time: new reply
   useSocketEvent(socket, "discussion:reply:new", (data) => {
     if (data.discussionId !== discussionId) return;
     const socketReply = data.reply;
@@ -121,18 +141,24 @@ export function DiscussionDetail({
     };
     setReplies((prev) => {
       if (socketReply.parentId) {
-        return prev.map((r) =>
-          r.id === socketReply.parentId
-            ? { ...r, replies: [...(r.replies ?? []), newReply] }
-            : r,
-        );
+        function attachToParent(list: DiscussionReply[]): DiscussionReply[] {
+          return list.map((r) => {
+            if (r.id === socketReply.parentId) {
+              return { ...r, replies: [...(r.replies ?? []), newReply] };
+            }
+            if (r.replies && r.replies.length > 0) {
+              return { ...r, replies: attachToParent(r.replies) };
+            }
+            return r;
+          });
+        }
+        return attachToParent(prev);
       }
       return [...prev, newReply];
     });
     setDiscussion((prev) => ({ ...prev, replyCount: prev.replyCount + 1 }));
   });
 
-  // Real-time: vote update
   useSocketEvent(socket, "discussion:vote:update", (data) => {
     if (data.entityType === "discussion" && data.discussionId === discussionId) {
       setDiscussion((prev) => ({ ...prev, upvoteCount: data.upvoteCount }));
@@ -154,7 +180,6 @@ export function DiscussionDetail({
     }
   });
 
-  // Real-time: reply edited
   useSocketEvent(socket, "discussion:reply:edited", (data) => {
     if (data.discussionId !== discussionId) return;
     const updateReplyInList = (list: DiscussionReply[]): DiscussionReply[] =>
@@ -170,33 +195,25 @@ export function DiscussionDetail({
     setReplies((prev) => updateReplyInList(prev));
   });
 
-  // Fetch replies
   const loadReplies = useCallback(async () => {
     try {
       const res = await listReplies(discussionId, 1, 100);
       if (res.success && res.data) {
         const data = res.data as { replies?: DiscussionReply[] };
-        const list = data.replies ?? [];
-        const byParent = new Map<string, DiscussionReply[]>();
-        for (const r of list) {
-          if (r.parentId) {
-            const arr = byParent.get(r.parentId) ?? [];
-            arr.push(r);
-            byParent.set(r.parentId, arr);
-          }
-        }
-        const topLevel = list
-          .filter((r) => !r.parentId)
-          .map((r) => ({
-            ...r,
-            isAccepted: discussion.solutionReplyId === r.id,
-            replies: (byParent.get(r.id) ?? [])
+
+        function attachAccepted(reply: DiscussionReply): DiscussionReply {
+          return {
+            ...reply,
+            isAccepted: discussion.solutionReplyId === reply.id,
+            replies: (reply.replies ?? [])
               .sort(
                 (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
               )
-              .map((c) => ({ ...c, isAccepted: discussion.solutionReplyId === c.id })),
-          }));
-        setReplies(topLevel);
+              .map(attachAccepted),
+          };
+        }
+
+        setReplies((data.replies ?? []).map(attachAccepted));
       }
     } catch {
     } finally {
@@ -208,10 +225,8 @@ export function DiscussionDetail({
     void loadReplies();
   }, [loadReplies]);
 
-  // Sort replies: accepted answer always first
   const sortedReplies = useCallback(() => {
     const copy = [...replies];
-    // Pin accepted answer to top
     const acceptedIdx = copy.findIndex((r) => r.isAccepted);
     if (acceptedIdx > 0) {
       const [accepted] = copy.splice(acceptedIdx, 1);
@@ -337,8 +352,7 @@ export function DiscussionDetail({
                   ),
                 };
               }
-              const wasUp = currentVote === "UP";
-              return { ...r, userVote: currentVote, upvoteCount: r.upvoteCount + (wasUp ? -1 : 1) };
+              return { ...r, userVote: currentVote, upvoteCount: r.upvoteCount + (currentVote === "UP" ? -1 : 1) };
             }),
           );
           toast.error(result.message || "Failed to record vote.");
@@ -356,8 +370,7 @@ export function DiscussionDetail({
                 ),
               };
             }
-            const wasUp = currentVote === "UP";
-            return { ...r, userVote: currentVote, upvoteCount: r.upvoteCount + (wasUp ? -1 : 1) };
+            return { ...r, userVote: currentVote, upvoteCount: r.upvoteCount + (currentVote === "UP" ? -1 : 1) };
           }),
         );
         toast.error(err instanceof Error ? err.message : "Failed to record vote.");
@@ -374,11 +387,18 @@ export function DiscussionDetail({
           const newReply = result.data as DiscussionReply;
           setReplies((prev) => {
             if (parentId) {
-              return prev.map((r) =>
-                r.id === parentId
-                  ? { ...r, replies: [...(r.replies ?? []), { ...newReply, isAccepted: false }] }
-                  : r,
-              );
+              function attachToParent(list: DiscussionReply[]): DiscussionReply[] {
+                return list.map((r) => {
+                  if (r.id === parentId) {
+                    return { ...r, replies: [...(r.replies ?? []), { ...newReply, isAccepted: false }] };
+                  }
+                  if (r.replies && r.replies.length > 0) {
+                    return { ...r, replies: attachToParent(r.replies) };
+                  }
+                  return r;
+                });
+              }
+              return attachToParent(prev);
             }
             return [...prev, { ...newReply, isAccepted: false }];
           });
@@ -438,52 +458,62 @@ export function DiscussionDetail({
     }
   }, [discussion.title]);
 
+  const isLocked = discussion.isLocked;
+
   return (
     <div className="mx-auto max-w-4xl space-y-6 px-4 py-6 sm:px-6">
-      {/* Breadcrumb */}
-      <nav className="flex items-center gap-1 text-sm text-muted-foreground">
-        <Link href="/discussions" className="transition-colors hover:text-primary">
-          Discussions
-        </Link>
-        <ChevronLeft className="size-3.5 rotate-180" />
-        <span className="truncate text-foreground">{discussion.title}</span>
-      </nav>
+      <Breadcrumb>
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink render={<Link href="/discussions" />}>
+              Discussions
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage className="truncate max-w-[200px] sm:max-w-[400px]">
+              {discussion.title}
+            </BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
 
-      {/* Header */}
-      <div className="flex flex-col gap-3">
-        <div className="flex items-start gap-2">
-          {discussion.isPinned && <Pin className="mt-1 size-5 shrink-0 text-primary" />}
-          <div className="flex-1">
-            <h1 className="text-xl font-bold text-foreground">{discussion.title}</h1>
+      <div className="flex flex-col gap-4">
+        <div className="flex items-start gap-3">
+          {discussion.isPinned && (
+            <Pin className="mt-1 size-5 shrink-0 text-primary" />
+          )}
+          <div className="flex-1 min-w-0">
+            <h1 className="text-xl font-bold text-foreground sm:text-2xl">
+              {discussion.title}
+            </h1>
           </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
           {discussion.category && (
-            <span
-              className={cn(
-                "rounded-full px-2 py-0.5 text-[10px] font-semibold",
-                categoryColor(discussion.category.slug),
-              )}
+            <Badge
+              variant="secondary"
+              className={cn("h-5 px-2 text-[10px] font-semibold", categoryColor(discussion.category.slug))}
             >
               {discussion.category.name}
-            </span>
+            </Badge>
           )}
           {discussion.isSolved && (
-            <span className="flex items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-[10px] font-semibold text-success">
-              <CheckCircle className="size-3" />
+            <Badge variant="outline" className="h-5 gap-1 border-success/30 px-1.5 text-[10px] text-success">
+              <CheckCircle className="size-2.5" />
               Solved
-            </span>
+            </Badge>
           )}
           {discussion.isLocked && (
-            <span className="flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
-              <Lock className="size-3" />
+            <Badge variant="outline" className="h-5 gap-1 px-1.5 text-[10px] text-muted-foreground">
+              <Lock className="size-2.5" />
               Locked
-            </span>
+            </Badge>
           )}
-          <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-semibold text-secondary-foreground">
+          <Badge variant="secondary" className="h-5 px-2 text-[10px]">
             {discussion.visibility}
-          </span>
+          </Badge>
         </div>
       </div>
 
@@ -502,9 +532,8 @@ export function DiscussionDetail({
         </Card>
       ) : (
         <>
-          {/* Content — rendered as HTML */}
           <Card>
-            <CardContent className="p-5">
+            <CardContent className="p-5 sm:p-6">
               <div
                 className="prose prose-sm max-w-none dark:prose-invert"
                 dangerouslySetInnerHTML={{ __html: discussion.content }}
@@ -512,7 +541,6 @@ export function DiscussionDetail({
             </CardContent>
           </Card>
 
-          {/* Tags */}
           {discussion.discussionTags && discussion.discussionTags.length > 0 && (
             <div className="flex flex-wrap gap-1.5">
               {discussion.discussionTags.map((dt) => (
@@ -526,7 +554,6 @@ export function DiscussionDetail({
             </div>
           )}
 
-          {/* Actions */}
           <div className="flex flex-wrap items-center gap-2">
             <VoteControls
               upvotes={discussion.upvoteCount}
@@ -535,74 +562,70 @@ export function DiscussionDetail({
               orientation="horizontal"
             />
 
-            <button
+            <Button
+              variant={bookmarked ? "secondary" : "outline"}
+              size="sm"
               onClick={handleBookmark}
-              className={cn(
-                "flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
-                bookmarked
-                  ? "bg-primary/10 text-primary"
-                  : "bg-muted text-muted-foreground hover:bg-muted/70",
-              )}
+              className={cn(bookmarked && "text-primary")}
             >
               <Bookmark className={cn("size-4", bookmarked && "fill-current")} />
               {bookmarked ? "Bookmarked" : "Bookmark"}
-            </button>
+            </Button>
 
-            <button
-              onClick={handleShare}
-              className="flex items-center gap-1 rounded-lg bg-muted px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted/70"
-            >
+            <Button variant="outline" size="sm" onClick={handleShare}>
               <Share2 className="size-4" />
               Share
-            </button>
+            </Button>
 
-            {/* Author can edit discussion */}
             {isAuthor && (
-              <button
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => setEditingDiscussion(true)}
-                className="flex items-center gap-1 rounded-lg bg-muted px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted/70"
               >
                 <Edit3 className="size-4" />
                 Edit
-              </button>
+              </Button>
             )}
 
-            {/* Admin actions */}
             {isAdmin && (
-          <div className="relative">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowAdminMenu((v) => !v)}
-            >
-              Admin
-              <ChevronDown className="size-3.5" />
-            </Button>
-            {showAdminMenu && (
-              <div className="absolute right-0 z-10 mt-1 w-40 rounded-md border bg-card p-1 shadow-lg ring-1 ring-foreground/10">
-                <AdminToggle
-                  label={discussion.isPinned ? "Unpin" : "Pin"}
-                  onToggle={async () => {
-                    await togglePin(discussionId);
-                    setDiscussion((prev) => ({ ...prev, isPinned: !prev.isPinned }));
-                  }}
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  render={
+                    <Button variant="outline" size="sm">
+                      Admin
+                      <ChevronDown className="size-3.5" />
+                    </Button>
+                  }
                 />
-                <AdminToggle
-                  label={discussion.isLocked ? "Unlock" : "Lock"}
-                  onToggle={async () => {
-                    await toggleLock(discussionId);
-                    setDiscussion((prev) => ({ ...prev, isLocked: !prev.isLocked }));
-                  }}
-                />
-              </div>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem
+                    onClick={async () => {
+                      await togglePin(discussionId);
+                      setDiscussion((prev) => ({ ...prev, isPinned: !prev.isPinned }));
+                    }}
+                  >
+                    <CheckCheck className="size-3.5" />
+                    {discussion.isPinned ? "Unpin" : "Pin"}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={async () => {
+                      await toggleLock(discussionId);
+                      setDiscussion((prev) => ({ ...prev, isLocked: !prev.isLocked }));
+                    }}
+                  >
+                    <Lock className="size-3.5" />
+                    {discussion.isLocked ? "Unlock" : "Lock"}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
           </div>
-        )}
-      </div>
         </>
       )}
 
-      {/* Author info + stats */}
+      <Separator />
+
       <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
         <AuthorInfo
           user={discussion.author ?? { id: "", name: "Unknown" }}
@@ -621,39 +644,46 @@ export function DiscussionDetail({
         </div>
       </div>
 
-      {/* Replies section */}
-      <div className="space-y-3">
+      <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-foreground">
             Replies ({discussion.replyCount})
           </h2>
-          <select
+          <Select
             value={replySort}
-            onChange={(e) => setReplySort(e.target.value as ReplySort)}
-            className="h-8 rounded-md border bg-transparent px-2 text-xs outline-none ring-1 ring-foreground/10"
+            onValueChange={(v) => setReplySort((v ?? "upvotes") as ReplySort)}
           >
-            <option value="upvotes">Most Upvoted</option>
-            <option value="newest">Newest First</option>
-            <option value="oldest">Oldest First</option>
-          </select>
+            <SelectTrigger className="h-8 w-[140px] text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="upvotes">Most Upvoted</SelectItem>
+              <SelectItem value="newest">Newest First</SelectItem>
+              <SelectItem value="oldest">Oldest First</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {loadingReplies ? (
           <div className="space-y-2">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-24 animate-pulse rounded-lg border bg-card p-3 ring-1 ring-foreground/10" />
+              <div key={i} className="h-24 animate-pulse rounded-lg border bg-card p-3" />
             ))}
           </div>
         ) : sortedReplies().length === 0 ? (
-          <div className="rounded-xl border bg-card p-8 text-center ring-1 ring-foreground/10">
-            <MessageCircle className="mx-auto size-8 text-muted-foreground/40" />
-            <p className="mt-2 text-sm font-medium text-foreground">No replies yet</p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              {discussion.isLocked
-                ? "This discussion is locked."
-                : "Be the first to reply."}
-            </p>
-          </div>
+          <Card>
+            <CardContent className="flex flex-col items-center py-10 text-center">
+              <div className="mb-3 flex size-10 items-center justify-center rounded-full bg-muted">
+                <MessageCircle className="size-5 text-muted-foreground/60" />
+              </div>
+              <p className="text-sm font-medium text-foreground">No replies yet</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {isLocked
+                  ? "This discussion is locked."
+                  : "Be the first to share your thoughts."}
+              </p>
+            </CardContent>
+          </Card>
         ) : (
           <div className="space-y-2">
             {sortedReplies().map((reply) => (
@@ -679,58 +709,25 @@ export function DiscussionDetail({
         )}
       </div>
 
-      {/* Reply form */}
-      {discussion.isLocked ? (
+      {isLocked ? (
         <div className="flex items-center gap-2 rounded-xl border bg-muted/40 p-4 text-sm text-muted-foreground">
           <Lock className="size-4" />
           This discussion is locked. New replies are disabled.
         </div>
       ) : (
-        <div>
-          {!showReplyForm ? (
-            <Button onClick={() => setShowReplyForm(true)} className="w-full sm:w-auto">
-              <MessageCircle className="size-4" />
-              Add a Reply
-            </Button>
-          ) : (
+        <div className="space-y-3">
+          <Separator />
+          <div>
+            <h3 className="mb-3 text-sm font-medium text-foreground">Post a Reply</h3>
             <ReplyForm
-              placeholder="Write your reply..."
+              placeholder="Write your reply... (Cmd+Enter to submit)"
               onSubmit={async (content) => {
                 await handlePostReply(content);
-                setShowReplyForm(false);
               }}
-              onCancel={() => setShowReplyForm(false)}
             />
-          )}
+          </div>
         </div>
       )}
     </div>
-  );
-}
-
-function AdminToggle({
-  label,
-  onToggle,
-}: {
-  label: string;
-  onToggle: () => Promise<void>;
-}) {
-  const [busy, setBusy] = useState(false);
-  return (
-    <button
-      onClick={async () => {
-        setBusy(true);
-        try {
-          await onToggle();
-        } finally {
-          setBusy(false);
-        }
-      }}
-      disabled={busy}
-      className="flex w-full items-center gap-1.5 rounded-md px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-muted"
-    >
-      {busy ? <Loader2 className="size-3.5 animate-spin" /> : <CheckCheck className="size-3.5" />}
-      {label}
-    </button>
   );
 }
