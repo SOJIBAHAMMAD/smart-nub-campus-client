@@ -27,6 +27,7 @@ import {
   postAnswer,
   voteAnswer,
   acceptAnswer,
+  updateAnswer,
   listAnswers,
   listQuestions,
 } from "@/actions/qa.actions";
@@ -199,6 +200,27 @@ export function QuestionDetail({
         }
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Failed to accept answer.");
+      }
+    },
+    [questionId],
+  );
+
+  const handleAnswerEdit = useCallback(
+    async (answerId: string, content: string) => {
+      try {
+        const result = await updateAnswer(questionId, answerId, content);
+        if (result.success) {
+          toast.success("Answer updated.");
+          setAnswers((prev) =>
+            prev.map((a) =>
+              a.id === answerId ? { ...a, content, updatedAt: new Date().toISOString() } : a,
+            ),
+          );
+        } else {
+          toast.error(result.message || "Failed to update answer.");
+        }
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Failed to update answer.");
       }
     },
     [questionId],
@@ -438,8 +460,10 @@ export function QuestionDetail({
                 key={answer.id}
                 answer={answer}
                 isQuestionAuthor={isAuthor}
+                currentUserId={currentUserId}
                 onVote={handleAnswerVote}
                 onAccept={handleAccept}
+                onEdit={handleAnswerEdit}
               />
             ))}
           </div>

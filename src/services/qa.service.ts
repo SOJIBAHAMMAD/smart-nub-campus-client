@@ -182,6 +182,19 @@ export const qaService = {
     return response.data!;
   },
 
+  async updateAnswer(
+    questionId: string,
+    answerId: string,
+    data: { content: string },
+  ): Promise<Answer> {
+    const response = await serverApi.put<Answer>(
+      `/qa/${questionId}/answers/${answerId}`,
+      data,
+      { invalidatesTags: [...QA_MUTATION_TAGS] },
+    );
+    return response.data!;
+  },
+
   async acceptAnswer(
     questionId: string,
     answerId: string,

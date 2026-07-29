@@ -1,28 +1,57 @@
 "use client";
 
-import { CheckCircle } from "lucide-react";
+import { useState } from "react";
+import { CheckCircle, Pencil, Loader2, X, Save } from "lucide-react";
 import type { Answer } from "@/types/qa.types";
 import { Card, CardContent } from "@/components/ui/card";
 import { AuthorInfo } from "@/components/ui/author-info";
 import { VoteControls } from "@/components/ui/vote-controls";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { RichTextEditor, RichTextEditorContent, RichTextEditorToolbar } from "@/components/ui/rich-text-editor";
 import { cn } from "@/lib/utils";
 
 interface AnswerCardProps {
   answer: Answer;
   isQuestionAuthor: boolean;
+  currentUserId?: string | null;
   onVote: (answerId: string, type: "UP" | "DOWN") => void;
   onAccept: (answerId: string) => void;
+  onEdit: (answerId: string, content: string) => Promise<void>;
 }
 
 export function AnswerCard({
   answer,
   isQuestionAuthor,
+  currentUserId,
   onVote,
   onAccept,
+  onEdit,
 }: AnswerCardProps) {
   const userVote = (answer.userVote ?? null) as "UP" | "DOWN" | null;
+  const isAnswerAuthor = currentUserId != null && answer.authorId === currentUserId;
+
+  const [editing, setEditing] = useState(false);
+  const [editContent, setEditContent] = useState(answer.content);
+  const [saving, setSaving] = useState(false);
+
+  async function handleSave() {
+    const stripped = editContent.replace(/<[^>]*>?/gm, "").trim();
+    if (stripped.length < 1) return;
+
+    setSaving(true);
+    try {
+      await onEdit(answer.id, editContent);
+      setEditing(false);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function handleCancel() {
+    setEditContent(answer.content);
+    setEditing(false);
+  }
 
   return (
     <Card
@@ -55,43 +84,100 @@ export function AnswerCard({
             </Badge>
           )}
 
-          {/* Content */}
-          <div
-            className="prose prose-sm max-w-none dark:prose-invert"
-            dangerouslySetInnerHTML={{ __html: answer.content }}
-          />
+          {/* Content or edit form */}
+          {editing ? (
+            <div className="space-y-2">
+              <RichTextEditor
+                value={editContent}
+                onChange={setEditContent}
+                placeholder="Edit your answer..."
+              >
+                <RichTextEditorToolbar />
+                <RichTextEditorContent className="min-h-40" />
+              </RichTextEditor>
+              <div className="flex items-center justify-end gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleCancel}
+                  disabled={saving}
+                >
+                  <X className="size-4" />
+                  Cancel
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={handleSave}
+                  disabled={saving || editContent.replace(/<[^>]*>?/gm, "").trim().length < 1}
+                >
+                  {saving ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    <Save className="size-4" />
+                  )}
+                  Save
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div
+              className="prose prose-sm max-w-none dark:prose-invert"
+              dangerouslySetInnerHTML={{ __html: answer.content }}
+            />
+          )}
 
           {/* Footer */}
           <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/40 pt-3">
             {answer.author && (
-              <AuthorInfo
-                user={{
-                  id: answer.authorId,
-                  name: answer.author.name ?? "Unknown",
-                  image: answer.author.image,
-                }}
-                timestamp={answer.createdAt}
-                size="sm"
-              />
+              <div className="flex items-center gap-1.5">
+                <AuthorInfo
+                  user={{
+                    id: answer.authorId,
+                    name: answer.author.name ?? "Unknown",
+                    image: answer.author.image,
+                  }}
+                  timestamp={answer.createdAt}
+                  size="sm"
+                />
+                {answer.updatedAt !== answer.createdAt && (
+                  <span className="text-[11px] text-muted-foreground/60 italic">
+                    (edited)
+                  </span>
+                )}
+              </div>
             )}
 
-            {isQuestionAuthor && (
-              <Button
-                variant={answer.isAccepted ? "default" : "outline"}
-                size="sm"
-                onClick={() => onAccept(answer.id)}
-                disabled={answer.isAccepted}
-                className={cn(
-                  "gap-1",
-                  answer.isAccepted
-                    ? "cursor-default bg-success/10 text-success hover:bg-success/15"
-                    : "",
-                )}
-              >
-                <CheckCircle className="size-3.5" />
-                {answer.isAccepted ? "Accepted" : "Accept"}
-              </Button>
-            )}
+            <div className="flex items-center gap-2">
+              {isAnswerAuthor && !editing && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setEditing(true)}
+                  className="gap-1"
+                >
+                  <Pencil className="size-3.5" />
+                  Edit
+                </Button>
+              )}
+
+              {isQuestionAuthor && (
+                <Button
+                  variant={answer.isAccepted ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => onAccept(answer.id)}
+                  disabled={answer.isAccepted}
+                  className={cn(
+                    "gap-1",
+                    answer.isAccepted
+                      ? "cursor-default bg-success/10 text-success hover:bg-success/15"
+                      : "",
+                  )}
+                >
+                  <CheckCircle className="size-3.5" />
+                  {answer.isAccepted ? "Accepted" : "Accept"}
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </CardContent>

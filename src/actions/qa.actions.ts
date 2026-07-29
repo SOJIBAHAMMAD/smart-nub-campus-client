@@ -155,6 +155,22 @@ export async function voteAnswer(
   }
 }
 
+/** Update an answer (answer author only). */
+export async function updateAnswer(
+  questionId: string,
+  answerId: string,
+  content: string,
+): Promise<ApiResponse> {
+  try {
+    const result = await qaService.updateAnswer(questionId, answerId, { content });
+    return { success: true, message: "Answer updated.", data: result };
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to update answer.";
+    return { success: false, message };
+  }
+}
+
 /** Accept an answer (question author only). */
 export async function acceptAnswer(
   questionId: string,
