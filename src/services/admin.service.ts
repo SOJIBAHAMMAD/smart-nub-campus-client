@@ -1,6 +1,11 @@
 import { apiClient } from "@/lib/api-client";
 import type {
   AdminDashboardStats,
+  AdminDiscussion,
+  ListAdminDiscussionsParams,
+  ListAdminDiscussionsResponse,
+  AdminDiscussionSort,
+  AdminDiscussionStatus,
   AdminDashboardCharts,
   ListAdminUsersParams,
   ListAdminUsersResponse,
@@ -397,6 +402,66 @@ export const adminService = {
 
   async deleteQuestionCategory(id: string): Promise<void> {
     await apiClient.del(`/admin/question-categories/${id}`);
+  },
+
+  // ── Discussion Management ───────────────────────────────────────────────
+
+  async listDiscussions(
+    params: ListAdminDiscussionsParams,
+  ): Promise<ListAdminDiscussionsResponse> {
+    const searchParams = new URLSearchParams();
+    searchParams.set("page", String(params.page));
+    searchParams.set("limit", String(params.limit));
+    if (params.search) searchParams.set("search", params.search);
+    if (params.categoryId) searchParams.set("categoryId", params.categoryId);
+    if (params.status && params.status !== "all")
+      searchParams.set("status", params.status);
+    if (params.sort) searchParams.set("sort", params.sort);
+
+    const response = await apiClient.get<{
+      success: boolean;
+      message: string;
+      data: ListAdminDiscussionsResponse;
+    }>(`/admin/discussions?${searchParams.toString()}`);
+    return response.data!.data;
+  },
+
+  async deleteDiscussion(id: string): Promise<void> {
+    await apiClient.del(`/admin/discussions/${id}`);
+  },
+
+  async togglePin(id: string): Promise<{ isPinned: boolean }> {
+    const response = await apiClient.put<{
+      success: boolean;
+      message: string;
+      data: { isPinned: boolean };
+    }>(`/admin/discussions/${id}/pin`, {});
+    return response.data!.data;
+  },
+
+  async toggleLock(id: string): Promise<{ isLocked: boolean }> {
+    const response = await apiClient.put<{
+      success: boolean;
+      message: string;
+      data: { isLocked: boolean };
+    }>(`/admin/discussions/${id}/lock`, {});
+    return response.data!.data;
+  },
+
+  async bulkDeleteDiscussions(ids: string[]): Promise<void> {
+    await Promise.all(ids.map((id) => this.deleteDiscussion(id)));
+  },
+
+  async bulkTogglePin(ids: string[], isPinned: boolean): Promise<void> {
+    await Promise.all(
+      ids.map((id) => (isPinned ? this.togglePin(id) : this.togglePin(id))),
+    );
+  },
+
+  async bulkToggleLock(ids: string[], isLocked: boolean): Promise<void> {
+    await Promise.all(
+      ids.map((id) => (isLocked ? this.toggleLock(id) : this.toggleLock(id))),
+    );
   },
 
   // ── Event Management ────────────────────────────────────────────────────

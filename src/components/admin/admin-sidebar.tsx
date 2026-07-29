@@ -13,6 +13,7 @@ import {
   Settings,
   ArrowLeft,
   X,
+  MessageSquare,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -30,6 +31,7 @@ const sidebarNavItems: SidebarNavItem[] = [
   { label: "Verification Requests", href: "/admin/verifications", icon: ShieldCheck },
   { label: "Users", href: "/admin/users", icon: Users },
   { label: "Resources", href: "/admin/resources", icon: BookOpen },
+  { label: "Discussions", href: "/admin/discussions", icon: MessageSquare },
   { label: "Courses & Categories", href: "/admin/courses", icon: GraduationCap },
   { label: "Events", href: "/admin/events", icon: Calendar },
   { label: "Settings", href: "/admin/settings", icon: Settings },

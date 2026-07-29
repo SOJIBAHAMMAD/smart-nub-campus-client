@@ -331,6 +331,51 @@ export interface ListAdminCategoriesResponse<T> {
   };
 }
 
+// ── Discussion Management ───────────────────────────────────────────────────
+
+export interface AdminDiscussion {
+  id: string;
+  title: string;
+  content: string;
+  authorId: string;
+  author: { id: string; name: string; email: string; image?: string | null };
+  category: { id: string; name: string; slug: string } | null;
+  course: { id: string; code: string; name: string } | null;
+  replyCount: number;
+  viewCount: number;
+  upvoteCount: number;
+  visibility: string;
+  isPinned: boolean;
+  isLocked: boolean;
+  isSolved: boolean;
+  isDeleted: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type AdminDiscussionSort = "newest" | "oldest" | "popular" | "replies";
+
+export type AdminDiscussionStatus = "all" | "pinned" | "locked" | "solved";
+
+export interface ListAdminDiscussionsParams {
+  page: number;
+  limit: number;
+  search?: string;
+  categoryId?: string;
+  status?: AdminDiscussionStatus;
+  sort?: AdminDiscussionSort;
+}
+
+export interface ListAdminDiscussionsResponse {
+  data: AdminDiscussion[];
+  meta: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
 // ── Event Management ────────────────────────────────────────────────────────
 
 export interface AdminEvent {
