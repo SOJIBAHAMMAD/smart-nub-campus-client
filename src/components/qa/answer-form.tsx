@@ -1,10 +1,15 @@
 "use client";
 
-import { useState } from "react";
-import { Send, Eye, Loader2 } from "lucide-react";
+import { useState, useCallback, useRef } from "react";
+import { Send, Loader2, Keyboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  RichTextEditor,
+  RichTextEditorContent,
+  RichTextEditorToolbar,
+} from "@/components/ui/rich-text-editor";
 
 interface AnswerFormProps {
   placeholder?: string;
@@ -12,57 +17,58 @@ interface AnswerFormProps {
   onCancel?: () => void;
 }
 
-/**
- * Form to post an answer to a question.
- * Supports a markdown preview toggle and submits the raw content.
- */
 export function AnswerForm({ placeholder, onSubmit, onCancel }: AnswerFormProps) {
   const [content, setContent] = useState("");
-  const [preview, setPreview] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const submittingRef = useRef(false);
 
   async function handleSubmit() {
-    if (!content.trim()) return;
+    const trimmed = content.replace(/<[^>]*>?/gm, "").trim();
+    if (!trimmed) return;
     setSubmitting(true);
+    submittingRef.current = true;
     try {
-      await onSubmit(content.trim());
+      await onSubmit(content);
       setContent("");
-      setPreview(false);
     } finally {
       setSubmitting(false);
+      submittingRef.current = false;
     }
   }
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "Enter" && content.replace(/<[^>]*>?/gm, "").trim() && !submittingRef.current) {
+        e.preventDefault();
+        void handleSubmit();
+      }
+    },
+    [content],
+  );
 
   return (
     <Card className="mt-4">
       <CardContent className="p-4">
         <div className="mb-2 flex items-center justify-between">
           <h3 className="text-sm font-semibold text-foreground">Your Answer</h3>
-          <button
-            type="button"
-            onClick={() => setPreview((v) => !v)}
-            className="flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted"
-          >
-            <Eye className="size-3.5" />
-            {preview ? "Edit" : "Preview"}
-          </button>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="hidden h-5 gap-1 rounded-full text-[10px] sm:flex">
+              <Keyboard className="size-2.5" />
+              Ctrl+Enter
+            </Badge>
+          </div>
         </div>
 
-        {preview ? (
-          <div className="min-h-24 rounded-md border bg-muted/30 p-3 text-sm text-foreground">
-            {content.trim() ? content : <span className="text-muted-foreground">Nothing to preview.</span>}
-          </div>
-        ) : (
-          <Textarea
+        <div onKeyDown={handleKeyDown}>
+          <RichTextEditor
             value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder={placeholder ?? "Write your answer..."}
-            rows={5}
-            maxLength={5000}
-            disabled={submitting}
-            className="w-full resize-none"
-          />
-        )}
+            onChange={setContent}
+            placeholder={placeholder ?? "Write your answer with rich formatting..."}
+          >
+            <RichTextEditorToolbar />
+            <RichTextEditorContent className="min-h-[150px]" />
+          </RichTextEditor>
+        </div>
 
         <div className="mt-3 flex items-center justify-end gap-2">
           {onCancel && (
@@ -70,7 +76,7 @@ export function AnswerForm({ placeholder, onSubmit, onCancel }: AnswerFormProps)
               Cancel
             </Button>
           )}
-          <Button size="sm" onClick={handleSubmit} disabled={submitting || !content.trim()}>
+          <Button size="sm" onClick={handleSubmit} disabled={submitting || !content.replace(/<[^>]*>?/gm, "").trim()}>
             {submitting ? (
               <Loader2 className="size-4 animate-spin" />
             ) : (

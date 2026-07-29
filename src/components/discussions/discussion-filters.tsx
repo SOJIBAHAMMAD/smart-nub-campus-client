@@ -10,6 +10,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
 import type { DiscussionCategory } from "@/types/discussion.types";
 import { cn } from "@/lib/utils";
 
@@ -32,8 +39,9 @@ interface DiscussionFiltersProps {
   onSortChange: (sort: SortOption) => void;
   categories: (DiscussionCategory & { _count: { discussions: number } })[];
   tags: { id: string; name: string; slug: string }[];
-  showMobileFilters: boolean;
-  onToggleMobileFilters: () => void;
+  mobileFiltersOpen: boolean;
+  onOpenMobileFilters: () => void;
+  onCloseMobileFilters: () => void;
 }
 
 export function DiscussionFilters({
@@ -47,8 +55,9 @@ export function DiscussionFilters({
   onSortChange,
   categories,
   tags,
-  showMobileFilters,
-  onToggleMobileFilters,
+  mobileFiltersOpen,
+  onOpenMobileFilters,
+  onCloseMobileFilters,
 }: DiscussionFiltersProps) {
   return (
     <div className="space-y-3">
@@ -92,7 +101,7 @@ export function DiscussionFilters({
             variant="outline"
             size="sm"
             className="lg:hidden"
-            onClick={onToggleMobileFilters}
+            onClick={onOpenMobileFilters}
           >
             <SlidersHorizontal className="size-4" />
             Filters
@@ -103,7 +112,7 @@ export function DiscussionFilters({
           variant="outline"
           size="sm"
           className="sm:hidden"
-          onClick={onToggleMobileFilters}
+          onClick={onOpenMobileFilters}
         >
           <SlidersHorizontal className="size-4" />
           Filters
@@ -127,23 +136,43 @@ export function DiscussionFilters({
         ))}
       </div>
 
-      {showMobileFilters && (
-        <div className="rounded-xl border bg-card p-4 sm:hidden">
-          <div className="space-y-3">
+      {/* ── Mobile filter sheet ──────────────────────────────────── */}
+      <Sheet open={mobileFiltersOpen} onOpenChange={(open) => { if (!open) onCloseMobileFilters(); }}>
+        <SheetContent side="bottom" showCloseButton>
+          <SheetHeader>
+            <SheetTitle>Filters</SheetTitle>
+            <SheetDescription>Refine your discussion list</SheetDescription>
+          </SheetHeader>
+          <div className="space-y-4 px-4 pb-6">
             <div>
               <label className="text-xs font-semibold text-muted-foreground">Category</label>
-              <select
-                value={categorySlug ?? ""}
-                onChange={(e) => onCategoryChange(e.target.value || null)}
-                className="mt-1 h-8 w-full rounded-md border bg-transparent px-2 text-xs outline-none ring-1 ring-foreground/10"
-              >
-                <option value="">All Categories</option>
+              <div className="mt-1 flex flex-wrap gap-1.5">
+                <button
+                  onClick={() => onCategoryChange(null)}
+                  className={cn(
+                    "rounded-full px-2.5 py-1 text-xs font-medium transition-colors",
+                    !categorySlug
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground hover:bg-muted/70",
+                  )}
+                >
+                  All
+                </button>
                 {categories.map((cat) => (
-                  <option key={cat.id} value={cat.slug}>
+                  <button
+                    key={cat.id}
+                    onClick={() => onCategoryChange(cat.slug === categorySlug ? null : cat.slug)}
+                    className={cn(
+                      "rounded-full px-2.5 py-1 text-xs font-medium transition-colors",
+                      categorySlug === cat.slug
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted text-muted-foreground hover:bg-muted/70",
+                    )}
+                  >
                     {cat.name}
-                  </option>
+                  </button>
                 ))}
-              </select>
+              </div>
             </div>
             <div>
               <label className="text-xs font-semibold text-muted-foreground">Tags</label>
@@ -175,8 +204,8 @@ export function DiscussionFilters({
               </div>
             </div>
           </div>
-        </div>
-      )}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

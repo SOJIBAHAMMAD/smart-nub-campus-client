@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import {
   ChevronLeft,
@@ -15,8 +15,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { TagPill } from "@/components/ui/tag-pill";
 import { VoteControls } from "@/components/ui/vote-controls";
 import { AuthorInfo } from "@/components/ui/author-info";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { VoteButtons, type VoteState } from "@/components/qa/vote-buttons";
 import { AnswerCard } from "@/components/qa/answer-card";
 import { AnswerForm } from "@/components/qa/answer-form";
 import {
@@ -26,9 +27,17 @@ import {
   voteAnswer,
   acceptAnswer,
   listAnswers,
+  listQuestions,
 } from "@/actions/qa.actions";
-import { formatRelativeTime } from "@/components/resources/file-type-utils";
-import type { Question, Answer } from "@/types/qa.types";
+import type { Question, Answer, QuestionListResponse } from "@/types/qa.types";
+import {
+  Empty,
+  EmptyHeader,
+  EmptyTitle,
+  EmptyDescription,
+  EmptyMedia,
+} from "@/components/ui/empty";
+import { categoryColor, categoryIcon } from "@/constants/card-constants";
 
 interface QuestionDetailProps {
   questionId: string;
@@ -36,27 +45,6 @@ interface QuestionDetailProps {
   currentUserId?: string | null;
 }
 
-const CATEGORY_COLORS: Record<string, string> = {
-  academics: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
-  programming: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-  projects: "bg-violet-500/10 text-violet-600 dark:text-violet-400",
-  career: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
-  events: "bg-pink-500/10 text-pink-600 dark:text-pink-400",
-  general: "bg-slate-500/10 text-slate-600 dark:text-slate-400",
-  internships: "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400",
-  research: "bg-rose-500/10 text-rose-600 dark:text-rose-400",
-};
-
-function categoryColor(slug?: string): string {
-  return (slug && CATEGORY_COLORS[slug]) || CATEGORY_COLORS.general;
-}
-
-/**
- * Full-width question detail view (no PageLayout).
- * Shows breadcrumb, vote column, header, rendered content, tags, actions
- * (bookmark / share), author card, view count, answers (accepted first),
- * and an answer form.
- */
 export function QuestionDetail({
   questionId,
   initialQuestion,
@@ -65,14 +53,31 @@ export function QuestionDetail({
   const [question, setQuestion] = useState<Question>(initialQuestion);
   const [answers, setAnswers] = useState<Answer[]>([]);
   const [loadingAnswers, setLoadingAnswers] = useState(true);
+  const [answerSort, setAnswerSort] = useState<"votes" | "newest" | "oldest">("votes");
+  const [relatedQuestions, setRelatedQuestions] = useState<Question[]>([]);
 
   const isAuthor = currentUserId != null && question.authorId === currentUserId;
   const bookmarked = question.isBookmarked ?? false;
-  const userVote = (question.userVote ?? null) as VoteState;
-  // Question authors cannot vote on their own question.
   const canVoteQuestion = !isAuthor;
+  const answerFormRef = useRef<HTMLDivElement>(null);
 
-  // Fetches answers for the question (initial load + rollback on error).
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA") return;
+      if (e.key === "a") {
+        e.preventDefault();
+        answerFormRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      } else if (e.key === "s") {
+        e.preventDefault();
+        navigator.clipboard.writeText(window.location.href);
+        toast.success("Link copied to clipboard");
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
+
   const loadAnswers = useCallback(async () => {
     try {
       const result = await listAnswers(questionId);
@@ -89,6 +94,20 @@ export function QuestionDetail({
   useEffect(() => {
     void loadAnswers();
   }, [loadAnswers]);
+
+  useEffect(() => {
+    const slug = initialQuestion.category?.slug;
+    if (slug) {
+      listQuestions({ category: slug, limit: 5 }).then(
+        (res) => {
+          if (res.success && res.data) {
+            const items = (res.data as QuestionListResponse).data.filter((q) => q.id !== questionId);
+            setRelatedQuestions(items);
+          }
+        },
+      );
+    }
+  }, [initialQuestion.category?.slug, questionId]);
 
   const handleQuestionVote = useCallback(
     async (type: "UP" | "DOWN") => {
@@ -132,22 +151,22 @@ export function QuestionDetail({
   }, [questionId]);
 
   const handleAnswerVote = useCallback(
-    async (answerId: string, currentVote: VoteState) => {
+    async (answerId: string, type: "UP" | "DOWN") => {
       setAnswers((prev) =>
         prev.map((a) => {
           if (a.id !== answerId) return a;
-          const wasUp = currentVote === "UP";
-          if (currentVote === null) {
-            return { ...a, userVote: "UP", upvoteCount: a.upvoteCount + 1 };
+          const wasUp = a.userVote === "UP";
+          const wasDown = a.userVote === "DOWN";
+          if (type === "UP") {
+            const delta = wasUp ? -1 : wasDown ? 2 : 1;
+            return { ...a, userVote: wasUp ? null : "UP", upvoteCount: a.upvoteCount + delta };
           }
-          if (wasUp) {
-            return { ...a, userVote: null, upvoteCount: a.upvoteCount - 1 };
-          }
-          return { ...a, userVote: "UP", upvoteCount: a.upvoteCount + 2 };
+          const delta = wasDown ? 1 : wasUp ? -2 : -1;
+          return { ...a, userVote: wasDown ? null : "DOWN", upvoteCount: a.upvoteCount + delta };
         }),
       );
       try {
-        const result = await voteAnswer(answerId, "UP");
+        const result = await voteAnswer(answerId, type);
         if (result.success && result.data) {
           const data = result.data as { upvoteCount: number };
           setAnswers((prev) =>
@@ -202,12 +221,31 @@ export function QuestionDetail({
     [questionId],
   );
 
+  const handleShare = useCallback(async () => {
+    const url = window.location.href;
+    if (typeof navigator !== "undefined" && navigator.share) {
+      await navigator.share({ title: question.title, url });
+    } else if (typeof navigator !== "undefined") {
+      await navigator.clipboard?.writeText(url);
+      toast.success("Link copied to clipboard!");
+    }
+  }, [question.title]);
+
   const tags = question.questionTags ?? [];
+  const sortedAnswers = [...answers].sort((a, b) => {
+    if (a.isAccepted && !b.isAccepted) return -1;
+    if (!a.isAccepted && b.isAccepted) return 1;
+    if (answerSort === "newest")
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    if (answerSort === "oldest")
+      return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+    return b.upvoteCount - a.upvoteCount;
+  });
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 px-4 py-6 sm:px-6">
       {/* ── Breadcrumb ──────────────────────────────────────────── */}
-      <nav className="flex items-center gap-1 text-sm text-muted-foreground">
+      <nav className="flex items-center gap-1.5 text-sm text-muted-foreground">
         <Link href="/qa" className="transition-colors hover:text-primary">
           Q&A
         </Link>
@@ -215,14 +253,14 @@ export function QuestionDetail({
         <span className="truncate text-foreground">{question.title}</span>
       </nav>
 
-      {/* ── Header + vote column ──────────────────────────────── */}
+      {/* ── Question ────────────────────────────────────────────── */}
       <div className="flex gap-4">
         {/* Sticky vote column */}
         <div className="hidden shrink-0 flex-col items-center gap-1 pt-1 sm:flex">
-          <VoteButtons
-            voteCount={question.upvoteCount}
-            userVote={userVote}
-             onVote={() => handleQuestionVote("UP")}
+          <VoteControls
+            upvotes={question.upvoteCount}
+            activeVote={(question.userVote ?? null) as "UP" | "DOWN" | null}
+            onVote={handleQuestionVote}
             orientation="vertical"
             disabled={!canVoteQuestion}
           />
@@ -232,48 +270,60 @@ export function QuestionDetail({
         </div>
 
         <div className="min-w-0 flex-1">
-          <h1 className="text-xl font-bold text-foreground">{question.title}</h1>
+          <h1 className="text-xl font-bold text-foreground sm:text-2xl">{question.title}</h1>
 
           <div className="mt-2 flex flex-wrap items-center gap-2">
             {question.category && (
-              <span
+              <Badge
+                variant="secondary"
                 className={cn(
-                  "rounded-full px-2 py-0.5 text-[10px] font-semibold",
+                  "flex h-5 items-center gap-1 rounded-full px-2 text-[10px] font-semibold",
                   categoryColor(question.category.slug),
                 )}
               >
+                {(() => {
+                  const Icon = categoryIcon(question.category.slug);
+                  return <Icon className="size-3" />;
+                })()}
                 {question.category.name}
-              </span>
+              </Badge>
             )}
             {question.isAnswered && (
-              <span className="flex items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-[10px] font-semibold text-success">
-                <CheckCircle className="size-3" />
+              <Badge className="h-5 gap-0.5 rounded-full bg-success/10 px-2 text-[10px] font-semibold text-success hover:bg-success/15">
+                <CheckCircle className="size-2.5" />
                 Answered
-              </span>
+              </Badge>
             )}
+          </div>
+
+          {/* Meta */}
+          <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+            {question.author && (
+              <AuthorInfo
+                user={question.author}
+                timestamp={question.createdAt}
+                size="sm"
+              />
+            )}
+            <span className="flex items-center gap-1">
+              <Eye className="size-3.5" />
+              {question.viewCount} views
+            </span>
+            <span className="flex items-center gap-1">
+              <MessageCircle className="size-3.5" />
+              {question.answerCount} answers
+            </span>
           </div>
         </div>
       </div>
 
-      {/* ── Meta ──────────────────────────────────────────────── */}
-      <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-        <span>Asked {formatRelativeTime(question.createdAt)}</span>
-        <span className="flex items-center gap-1">
-          <Eye className="size-3.5" />
-          {question.viewCount} views
-        </span>
-        <span className="flex items-center gap-1">
-          <MessageCircle className="size-3.5" />
-          {question.answerCount} answers
-        </span>
-      </div>
-
       {/* ── Content ────────────────────────────────────────────── */}
       <Card>
-        <CardContent className="p-5">
-          <div className="prose prose-sm max-w-none dark:prose-invert">
-            {question.content}
-          </div>
+          <CardContent className="p-5">
+          <div
+            className="prose prose-sm max-w-none dark:prose-invert"
+            dangerouslySetInnerHTML={{ __html: question.content }}
+          />
 
           {/* Tags */}
           {tags.length > 0 && (
@@ -290,79 +340,86 @@ export function QuestionDetail({
           )}
 
           {/* Actions */}
-          <div className="mt-4 flex items-center gap-2 border-t border-border/50 pt-3">
-            <VoteControls
-              upvotes={question.upvoteCount}
-              activeVote={(question.userVote ?? null) as "UP" | "DOWN" | null}
-              onVote={handleQuestionVote}
-              orientation="horizontal"
-              disabled={!canVoteQuestion}
-            />
+          <div className="mt-4 flex items-center gap-2 border-t border-border/50 pt-4">
+            <div className="sm:hidden">
+              <VoteControls
+                upvotes={question.upvoteCount}
+                activeVote={(question.userVote ?? null) as "UP" | "DOWN" | null}
+                onVote={handleQuestionVote}
+                orientation="horizontal"
+                size="sm"
+                disabled={!canVoteQuestion}
+              />
+            </div>
 
-            <button
+            <Button
+              variant={bookmarked ? "default" : "outline"}
+              size="sm"
               onClick={handleBookmark}
-              className={cn(
-                "flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
-                bookmarked
-                  ? "bg-primary/10 text-primary"
-                  : "bg-muted text-muted-foreground hover:bg-muted/70",
-              )}
+              className="gap-1"
             >
               <Bookmark className={cn("size-4", bookmarked && "fill-current")} />
               {bookmarked ? "Bookmarked" : "Bookmark"}
-            </button>
+            </Button>
 
-            <button
-              onClick={() => {
-                if (typeof navigator !== "undefined" && navigator.share) {
-                  navigator.share({ title: question.title, url: window.location.href });
-                } else if (typeof window !== "undefined") {
-                  navigator.clipboard?.writeText(window.location.href);
-                }
-              }}
-              className="flex items-center gap-1 rounded-lg bg-muted px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted/70"
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleShare}
+              className="gap-1"
             >
               <Share2 className="size-4" />
               Share
-            </button>
+            </Button>
           </div>
         </CardContent>
       </Card>
 
-      {/* ── Author card ────────────────────────────────────────── */}
-      {question.author && (
-        <AuthorInfo
-          user={{ id: question.authorId, name: question.author.name ?? "Unknown", image: question.author.image }}
-          timestamp={question.createdAt}
-          size="md"
-        />
-      )}
-
       {/* ── Answers ────────────────────────────────────────────── */}
       <div className="space-y-3">
-        <h2 className="text-lg font-semibold text-foreground">
-          {question.answerCount} Answer{question.answerCount === 1 ? "" : "s"}
-        </h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-foreground">
+            {question.answerCount} Answer{question.answerCount === 1 ? "" : "s"}
+          </h2>
+          <div className="flex items-center gap-1">
+            {(["votes", "newest", "oldest"] as const).map((opt) => (
+              <button
+                key={opt}
+                onClick={() => setAnswerSort(opt)}
+                className={cn(
+                  "rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
+                  answerSort === opt
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground hover:bg-muted",
+                )}
+              >
+                {opt === "votes" ? "Votes" : opt === "newest" ? "Newest" : "Oldest"}
+              </button>
+            ))}
+          </div>
+        </div>
 
         {loadingAnswers ? (
           <div className="space-y-2">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-24 animate-pulse rounded-lg border bg-card p-3 ring-1 ring-foreground/10" />
+              <div key={i} className="h-24 animate-pulse rounded-lg border bg-card p-3" />
             ))}
           </div>
         ) : answers.length === 0 ? (
-          <Card>
-            <CardContent className="p-8 text-center ring-1 ring-foreground/10">
-              <MessageCircle className="mx-auto size-8 text-muted-foreground/40" />
-              <p className="mt-2 text-sm font-medium text-foreground">No answers yet</p>
-              <p className="mt-1 text-xs text-muted-foreground">
+          <Empty>
+            <EmptyMedia variant="icon">
+              <MessageCircle className="size-6" />
+            </EmptyMedia>
+            <EmptyHeader>
+              <EmptyTitle>No answers yet</EmptyTitle>
+              <EmptyDescription>
                 Be the first to answer this question.
-              </p>
-            </CardContent>
-          </Card>
+              </EmptyDescription>
+            </EmptyHeader>
+          </Empty>
         ) : (
           <div className="space-y-3">
-            {answers.map((answer) => (
+            {sortedAnswers.map((answer) => (
               <AnswerCard
                 key={answer.id}
                 answer={answer}
@@ -376,10 +433,46 @@ export function QuestionDetail({
       </div>
 
       {/* ── Answer form ────────────────────────────────────────── */}
-      <AnswerForm
-        placeholder="Write your answer..."
-        onSubmit={handlePostAnswer}
-      />
+      <div ref={answerFormRef}>
+        <AnswerForm
+          placeholder="Write your answer..."
+          onSubmit={handlePostAnswer}
+        />
+      </div>
+
+      {/* ── Cross-link to Discussions ─────────────────────────── */}
+      <div className="rounded-xl border border-dashed bg-muted/30 p-4 text-center text-sm text-muted-foreground">
+        Want to explore different perspectives?{" "}
+        <Link
+          href={question.category?.slug ? `/discussions?category=${question.category.slug}` : "/discussions"}
+          className="font-medium text-primary underline-offset-4 hover:underline"
+        >
+          Start a discussion about this topic
+        </Link>
+        .
+      </div>
+
+      {/* ── Related questions ─────────────────────────────────── */}
+      {relatedQuestions.length > 0 && (
+        <div className="space-y-3">
+          <h3 className="text-sm font-semibold text-foreground">Related Questions</h3>
+          <div className="space-y-2">
+            {relatedQuestions.map((rq) => (
+              <Link
+                key={rq.id}
+                href={`/qa/${rq.id}`}
+                className="group flex items-center gap-3 rounded-lg border p-3 text-sm transition-colors hover:bg-muted/50"
+              >
+                {rq.isAnswered && <CheckCircle className="size-4 shrink-0 text-success" />}
+                <span className="flex-1 truncate group-hover:text-primary">{rq.title}</span>
+                <span className="shrink-0 text-xs text-muted-foreground">
+                  {rq.upvoteCount} vote{rq.upvoteCount !== 1 ? "s" : ""}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

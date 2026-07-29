@@ -435,23 +435,7 @@ export function TeamDetail({
         <CardContent className="p-5">
           <h3 className="text-sm font-semibold text-foreground">Description</h3>
           <div
-            className={cn(
-              "text-foreground text-sm leading-relaxed",
-              "[&>h1]:mt-6 [&>h1]:mb-3 [&>h1]:text-3xl [&>h1]:font-bold max-sm:[&>h1]:text-2xl",
-              "[&>h2]:mt-5 [&>h2]:mb-2 [&>h2]:text-2xl [&>h2]:font-semibold max-sm:[&>h2]:text-xl",
-              "[&>h3]:mt-4 [&>h3]:mb-2 [&>h3]:text-xl [&>h3]:font-semibold max-sm:[&>h3]:text-lg",
-              "[&>p]:my-3 [&>p]:text-base [&>p]:leading-7 [&>p:first-child]:mt-0 [&>p:last-child]:mb-0",
-              "[&>ul]:my-3 [&>ul]:ms-6 [&>ul]:list-disc",
-              "[&>ol]:my-3 [&>ol]:ms-6 [&>ol]:list-decimal",
-              "[&>li]:my-1 [&>li_p]:my-0",
-              "[&>code]:rounded [&>code]:bg-muted [&>code]:px-1.5 [&>code]:py-0.5 [&>code]:font-mono [&>code]:text-sm",
-              "[&>pre]:my-3 [&>pre]:overflow-x-auto [&>pre]:rounded-lg [&>pre]:border [&>pre]:border-border [&>pre]:bg-muted [&>pre]:p-4 max-sm:[&>pre]:text-xs",
-              "[&>pre>code]:bg-transparent [&>pre>code]:p-0 [&>pre>code]:text-sm [&>pre>code]:leading-relaxed",
-              "[&>blockquote]:my-3 [&>blockquote]:border-s-4 [&>blockquote]:border-primary [&>blockquote]:ps-4 [&>blockquote]:italic [&>blockquote]:text-muted-foreground",
-              "[&>hr]:my-6 [&>hr]:border-t [&>hr]:border-border",
-              "[&>mark]:rounded-sm [&>mark]:bg-warm/40 [&>mark]:px-0.5 [&>mark]:text-warm-foreground",
-              "[&_a]:text-primary [&>_a]:underline [&>_a]:underline-offset-2 [&>_a]:hover:text-primary/80",
-            )}
+            className="prose prose-sm max-w-none dark:prose-invert [&>pre]:border [&>pre]:border-border [&>mark]:rounded-sm [&>mark]:bg-warm/40 [&>mark]:px-0.5 [&>mark]:text-warm-foreground max-sm:[&>pre]:text-xs"
             dangerouslySetInnerHTML={{ __html: team.description }}
           />
         </CardContent>

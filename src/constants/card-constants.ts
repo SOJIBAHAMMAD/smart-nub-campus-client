@@ -1,3 +1,15 @@
+import {
+  GraduationCap,
+  Code,
+  FolderKanban,
+  Briefcase,
+  Calendar,
+  Globe,
+  Building,
+  FlaskConical,
+  type LucideIcon,
+} from "lucide-react";
+
 /**
  * Shared constants used across card components.
  * Eliminates duplication between Q&A, discussions, and other modules.
@@ -15,6 +27,21 @@ export const CATEGORY_COLORS: Record<string, string> = {
   research: "bg-rose-500/10 text-rose-600 dark:text-rose-400",
 };
 
+export const CATEGORY_ICONS: Record<string, LucideIcon> = {
+  academics: GraduationCap,
+  programming: Code,
+  projects: FolderKanban,
+  career: Briefcase,
+  events: Calendar,
+  general: Globe,
+  internships: Building,
+  research: FlaskConical,
+};
+
 export function categoryColor(slug?: string): string {
   return (slug && CATEGORY_COLORS[slug]) || CATEGORY_COLORS.general;
+}
+
+export function categoryIcon(slug?: string): LucideIcon {
+  return (slug && CATEGORY_ICONS[slug]) || CATEGORY_ICONS.general;
 }

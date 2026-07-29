@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { TrendingUp, Tag, HelpCircle, CheckCircle } from "lucide-react";
+import { TrendingUp, Tag, HelpCircle } from "lucide-react";
 import type { Question } from "@/types/qa.types";
 import { Card, CardContent } from "@/components/ui/card";
 import { TagPill } from "@/components/ui/tag-pill";
+import { Button } from "@/components/ui/button";
 
 export interface TopContributor {
   rank: number;
@@ -17,18 +18,11 @@ export interface TopContributor {
 interface QATrendingProps {
   trendingQuestions: Question[];
   popularTags: { id: string; name: string; slug: string }[];
-  contributors: TopContributor[];
 }
 
-/**
- * Right sidebar for the Q&A page.
- * Shows an Ask-a-Question call-to-action, top questions of the week,
- * popular tag chips, and a "How It Works" explainer.
- */
 export function QATrending({
   trendingQuestions,
   popularTags,
-  contributors,
 }: QATrendingProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -53,21 +47,23 @@ export function QATrending({
     <div className="space-y-6">
       {/* ── Ask a Question CTA ───────────────────────────────── */}
       <Card>
-        <CardContent className="p-4 ring-1 ring-foreground/10">
+        <CardContent className="p-4">
           <h3 className="text-sm font-semibold text-foreground">Ask a Question</h3>
           <p className="mt-1 text-xs text-muted-foreground">
             Have a question? Get help from the NUB community.
           </p>
-          <Link
-            href="/qa/ask"
-            className="mt-3 flex w-full items-center justify-center gap-1 rounded-xl bg-brand px-3 py-1.5 text-xs font-medium text-white transition-all hover:bg-brand/90"
+          <Button
+            className="mt-3 w-full gap-1"
+            size="sm"
+            nativeButton={false}
+            render={<Link href="/qa/ask" />}
           >
             Ask Question
-          </Link>
+          </Button>
         </CardContent>
       </Card>
 
-      {/* ── Top Questions (this week) ─────────────────────────── */}
+      {/* ── Top Questions ─────────────────────────────────────── */}
       <div>
         <div className="mb-3 flex items-center gap-2">
           <TrendingUp className="size-4 text-primary" />
@@ -79,7 +75,7 @@ export function QATrending({
               <Link
                 key={q.id}
                 href={`/qa/${q.id}`}
-                className="flex items-start gap-3 rounded-lg border bg-card p-2.5 ring-1 ring-foreground/10 transition-all hover:shadow-sm"
+                className="flex items-start gap-3 rounded-lg border bg-card p-2.5 transition-all hover:shadow-sm"
               >
                 <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
                   {idx + 1}
@@ -96,7 +92,7 @@ export function QATrending({
             ))}
           </div>
         ) : (
-          <p className="rounded-lg border bg-card p-3 text-center text-xs text-muted-foreground ring-1 ring-foreground/10">
+          <p className="rounded-lg border bg-card p-3 text-center text-xs text-muted-foreground">
             No questions yet.
           </p>
         )}
@@ -118,7 +114,6 @@ export function QATrending({
                   name={tag.name}
                   active={active}
                   onClick={() => toggleTag(tag.slug)}
-
                 />
               );
             })}
@@ -150,34 +145,6 @@ export function QATrending({
           ))}
         </ol>
       </div>
-
-      {/* ── Top Contributors (compact) ────────────────────────── */}
-      {contributors.length > 0 && (
-        <div>
-          <div className="mb-3 flex items-center gap-2">
-            <CheckCircle className="size-4 text-primary" />
-            <h3 className="text-sm font-semibold text-foreground">Top Contributors</h3>
-          </div>
-          <div className="space-y-1.5">
-            {contributors.slice(0, 3).map((entry) => (
-              <div
-                key={entry.rank}
-                className="flex items-center gap-2.5 rounded-lg bg-card p-2 ring-1 ring-foreground/10"
-              >
-                <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[10px] font-bold text-primary">
-                  {entry.rank}
-                </span>
-                <span className="truncate text-xs font-medium text-foreground">
-                  {entry.name ?? "Unknown"}
-                </span>
-                <span className="ml-auto text-[10px] text-muted-foreground">
-                  {entry.questionCount}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

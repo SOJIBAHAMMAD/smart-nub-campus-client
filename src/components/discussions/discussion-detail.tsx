@@ -61,13 +61,16 @@ import {
   toggleLock,
   acceptAnswer,
   reportReply,
+  listDiscussions,
 } from "@/actions/discussion.actions";
 import type {
   Discussion,
   DiscussionReply,
+  DiscussionListResponse,
 } from "@/types/discussion.types";
 import { useSocket, useSocketEvent } from "@/hooks/use-socket";
 import { env } from "@/env";
+import { categoryColor, categoryIcon } from "@/constants/card-constants";
 
 type ReplySort = "upvotes" | "newest" | "oldest";
 
@@ -76,21 +79,6 @@ interface DiscussionDetailProps {
   initialDiscussion: Discussion;
   currentUserId?: string | null;
   isAdmin?: boolean;
-}
-
-const CATEGORY_COLORS: Record<string, string> = {
-  academics: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
-  programming: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-  projects: "bg-violet-500/10 text-violet-600 dark:text-violet-400",
-  career: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
-  events: "bg-pink-500/10 text-pink-600 dark:text-pink-400",
-  general: "bg-slate-500/10 text-slate-600 dark:text-slate-400",
-  internships: "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400",
-  research: "bg-rose-500/10 text-rose-600 dark:text-rose-400",
-};
-
-function categoryColor(slug?: string): string {
-  return (slug && CATEGORY_COLORS[slug]) || CATEGORY_COLORS.general;
 }
 
 export function DiscussionDetail({
@@ -104,10 +92,12 @@ export function DiscussionDetail({
   const [loadingReplies, setLoadingReplies] = useState(true);
   const [replySort, setReplySort] = useState<ReplySort>("upvotes");
   const [editingDiscussion, setEditingDiscussion] = useState(false);
+  const [relatedDiscussions, setRelatedDiscussions] = useState<Discussion[]>([]);
   const hasJoinedRoom = useRef(false);
 
   const isAuthor = currentUserId != null && discussion.authorId === currentUserId;
   const bookmarked = discussion.isBookmarked ?? false;
+  const replyFormRef = useRef<HTMLDivElement>(null);
   const socketUrl = env.NEXT_PUBLIC_BACKEND_URL.replace(/\/+$/, "");
   const { socket } = useSocket({ url: socketUrl });
 
@@ -122,6 +112,23 @@ export function DiscussionDetail({
       }
     };
   }, [socket, discussionId]);
+
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA") return;
+      if (e.key === "a") {
+        e.preventDefault();
+        replyFormRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      } else if (e.key === "s") {
+        e.preventDefault();
+        navigator.clipboard.writeText(window.location.href);
+        toast.success("Link copied to clipboard");
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
 
   useSocketEvent(socket, "discussion:reply:new", (data) => {
     if (data.discussionId !== discussionId) return;
@@ -225,6 +232,20 @@ export function DiscussionDetail({
     void loadReplies();
   }, [loadReplies]);
 
+  useEffect(() => {
+    const slug = initialDiscussion.category?.slug;
+    if (slug) {
+      listDiscussions({ category: slug, limit: 5 }).then(
+        (res) => {
+          if (res.success && res.data) {
+            const items = (res.data as DiscussionListResponse).data.filter((d) => d.id !== discussionId);
+            setRelatedDiscussions(items);
+          }
+        },
+      );
+    }
+  }, [initialDiscussion.category?.slug, discussionId]);
+
   const sortedReplies = useCallback(() => {
     const copy = [...replies];
     const acceptedIdx = copy.findIndex((r) => r.isAccepted);
@@ -249,16 +270,33 @@ export function DiscussionDetail({
 
   const handleVote = useCallback(
     async (type: "UP" | "DOWN") => {
-      if (type !== "UP") return;
       const original = discussion;
       const wasUp = original.userVote === "UP";
-      setDiscussion((prev) => ({
-        ...prev,
-        userVote: wasUp ? null : "UP",
-        upvoteCount: prev.upvoteCount + (wasUp ? -1 : 1),
-      }));
+      const wasDown = original.userVote === "DOWN";
+      const sameVote = type === "UP" ? wasUp : wasDown;
+      if (sameVote) {
+        setDiscussion((prev) => ({
+          ...prev,
+          userVote: null,
+          upvoteCount: prev.upvoteCount + (type === "UP" ? -1 : 1),
+        }));
+      } else {
+        const delta =
+          type === "UP"
+            ? wasDown
+              ? 2
+              : 1
+            : wasUp
+              ? -2
+              : -1;
+        setDiscussion((prev) => ({
+          ...prev,
+          userVote: type,
+          upvoteCount: prev.upvoteCount + delta,
+        }));
+      }
       try {
-        const result = await voteDiscussion(discussionId, "UP");
+        const result = await voteDiscussion(discussionId, type);
         if (result.success && result.data) {
           const data = result.data as { upvoteCount: number };
           setDiscussion((prev) => ({ ...prev, upvoteCount: data.upvoteCount }));
@@ -298,33 +336,41 @@ export function DiscussionDetail({
   }, [discussionId, discussion]);
 
   const handleReplyVote = useCallback(
-    async (replyId: string, currentVote: DiscussionReply["userVote"]) => {
-      setReplies((prev) =>
-        prev.map((r) => {
-          if (r.id !== replyId) {
-            return {
-              ...r,
-              replies: (r.replies ?? []).map((c) =>
-                c.id === replyId
-                  ? {
-                      ...c,
-                      userVote: currentVote === "UP" ? null : "UP",
-                      upvoteCount: c.upvoteCount + (currentVote === "UP" ? -1 : 1),
-                    }
-                  : c,
-              ),
-            };
-          }
-          const wasUp = currentVote === "UP";
+    async (replyId: string, type: "UP" | "DOWN") => {
+      const updateVote = (reply: DiscussionReply) => {
+        const wasUp = reply.userVote === "UP";
+        const wasDown = reply.userVote === "DOWN";
+        const sameVote = type === "UP" ? wasUp : wasDown;
+        if (sameVote) {
           return {
-            ...r,
-            userVote: wasUp ? null : "UP",
-            upvoteCount: r.upvoteCount + (wasUp ? -1 : 1),
+            ...reply,
+            userVote: null as DiscussionReply["userVote"],
+            upvoteCount: reply.upvoteCount + (type === "UP" ? -1 : 1),
           };
-        }),
+        }
+        const delta =
+          type === "UP"
+            ? wasDown
+              ? 2
+              : 1
+            : wasUp
+              ? -2
+              : -1;
+        return {
+          ...reply,
+          userVote: type,
+          upvoteCount: reply.upvoteCount + delta,
+        };
+      };
+      setReplies((prev) =>
+        prev.map((r) =>
+          r.id === replyId
+            ? updateVote(r)
+            : { ...r, replies: (r.replies ?? []).map((c) => (c.id === replyId ? updateVote(c) : c)) },
+        ),
       );
       try {
-        const result = await voteReply(replyId, "UP");
+        const result = await voteReply(replyId, type);
         if (result.success && result.data) {
           const data = result.data as { upvoteCount: number };
           setReplies((prev) =>
@@ -340,39 +386,9 @@ export function DiscussionDetail({
             ),
           );
         } else {
-          setReplies((prev) =>
-            prev.map((r) => {
-              if (r.id !== replyId) {
-                return {
-                  ...r,
-                  replies: (r.replies ?? []).map((c) =>
-                    c.id === replyId
-                      ? { ...c, userVote: currentVote, upvoteCount: c.upvoteCount + (currentVote === "UP" ? -1 : 1) }
-                      : c,
-                  ),
-                };
-              }
-              return { ...r, userVote: currentVote, upvoteCount: r.upvoteCount + (currentVote === "UP" ? -1 : 1) };
-            }),
-          );
           toast.error(result.message || "Failed to record vote.");
         }
       } catch (err) {
-        setReplies((prev) =>
-          prev.map((r) => {
-            if (r.id !== replyId) {
-              return {
-                ...r,
-                replies: (r.replies ?? []).map((c) =>
-                  c.id === replyId
-                    ? { ...c, userVote: currentVote, upvoteCount: c.upvoteCount + (currentVote === "UP" ? -1 : 1) }
-                    : c,
-                ),
-              };
-            }
-            return { ...r, userVote: currentVote, upvoteCount: r.upvoteCount + (currentVote === "UP" ? -1 : 1) };
-          }),
-        );
         toast.error(err instanceof Error ? err.message : "Failed to record vote.");
       }
     },
@@ -494,8 +510,12 @@ export function DiscussionDetail({
           {discussion.category && (
             <Badge
               variant="secondary"
-              className={cn("h-5 px-2 text-[10px] font-semibold", categoryColor(discussion.category.slug))}
+              className={cn("flex h-5 items-center gap-1 px-2 text-[10px] font-semibold", categoryColor(discussion.category.slug))}
             >
+              {(() => {
+                const Icon = categoryIcon(discussion.category.slug);
+                return <Icon className="size-3" />;
+              })()}
               {discussion.category.name}
             </Badge>
           )}
@@ -715,7 +735,7 @@ export function DiscussionDetail({
           This discussion is locked. New replies are disabled.
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-3" ref={replyFormRef}>
           <Separator />
           <div>
             <h3 className="mb-3 text-sm font-medium text-foreground">Post a Reply</h3>
@@ -725,6 +745,38 @@ export function DiscussionDetail({
                 await handlePostReply(content);
               }}
             />
+          </div>
+        </div>
+      )}
+
+      {/* ── Cross-link to Q&A ──────────────────────────────────── */}
+      <div className="rounded-xl border border-dashed bg-muted/30 p-4 text-center text-sm text-muted-foreground">
+        Looking for a definitive answer?{" "}
+        <Link
+          href={discussion.category?.slug ? `/qa?category=${discussion.category.slug}` : "/qa"}
+          className="font-medium text-primary underline-offset-4 hover:underline"
+        >
+          Ask a question about this topic
+        </Link>
+        .
+      </div>
+
+      {/* ── Related discussions ────────────────────────────────── */}
+      {relatedDiscussions.length > 0 && (
+        <div className="space-y-3">
+          <h3 className="text-sm font-semibold text-foreground">Related Discussions</h3>
+          <div className="space-y-2">
+            {relatedDiscussions.map((rd) => (
+              <Link
+                key={rd.id}
+                href={`/discussions/${rd.id}`} className="group flex items-center gap-3 rounded-lg border p-3 text-sm transition-colors hover:bg-muted/50"
+              >
+                <span className="flex-1 truncate group-hover:text-primary">{rd.title}</span>
+                <span className="shrink-0 text-xs text-muted-foreground">
+                  {rd.upvoteCount} vote{rd.upvoteCount !== 1 ? "s" : ""}
+                </span>
+              </Link>
+            ))}
           </div>
         </div>
       )}

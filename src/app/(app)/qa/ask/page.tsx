@@ -21,16 +21,28 @@ export default async function AskQuestionPage() {
       resourceService.listCourses(),
     ]);
 
-    categories = (categoriesResult as unknown as (QuestionCategory & { _count: { questions: number } })[]) ?? [];
+    categories =
+      (categoriesResult as unknown as (QuestionCategory & {
+        _count: { questions: number };
+      })[]) ?? [];
     tags = (tagsResult as unknown as Tag[]) ?? [];
-    courses = (coursesResult as unknown as { id: string; code: string; name: string }[]) ?? [];
+    courses =
+      (coursesResult as unknown as {
+        id: string;
+        code: string;
+        name: string;
+      }[]) ?? [];
   } catch {
     // Form renders empty selects gracefully
   }
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6">
-      <QuestionCreateForm categories={categories} tags={tags} courses={courses} />
+    <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6">
+      <QuestionCreateForm
+        categories={categories}
+        tags={tags}
+        courses={courses}
+      />
     </div>
   );
 }

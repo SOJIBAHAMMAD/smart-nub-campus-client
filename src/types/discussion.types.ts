@@ -8,7 +8,9 @@ import type { UserReferenceWithEmail, CategoryBase } from "./common.types";
 
 // ── Shared references ────────────────────────────────────────────────────────
 
-export type DiscussionAuthor = UserReferenceWithEmail;
+export interface DiscussionAuthor extends UserReferenceWithEmail {
+  reputation?: number;
+}
 
 // ── Core models ──────────────────────────────────────────────────────────────
 

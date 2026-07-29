@@ -7,6 +7,7 @@ import type { QuestionCategory } from "@/types/qa.types";
 import type { TopContributor } from "@/components/qa/qa-trending";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
+import { Button } from "@/components/ui/button";
 
 export type QATab = "all" | "answered" | "unanswered" | "bookmarked";
 
@@ -50,13 +51,15 @@ export function QASidebar({
   return (
     <div className="space-y-6">
       {/* ── Ask button ─────────────────────────────────────────── */}
-      <Link
-        href="/qa/ask"
-        className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-brand px-10 py-2.5 text-sm font-medium text-white transition-all hover:bg-brand/90 active:translate-y-px"
+      <Button
+        variant="default"
+        className="w-full gap-1.5"
+        nativeButton={false}
+        render={<Link href="/qa/ask" />}
       >
         <Plus className="size-4" />
-        Ask
-      </Link>
+        Ask a Question
+      </Button>
 
       {/* ── Tabs ─────────────────────────────────────────────────── */}
       <nav className="space-y-1">

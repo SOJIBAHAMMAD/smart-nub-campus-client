@@ -30,7 +30,7 @@ interface ReplyCardProps {
   isSolved: boolean;
   solutionReplyId: string | null;
   currentUserId?: string | null;
-  onVote: (replyId: string, currentVote: DiscussionReply["userVote"]) => void;
+  onVote: (replyId: string, type: "UP" | "DOWN") => void;
   onReply: (parentId: string, content: string) => Promise<void>;
   onAccept: (replyId: string) => Promise<void>;
   onReport?: (replyId: string, reason: string, details?: string) => Promise<void>;
@@ -59,6 +59,7 @@ export function ReplyCard({
   const [saving, setSaving] = useState(false);
 
   const upvoted = reply.userVote === "UP";
+  const downvoted = reply.userVote === "DOWN";
   const nested = reply.replies ?? [];
   const [showAllNested, setShowAllNested] = useState(false);
   const INITIAL_VISIBLE = 2;
@@ -171,15 +172,37 @@ export function ReplyCard({
         {!editing && (
           <div className="mt-2 flex items-center gap-1.5 text-muted-foreground">
             <button
-              onClick={() => onVote(reply.id, reply.userVote)}
+              onClick={() => onVote(reply.id, "UP")}
               className={cn(
-                "flex items-center gap-0.5 rounded-md px-1.5 py-0.5 text-xs font-medium transition-colors",
-                upvoted ? "bg-primary/10 text-primary" : "hover:bg-muted",
+                "flex items-center rounded-md px-1 py-0.5 text-xs font-medium transition-colors",
+                upvoted
+                  ? "bg-primary/10 text-primary"
+                  : "text-muted-foreground hover:bg-muted hover:text-primary",
               )}
               aria-label="Upvote reply"
             >
               <ChevronUp className="size-3.5" />
+            </button>
+            <span
+              className={cn(
+                "min-w-3 text-center text-xs font-semibold tabular-nums",
+                upvoted && "text-primary",
+                downvoted && "text-destructive",
+              )}
+            >
               {reply.upvoteCount}
+            </span>
+            <button
+              onClick={() => onVote(reply.id, "DOWN")}
+              className={cn(
+                "flex items-center rounded-md px-1 py-0.5 text-xs font-medium transition-colors",
+                downvoted
+                  ? "bg-destructive/10 text-destructive"
+                  : "text-muted-foreground hover:bg-muted hover:text-destructive",
+              )}
+              aria-label="Downvote reply"
+            >
+              <ChevronDown className="size-3.5" />
             </button>
 
             <button

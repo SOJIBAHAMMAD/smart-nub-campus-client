@@ -19,3 +19,39 @@ export function buildQueryString(params: object): string {
   const qs = searchParams.toString();
   return qs ? `?${qs}` : "";
 }
+
+export type ActivityLevel = "hot" | "trending" | "new" | null;
+
+export function getActivityLevel(
+  createdAt: string,
+  viewCount: number,
+  upvoteCount: number,
+  replyCount: number,
+): ActivityLevel {
+  const now = Date.now();
+  const created = new Date(createdAt).getTime();
+  const hoursOld = (now - created) / (1000 * 60 * 60);
+
+  if (hoursOld < 24) return "new";
+  if (viewCount > 100 && hoursOld < 168) return "hot";
+  if ((upvoteCount + replyCount) > 10 && hoursOld < 336) return "trending";
+  return null;
+}
+
+export const ACTIVITY_BADGE: Record<
+  NonNullable<ActivityLevel>,
+  { label: string; className: string }
+> = {
+  new: {
+    label: "New",
+    className: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
+  },
+  hot: {
+    label: "Hot",
+    className: "bg-orange-500/10 text-orange-600 dark:text-orange-400",
+  },
+  trending: {
+    label: "Trending",
+    className: "bg-purple-500/10 text-purple-600 dark:text-purple-400",
+  },
+};

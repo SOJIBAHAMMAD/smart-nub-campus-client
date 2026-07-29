@@ -29,8 +29,9 @@ describe("QuestionCard", () => {
         onBookmark={vi.fn()}
       />,
     );
-    const link = screen.getByRole("link");
-    expect(link).toHaveAttribute("href", `/qa/${baseQuestion.id}`);
+    const links = screen.getAllByRole("link");
+    const titleLink = links.find((l) => l.getAttribute("href") === `/qa/${baseQuestion.id}`);
+    expect(titleLink).toBeInTheDocument();
   });
 
   it("renders VoteButtons with the upvote count", () => {
@@ -63,10 +64,10 @@ describe("QuestionCard", () => {
         onBookmark={vi.fn()}
       />,
     );
-    expect(screen.getByText(/3 answers/)).toBeInTheDocument();
+    expect(screen.getByText("3")).toBeInTheDocument();
   });
 
-  it("highlights answer count green when solved", () => {
+  it("shows Answered badge when solved", () => {
     const solved = { ...baseQuestion, isAnswered: true };
     render(
       <QuestionCard
@@ -75,7 +76,7 @@ describe("QuestionCard", () => {
         onBookmark={vi.fn()}
       />,
     );
-    expect(screen.getByText(/3 answers/)).toBeInTheDocument();
+    expect(screen.getByText("Answered")).toBeInTheDocument();
     expect(screen.getByLabelText("Bookmark")).toBeInTheDocument();
   });
 
@@ -87,7 +88,7 @@ describe("QuestionCard", () => {
         onBookmark={vi.fn()}
       />,
     );
-    expect(screen.getByText(/100 views/)).toBeInTheDocument();
+    expect(screen.getByText("100")).toBeInTheDocument();
   });
 
   it("shows author name", () => {
