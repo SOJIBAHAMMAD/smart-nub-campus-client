@@ -1,16 +1,4 @@
-import type { Metadata } from "next";
 import { Suspense } from "react";
-
-export const metadata: Metadata = {
-  title: "AI Assistant | Smart NUB Campus",
-  description:
-    "AI-powered study tools — PDF summarizer, quiz generator, flashcards and more for NUB students.",
-  openGraph: {
-    title: "AI Assistant | Smart NUB Campus",
-    description: "AI-powered study tools for NUB students.",
-    type: "website",
-  },
-};
 import { aiService } from "@/services/ai.service";
 import { PageLayout } from "@/components/layout/page-layout";
 import { PageLayoutSkeleton } from "@/components/skeletons/page-layout-skeleton";
@@ -19,28 +7,17 @@ import { AIRightPanel } from "@/components/ai/ai-right-panel";
 import { AIClient } from "@/components/ai/ai-client";
 import type { AIChatSession, AIMessage, AIStudyStats } from "@/types/ai.types";
 
-/**
- * AI Assistant page — Server Component.
- * Fetches the user's chat sessions, study stats, and the current session
- * (when linked via ?chat=) on the server, then renders the interactive
- * AIClient inside a PageLayout with AI sidebars.
- */
-export default async function AIPage({
-  searchParams,
+export default async function AIPageContent({
+  activeSessionId: explicitSessionId,
 }: {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+  activeSessionId?: string | null;
 }) {
-  const params = await searchParams;
-  const activeSessionId =
-    typeof params.chat === "string" ? params.chat : undefined;
+  const activeSessionId = explicitSessionId ?? null;
 
   let sessions: AIChatSession[] = [];
   let studyStats: AIStudyStats | null = null;
-  let activeSession: (AIChatSession & { aiMessages: AIMessage[] }) | null =
-    null;
-  // When the linked session can't be loaded (deleted / not found), don't
-  // seed a dead session id into the client — fall back to a fresh chat.
-  let resolvedActiveSessionId: string | null = activeSessionId ?? null;
+  let activeSession: (AIChatSession & { aiMessages: AIMessage[] }) | null = null;
+  let resolvedActiveSessionId: string | null = activeSessionId;
 
   try {
     const [sessionsResult, statsResult] = await Promise.all([
@@ -50,12 +27,8 @@ export default async function AIPage({
 
     sessions = (sessionsResult.sessions ?? []) as AIChatSession[];
     studyStats = statsResult ?? null;
-  } catch {
-    // Client component handles empty state gracefully
-  }
+  } catch {}
 
-  // Load the active session in its own try so a missing session doesn't
-  // wipe the rest of the page data.
   if (
     resolvedActiveSessionId &&
     sessions.some((s) => s.id === resolvedActiveSessionId)
@@ -71,7 +44,6 @@ export default async function AIPage({
     resolvedActiveSessionId = null;
   }
 
-  // Initial messages for the active session (if any)
   const initialMessages: AIMessage[] = activeSession?.aiMessages ?? [];
 
   return (
@@ -80,10 +52,12 @@ export default async function AIPage({
         leftSidebar={
           <AISidebar
             sessions={sessions}
-            activeSessionId={activeSessionId ?? null}
+            activeSessionId={resolvedActiveSessionId}
           />
         }
         rightSidebar={<AIRightPanel studyStats={studyStats} />}
+        leftSidebarTitle="AI Tools"
+        rightSidebarTitle="Prompts & Stats"
       >
         <AIClient
           initialSessions={sessions}

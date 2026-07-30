@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import {
   Plus, MessageSquare, Trash2, FileText, HelpCircle, Layers, Code,
 } from "lucide-react";
@@ -51,21 +51,18 @@ interface AISidebarProps {
 
 export function AISidebar({ sessions, activeSessionId }: AISidebarProps) {
   const router = useRouter();
-  const pathname = usePathname();
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const handleNewChat = () => {
-    router.push(pathname);
+    router.push("/ai");
   };
 
   const handleSelectSession = (id: string) => {
     if (!id) {
-      router.push(pathname);
+      router.push("/ai");
       return;
     }
-    const params = new URLSearchParams();
-    params.set("chat", id);
-    router.push(`${pathname}?${params.toString()}`);
+    router.push(`/ai/${id}`);
   };
 
   const handleDeleteSession = async (id: string) => {
@@ -75,7 +72,7 @@ export function AISidebar({ sessions, activeSessionId }: AISidebarProps) {
       await aiClientService.deleteSession(id);
       toast.success("Conversation deleted.");
       if (activeSessionId === id) {
-        router.push(pathname);
+        router.push("/ai");
       } else {
         router.refresh();
       }
@@ -92,7 +89,7 @@ export function AISidebar({ sessions, activeSessionId }: AISidebarProps) {
 
   return (
     <div className="space-y-6">
-      <Button onClick={handleNewChat} className="w-full gap-1.5">
+      <Button onClick={handleNewChat} className="w-full gap-1.5 rounded-xl">
         <Plus className="size-4" />
         New Chat
       </Button>
@@ -169,10 +166,10 @@ export function AISidebar({ sessions, activeSessionId }: AISidebarProps) {
               interactive
               size="sm"
               onClick={() => handleToolSelect(tool.prompt)}
-              className="gap-2 p-3 transition-all hover:-translate-y-0.5 hover:shadow-md"
+              className="group gap-2 p-3 transition-all hover:-translate-y-0.5 hover:border-brand/30 hover:shadow-md"
             >
               <CardContent className="flex flex-col items-start gap-1.5 p-0">
-                <span className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <span className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors group-hover:bg-primary/15">
                   <tool.icon className="size-4" />
                 </span>
                 <span className="text-xs font-semibold text-foreground">

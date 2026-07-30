@@ -89,15 +89,26 @@ export function tryRenderStructured(
 export function CodeBlockRenderer({
   children,
   className,
+  ...props
 }: ComponentProps<"code"> & { className?: string }) {
   const match = /language-(\w+)/.exec(className || "");
   const language = match ? match[1] : undefined;
-  const code = String(children).replace(/\n$/, "");
+  const rawCode = String(children);
+  const code = rawCode.replace(/^[\n]+|[\n]+$/g, "");
 
   const structured = detectAndRender(code, language);
   if (structured) {
     return structured;
   }
 
-  return null;
+  // Inline code (no newlines) vs. block code
+  if (!rawCode.includes("\n")) {
+    return (
+      <code className={className} {...props}>
+        {children}
+      </code>
+    );
+  }
+
+  return <CodeBlock code={code} language={language} />;
 }

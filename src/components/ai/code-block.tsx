@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Copy, Check, ChevronDown, ChevronRight } from "lucide-react";
+import { Copy, Check, ChevronDown, ChevronRight, Terminal } from "lucide-react";
 
 interface CodeBlockProps {
   code: string;
@@ -21,14 +21,16 @@ export function CodeBlock({ code, language, title }: CodeBlockProps) {
   };
 
   const lines = code.split("\n");
+  const displayLang = language || (title ? undefined : undefined);
 
   return (
-    <div className="my-3 overflow-hidden rounded-xl border bg-muted/50">
-      <div className="flex items-center justify-between border-b bg-muted/80 px-3 py-1.5">
-        <div className="flex items-center gap-2">
-          {language && (
-            <span className="rounded-md bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium uppercase text-primary">
-              {language}
+    <div className="not-prose my-3 overflow-hidden rounded-xl border bg-gradient-to-b from-muted/60 to-muted/30">
+      <div className="flex items-center justify-between border-b bg-muted/70 px-4 py-2">
+        <div className="flex items-center gap-2.5">
+          <Terminal className="size-3.5 text-muted-foreground/50" />
+          {displayLang && (
+            <span className="rounded-md bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary">
+              {displayLang}
             </span>
           )}
           {title && (
@@ -37,14 +39,14 @@ export function CodeBlock({ code, language, title }: CodeBlockProps) {
         </div>
         <button
           onClick={handleCopy}
-          className="flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
+          className="flex items-center gap-1.5 rounded-lg px-2 py-1 text-[11px] text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
         >
           {copied ? (
-            <Check className="size-3 text-primary" />
+            <Check className="size-3.5 text-primary" />
           ) : (
-            <Copy className="size-3" />
+            <Copy className="size-3.5" />
           )}
-          {copied ? "Copied" : "Copy"}
+          {copied ? "Copied!" : "Copy"}
         </button>
       </div>
       <div className="overflow-x-auto">
@@ -52,11 +54,11 @@ export function CodeBlock({ code, language, title }: CodeBlockProps) {
           <tbody>
             {lines.map((line, i) => (
               <tr key={i} className="group">
-                <td className="select-none px-3 text-right text-[11px] text-muted-foreground/40 group-hover:text-muted-foreground/60">
+                <td className="select-none px-3 text-right text-[11px] leading-6 tabular-nums text-muted-foreground/30 group-hover:text-muted-foreground/50">
                   {i + 1}
                 </td>
-                <td className="whitespace-pre px-3 py-0 text-foreground">
-                  {line || " "}
+                <td className="whitespace-pre px-4 py-0 font-mono text-[13px] leading-6 text-foreground/90">
+                  {line || <span className="select-none">&nbsp;</span>}
                 </td>
               </tr>
             ))}
@@ -71,25 +73,28 @@ export function CollapsibleCodeBlock({ code, language, title }: CodeBlockProps) 
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="my-3 overflow-hidden rounded-xl border bg-muted/50">
+    <div className="not-prose my-3 overflow-hidden rounded-xl border bg-gradient-to-b from-muted/60 to-muted/30">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex w-full items-center justify-between px-3 py-2 text-left text-sm text-muted-foreground transition-colors hover:bg-muted/80"
+        className="flex w-full items-center justify-between px-4 py-2.5 text-left text-sm text-muted-foreground transition-colors hover:bg-muted/50"
       >
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
           {isOpen ? (
-            <ChevronDown className="size-3.5" />
+            <ChevronDown className="size-4 text-muted-foreground/60" />
           ) : (
-            <ChevronRight className="size-3.5" />
+            <ChevronRight className="size-4 text-muted-foreground/60" />
           )}
+          <Terminal className="size-3.5 text-muted-foreground/50" />
           {language && (
-            <span className="rounded-md bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium uppercase text-primary">
+            <span className="rounded-md bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary">
               {language}
             </span>
           )}
-          <span>{title || "Code"}</span>
+          <span className="text-foreground/80">{title || "Code"}</span>
         </div>
-        <span className="text-[11px]">{code.split("\n").length} lines</span>
+        <span className="text-[11px] tabular-nums text-muted-foreground/60">
+          {code.split("\n").length} lines
+        </span>
       </button>
       {isOpen && (
         <div className="border-t">

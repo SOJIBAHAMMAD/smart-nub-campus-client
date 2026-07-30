@@ -66,17 +66,25 @@ export function parseCitations(text: string): CitationParseResult {
     mainText = text.replace(sourceSectionMatch[0], "").trim();
   }
 
-  mainText = mainText.replace(
-    /\[(\d+)\]/g,
-    (_, num) => {
-      const id = parseInt(num, 10);
-      if (!sourceDefs.has(id) && !sources.some((s) => s.id === id)) {
-        sources.push({ id });
-        sourceDefs.set(id, { id });
-      }
-      return `[📎 ${id}](#citation-${id})`;
-    },
-  );
+  // Only convert [N] to citation links when N has an actual source definition.
+  // Without a "Sources" section, all [N] patterns (e.g. Python list syntax [0])
+  // would incorrectly become citation links.
+  if (sourceDefs.size > 0) {
+    mainText = mainText.replace(
+      /\[(\d+)\]/g,
+      (_, num) => {
+        const id = parseInt(num, 10);
+        if (sourceDefs.has(id)) {
+          if (!sources.some((s) => s.id === id)) {
+            sources.push(sourceDefs.get(id)!);
+          }
+          return `[${id}](#citation-${id})`;
+        }
+        // No matching source definition — keep original text
+        return `[${num}]`;
+      },
+    );
+  }
 
   return { cleanedText: mainText, sources };
 }
