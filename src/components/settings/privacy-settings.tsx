@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { motion } from "motion/react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import {
@@ -10,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { updatePrivacySettingsAction } from "@/actions/settings.actions";
 import type {
@@ -46,9 +48,15 @@ const TOGGLE_FIELDS = [
   { key: "appearInRecommendations" as const, label: "Appear in Recommendations" },
 ];
 
-/**
- * Privacy settings: connection/messaging policies, online status, searchability.
- */
+const cardVariants = {
+  hidden: { opacity: 0, y: 12 },
+  visible: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    transition: { delay: i * 0.08, duration: 0.25, ease: "easeOut" as const },
+  }),
+};
+
 export function PrivacySettings({ settings }: PrivacySettingsProps) {
   const [localSettings, setLocalSettings] = useState(settings);
   const [saving, setSaving] = useState(false);
@@ -60,7 +68,6 @@ export function PrivacySettings({ settings }: PrivacySettingsProps) {
     if (value === null) return;
     setLocalSettings((prev) => ({ ...prev, [field]: value }));
     setSaving(true);
-
     try {
       const result = await updatePrivacySettingsAction({ [field]: value });
       if (result.success) {
@@ -78,7 +85,6 @@ export function PrivacySettings({ settings }: PrivacySettingsProps) {
   const handleToggle = async (field: keyof UserSettings) => {
     const newValue = !localSettings[field];
     setLocalSettings((prev) => ({ ...prev, [field]: newValue }));
-
     try {
       const result = await updatePrivacySettingsAction({ [field]: newValue });
       if (result.success) {
@@ -95,105 +101,110 @@ export function PrivacySettings({ settings }: PrivacySettingsProps) {
 
   return (
     <div className="space-y-6">
-      {/* Connection Request Policy */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Connection Requests</CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Control who can send you connection requests.
-          </p>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between gap-4">
-            <Label className="text-sm">Who can send requests</Label>
-            <Select
-              value={localSettings.connectionRequestPolicy}
-              onValueChange={(v) => handleSelectChange("connectionRequestPolicy", v)}
-              disabled={saving}
-            >
-              <SelectTrigger className="w-56">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {CONNECTION_POLICIES.map((opt) => (
-                  <SelectItem key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Messaging Policy */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Messaging</CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Control who can send you messages.
-          </p>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between gap-4">
-            <Label className="text-sm">Who can message me</Label>
-            <Select
-              value={localSettings.messagingPolicy}
-              onValueChange={(v) => handleSelectChange("messagingPolicy", v)}
-              disabled={saving}
-            >
-              <SelectTrigger className="w-56">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {MESSAGING_POLICIES.map((opt) => (
-                  <SelectItem key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Toggle Privacy Settings */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Visibility & Privacy</CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Control your online presence and discoverability.
-          </p>
-        </CardHeader>
-        <CardContent className="space-y-0">
-          {TOGGLE_FIELDS.map(({ key, label }) => (
-            <div
-              key={key}
-              className="flex items-center justify-between py-3 border-b last:border-0"
-            >
-              <Label className="text-sm">{label}</Label>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={localSettings[key] as boolean}
-                onClick={() => handleToggle(key)}
+      <motion.div
+        variants={cardVariants}
+        initial="hidden"
+        animate="visible"
+        custom={0}
+      >
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Connection Requests</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Control who can send you connection requests.
+            </p>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+              <Label className="text-sm">Who can send requests</Label>
+              <Select
+                value={localSettings.connectionRequestPolicy}
+                onValueChange={(v) => handleSelectChange("connectionRequestPolicy", v)}
                 disabled={saving}
-                className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 ${
-                  localSettings[key] ? "bg-primary" : "bg-input"
-                }`}
               >
-                <span
-                  className={`pointer-events-none block h-4 w-4 rounded-full bg-background shadow-lg ring-0 transition-transform ${
-                    localSettings[key]
-                      ? "translate-x-4"
-                      : "translate-x-0.5"
-                  }`}
-                />
-              </button>
+                <SelectTrigger className="w-full sm:w-56">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {CONNECTION_POLICIES.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-          ))}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      <motion.div
+        variants={cardVariants}
+        initial="hidden"
+        animate="visible"
+        custom={1}
+      >
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Messaging</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Control who can send you messages.
+            </p>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+              <Label className="text-sm">Who can message me</Label>
+              <Select
+                value={localSettings.messagingPolicy}
+                onValueChange={(v) => handleSelectChange("messagingPolicy", v)}
+                disabled={saving}
+              >
+                <SelectTrigger className="w-full sm:w-56">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {MESSAGING_POLICIES.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      <motion.div
+        variants={cardVariants}
+        initial="hidden"
+        animate="visible"
+        custom={2}
+      >
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Visibility & Privacy</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Control your online presence and discoverability.
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-0">
+            {TOGGLE_FIELDS.map(({ key, label }) => (
+              <div
+                key={key}
+                className="flex items-center justify-between py-3 border-b last:border-0"
+              >
+                <Label className="text-sm">{label}</Label>
+                <Switch
+                  checked={localSettings[key] as boolean}
+                  onCheckedChange={() => handleToggle(key)}
+                  disabled={saving}
+                />
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      </motion.div>
     </div>
   );
 }

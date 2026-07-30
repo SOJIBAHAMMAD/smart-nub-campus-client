@@ -1,6 +1,14 @@
 import type { Metadata } from "next";
 import { SettingsClient } from "@/components/settings/settings-client";
 import { Suspense } from "react";
+import {
+  getPrivacySettingsAction,
+  getNotificationSettingsAction,
+} from "@/actions/settings.actions";
+import type {
+  UserSettings,
+  UserNotificationSettings,
+} from "@/types";
 
 export const metadata: Metadata = {
   title: "Settings | Smart NUB Campus",
@@ -14,7 +22,7 @@ export const metadata: Metadata = {
 };
 
 /**
- * Settings page — Server Component.
+ * Settings page — Server Component with server-side data fetching.
  * Uses optional catch-all route to handle /settings, /settings/profile, etc.
  */
 export default async function SettingsPage({
@@ -25,7 +33,6 @@ export default async function SettingsPage({
   const { section: sectionParam } = await params;
   const section = sectionParam?.[0] ?? "profile";
 
-  // Validate section name
   const validSections = [
     "profile",
     "notifications",
@@ -36,13 +43,29 @@ export default async function SettingsPage({
   ];
   const activeSection = validSections.includes(section) ? section : "profile";
 
+  const [privacyRes, notifRes] = await Promise.all([
+    getPrivacySettingsAction(),
+    getNotificationSettingsAction(),
+  ]);
+
+  const initialSettings = privacyRes.success
+    ? (privacyRes.data as UserSettings | null)
+    : null;
+  const initialNotificationSettings = notifRes.success
+    ? (notifRes.data as UserNotificationSettings | null)
+    : null;
+
   return (
     <Suspense
       fallback={
         <div className="p-6 text-sm text-muted-foreground">Loading settings...</div>
       }
     >
-      <SettingsClient section={activeSection} />
+      <SettingsClient
+        initialSettings={initialSettings}
+        initialNotificationSettings={initialNotificationSettings}
+        section={activeSection}
+      />
     </Suspense>
   );
 }

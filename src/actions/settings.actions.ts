@@ -231,3 +231,14 @@ export async function cancelDeletionAction(): Promise<ApiResponse> {
     return { success: false, message };
   }
 }
+
+export async function getDeletionStatusAction(): Promise<ApiResponse> {
+  try {
+    const data = await settingsService.getDeletionStatus();
+    return { success: true, message: "Deletion status fetched.", data };
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to fetch deletion status.";
+    return { success: false, message };
+  }
+}

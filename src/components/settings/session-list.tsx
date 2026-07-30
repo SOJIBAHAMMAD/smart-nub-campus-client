@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { motion } from "motion/react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -23,26 +24,28 @@ interface SessionListProps {
   loading?: boolean;
 }
 
-/** Parse user agent to extract device/browser info. */
 function parseUserAgent(ua: string | null): { browser: string; device: string } {
   if (!ua) return { browser: "Unknown browser", device: "Unknown device" };
-
   let browser = "Unknown browser";
   if (ua.includes("Firefox")) browser = "Firefox";
   else if (ua.includes("Edg")) browser = "Edge";
   else if (ua.includes("Chrome")) browser = "Chrome";
   else if (ua.includes("Safari")) browser = "Safari";
-
   let device = "Desktop";
   if (ua.includes("Mobile") || ua.includes("Android")) device = "Mobile";
   else if (ua.includes("iPad") || ua.includes("Tablet")) device = "Tablet";
-
   return { browser, device };
 }
 
-/**
- * List of active sessions with terminate functionality.
- */
+const sessionVariants = {
+  hidden: { opacity: 0, x: -8 },
+  visible: (i: number) => ({
+    opacity: 1,
+    x: 0,
+    transition: { delay: i * 0.06, duration: 0.2, ease: "easeOut" as const },
+  }),
+};
+
 export function SessionList({
   sessions,
   currentSessionId,
@@ -68,23 +71,27 @@ export function SessionList({
   return (
     <div className="space-y-4">
       <div className="space-y-3">
-        {sessions.map((session) => {
+        {sessions.map((session, index) => {
           const { browser, device } = parseUserAgent(session.userAgent);
           const isCurrent = session.id === currentSessionId;
 
           return (
-            <div
+            <motion.div
               key={session.id}
-              className="flex items-center justify-between rounded-lg border p-3"
+              variants={sessionVariants}
+              initial="hidden"
+              animate="visible"
+              custom={index}
+              className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between rounded-lg border p-3"
             >
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 min-w-0">
                 {device === "Mobile" ? (
-                  <Smartphone className="h-5 w-5 text-muted-foreground" />
+                  <Smartphone className="h-5 w-5 text-muted-foreground shrink-0" />
                 ) : (
-                  <Monitor className="h-5 w-5 text-muted-foreground" />
+                  <Monitor className="h-5 w-5 text-muted-foreground shrink-0" />
                 )}
-                <div>
-                  <div className="flex items-center gap-2">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-sm font-medium">
                       {browser} on {device}
                     </span>
@@ -94,7 +101,7 @@ export function SessionList({
                       </Badge>
                     )}
                   </div>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-muted-foreground truncate">
                     {session.ipAddress ?? "Unknown IP"} &middot; Active{" "}
                     {formatDistanceToNow(new Date(session.updatedAt), {
                       addSuffix: true,
@@ -108,11 +115,12 @@ export function SessionList({
                   variant="ghost"
                   size="sm"
                   onClick={() => setConfirmTerminate(session.id)}
+                  className="self-end sm:self-auto"
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
               )}
-            </div>
+            </motion.div>
           );
         })}
       </div>
@@ -126,7 +134,6 @@ export function SessionList({
         </Button>
       )}
 
-      {/* Confirm terminate others dialog */}
       <Dialog
         open={confirmTerminateOthers}
         onOpenChange={setConfirmTerminateOthers}
@@ -159,7 +166,6 @@ export function SessionList({
         </DialogContent>
       </Dialog>
 
-      {/* Confirm terminate single session dialog */}
       <Dialog
         open={confirmTerminate !== null}
         onOpenChange={(open) => !open && setConfirmTerminate(null)}
