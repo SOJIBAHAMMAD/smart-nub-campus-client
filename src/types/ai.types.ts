@@ -20,6 +20,16 @@ export interface AIMessage {
   role: AIMessageRole;
   content: string;
   isHelpful?: boolean | null;
+  attachments?: AIAttachment[];
+  createdAt: string;
+}
+
+export interface AIAttachment {
+  id: string;
+  fileName: string;
+  fileUrl: string;
+  fileType: string;
+  fileSize: number | null;
   createdAt: string;
 }
 
@@ -44,6 +54,7 @@ export type AIMessageRole = "USER" | "ASSISTANT";
 export interface SendAIMessagePayload {
   sessionId?: string;
   content: string;
+  attachmentIds?: string[];
 }
 
 export interface SendAIMessageResponse {
@@ -60,3 +71,15 @@ export interface AISessionListResponse {
   sessions: AIChatSession[];
   meta: import("./resource.types").PaginationMeta;
 }
+
+// ── Streaming types ──────────────────────────────────────────────────────────
+
+export interface StreamChunk {
+  type: "text" | "reasoning" | "tool_start" | "tool_end" | "error" | "done";
+  content?: string;
+  toolName?: string;
+  toolArgs?: Record<string, unknown>;
+  toolResult?: unknown;
+}
+
+export type StreamChunkCallback = (chunk: StreamChunk) => void;

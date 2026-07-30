@@ -1,19 +1,18 @@
-/* TODO(AI-PAGE): Known issues to revisit — Phase 18 AI Assistant page. See commit/notes: 1) New-chat URL uses /ai?chat=<id> via createNewSession; confirm this matches desired route (some wanted /ai/<uuid> path segment). 2) Chat history title updates from server on first message — verify it shows promptly. 3) Verify send retry-on-not-found and clean URL across refresh/back-forward. 4) Re-check right sidebar (AI Tools removed per request). */
 "use client";
-
 
 import { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { Plus, Sparkles, FileText, HelpCircle, Layers, Code, Trash2, Settings } from "lucide-react";
+import {
+  Plus, MessageSquare, Trash2, FileText, HelpCircle, Layers, Code,
+} from "lucide-react";
 import type { AIChatSession } from "@/types/ai.types";
-import { ChatHistoryItem } from "@/components/ai/chat-history-item";
-import { ToolCard } from "@/components/ai/tool-card";
 import { aiClientService } from "@/services/ai.client.service";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { aiComposer } from "@/components/ai/ai-composer-store";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 
-/** Quick tools surfaced in the sidebar grid. */
 const QUICK_TOOLS = [
   {
     id: "pdf-summarizer",
@@ -50,23 +49,15 @@ interface AISidebarProps {
   activeSessionId: string | null;
 }
 
-/**
- * Left sidebar for the AI Assistant page.
- * Provides the New Chat action, conversation history (with delete),
- * a quick-tools grid, and settings shortcuts.
- */
 export function AISidebar({ sessions, activeSessionId }: AISidebarProps) {
   const router = useRouter();
   const pathname = usePathname();
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  // Start a brand new conversation by clearing the active chat param.
   const handleNewChat = () => {
-    router.push(`${pathname}`);
+    router.push(pathname);
   };
 
-  // Select an existing conversation (build the URL safely to avoid
-  // malformed/undefined query params).
   const handleSelectSession = (id: string) => {
     if (!id) {
       router.push(pathname);
@@ -77,7 +68,6 @@ export function AISidebar({ sessions, activeSessionId }: AISidebarProps) {
     router.push(`${pathname}?${params.toString()}`);
   };
 
-  // Delete a conversation from history.
   const handleDeleteSession = async (id: string) => {
     if (deletingId) return;
     setDeletingId(id);
@@ -85,7 +75,7 @@ export function AISidebar({ sessions, activeSessionId }: AISidebarProps) {
       await aiClientService.deleteSession(id);
       toast.success("Conversation deleted.");
       if (activeSessionId === id) {
-        router.push(`${pathname}`);
+        router.push(pathname);
       } else {
         router.refresh();
       }
@@ -96,110 +86,105 @@ export function AISidebar({ sessions, activeSessionId }: AISidebarProps) {
     }
   };
 
-  // Launch a quick tool by pre-filling the composer with a tool
-  // prompt prefix (does not navigate or pollute the URL).
   const handleToolSelect = (prompt: string) => {
     aiComposer.append(prompt.trim());
   };
 
   return (
     <div className="space-y-6">
-      {/* ── New Chat ──────────────────────────────────────────── */}
-      <button
-        onClick={handleNewChat}
-        className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-brand px-4 py-2.5 text-sm font-medium text-white transition-all hover:bg-brand/90 active:translate-y-px"
-      >
+      <Button onClick={handleNewChat} className="w-full gap-1.5">
         <Plus className="size-4" />
         New Chat
-      </button>
+      </Button>
 
-      {/* ── Chat History ──────────────────────────────────────── */}
       <div>
         <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           Chat History
         </h3>
         {sessions.length > 0 ? (
           <div className="space-y-1">
-            {sessions.map((session) => (
-              <ChatHistoryItem
-                key={session.id}
-                session={session}
-                isActive={session.id === activeSessionId}
-                disabled={deletingId === session.id}
-                onSelect={() => handleSelectSession(session.id)}
-                onDelete={() => handleDeleteSession(session.id)}
-              />
-            ))}
+            {sessions.map((session) => {
+              const title = session.title || "New Chat";
+              const created = new Date(session.createdAt);
+              const label = created.toLocaleDateString(undefined, {
+                month: "short",
+                day: "numeric",
+              });
+              const isActive = session.id === activeSessionId;
+              return (
+                <div
+                  key={session.id}
+                  className={cn(
+                    "group relative flex items-center gap-2 rounded-lg px-2.5 py-2 text-sm transition-colors",
+                    isActive
+                      ? "bg-primary/10 font-medium text-primary"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                    deletingId === session.id && "opacity-50 pointer-events-none",
+                  )}
+                >
+                  <button
+                    onClick={() => handleSelectSession(session.id)}
+                    disabled={deletingId === session.id}
+                    className="flex min-w-0 flex-1 items-center gap-2 text-left"
+                  >
+                    <MessageSquare className="size-4 shrink-0" />
+                    <span className="truncate">{title}</span>
+                  </button>
+                  <span className="shrink-0 text-[10px] tabular-nums text-muted-foreground">
+                    {label}
+                  </span>
+                  <button
+                    onClick={() => handleDeleteSession(session.id)}
+                    disabled={deletingId === session.id}
+                    aria-label="Delete conversation"
+                    className="shrink-0 rounded p-1 text-muted-foreground opacity-0 transition-opacity hover:bg-background hover:text-destructive group-hover:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring/50"
+                  >
+                    <Trash2 className="size-3.5" />
+                  </button>
+                </div>
+              );
+            })}
           </div>
         ) : (
-          <p className="text-xs text-muted-foreground">No conversations yet.</p>
+          <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed p-6 text-center">
+            <MessageSquare className="size-8 text-muted-foreground/40" />
+            <p className="text-xs text-muted-foreground">
+              No conversations yet.
+            </p>
+            <p className="text-[10px] text-muted-foreground/60">
+              Start a new chat to begin.
+            </p>
+          </div>
         )}
       </div>
 
-      {/* ── Quick Tools ──────────────────────────────────────── */}
       <div>
         <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           Quick Tools
         </h3>
         <div className="grid grid-cols-2 gap-2">
           {QUICK_TOOLS.map((tool) => (
-            <ToolCard
+            <Card
               key={tool.id}
-              name={tool.name}
-              description={tool.description}
-              icon={tool.icon}
+              interactive
+              size="sm"
               onClick={() => handleToolSelect(tool.prompt)}
-            />
+              className="gap-2 p-3 transition-all hover:-translate-y-0.5 hover:shadow-md"
+            >
+              <CardContent className="flex flex-col items-start gap-1.5 p-0">
+                <span className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <tool.icon className="size-4" />
+                </span>
+                <span className="text-xs font-semibold text-foreground">
+                  {tool.name}
+                </span>
+                <span className="text-[10px] leading-tight text-muted-foreground">
+                  {tool.description}
+                </span>
+              </CardContent>
+            </Card>
           ))}
         </div>
-      </div>
-
-      {/* ── Settings ─────────────────────────────────────────── */}
-      <div>
-        <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          Settings
-        </h3>
-        <div className="space-y-1">
-          <button
-            onClick={() => {
-              if (sessions.length === 0) return;
-              if (
-                window.confirm(
-                  "Clear all chat history? This cannot be undone.",
-                )
-              ) {
-                Promise.all(sessions.map((s) => aiClientService.deleteSession(s.id)))
-                  .then(() => {
-                    toast.success("Chat history cleared.");
-                    router.push(`${pathname}`);
-                  })
-                  .catch(() => toast.error("Failed to clear history."));
-              }
-            }}
-            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-          >
-            <Trash2 className="size-4" />
-            Clear History
-          </button>
-          <button
-            onClick={() =>
-              toast.info("Preferences coming soon.")
-            }
-            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-          >
-            <Settings className="size-4" />
-            Preferences
-          </button>
-        </div>
-      </div>
-
-      <div
-        className={cn(
-          "flex items-center gap-2 rounded-lg bg-primary/5 px-3 py-2 text-xs text-muted-foreground",
-        )}
-      >
-        <Sparkles className="size-4 text-primary" />
-        Mock AI mode — real LLM coming soon.
       </div>
     </div>
   );

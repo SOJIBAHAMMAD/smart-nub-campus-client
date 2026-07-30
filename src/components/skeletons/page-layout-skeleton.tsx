@@ -23,7 +23,10 @@ export function PageLayoutSkeleton({
   variant = "grid",
 }: PageLayoutSkeletonProps) {
   return (
-    <div className="mx-auto w-full max-w-360 px-4 py-6 sm:px-6" aria-hidden="true">
+    <div
+      className="mx-auto w-full max-w-360 px-4 py-6 sm:px-6"
+      aria-hidden="true"
+    >
       <div
         className={cn(
           "grid gap-6",
@@ -36,7 +39,7 @@ export function PageLayoutSkeleton({
         {/* Left sidebar skeleton */}
         {hasLeftSidebar && (
           <aside className="hidden lg:block">
-            <div className="sticky top-20 space-y-4">
+            <div className="sticky top-2 space-y-4">
               <Skeleton className="h-10 w-full rounded-lg" />
               {Array.from({ length: 4 }).map((_, i) => (
                 <Skeleton key={i} className="h-8 w-full rounded-md" />
@@ -97,10 +100,13 @@ export function PageLayoutSkeleton({
         {/* Right sidebar skeleton */}
         {hasRightSidebar && (
           <aside className="hidden lg:block">
-            <div className="sticky top-20 space-y-4">
+            <div className="sticky top-2 space-y-4">
               <Skeleton className="h-6 w-24" />
               {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="rounded-xl border p-3 ring-1 ring-foreground/10">
+                <div
+                  key={i}
+                  className="rounded-xl border p-3 ring-1 ring-foreground/10"
+                >
                   <div className="flex items-center gap-3">
                     <Skeleton className="size-8 rounded-full" />
                     <div className="flex-1 space-y-1">

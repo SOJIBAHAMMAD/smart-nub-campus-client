@@ -33,7 +33,7 @@ export function PageLayout({
             role="complementary"
             aria-label="Page sidebar"
           >
-            <div className="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto">
+            <div className="sticky top-2 max-h-[calc(100vh-6rem)] overflow-y-auto">
               {leftSidebar}
             </div>
           </aside>
@@ -47,7 +47,7 @@ export function PageLayout({
             role="complementary"
             aria-label="Page information"
           >
-            <div className="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto">
+            <div className="sticky top-2 max-h-[calc(100vh-6rem)] overflow-y-auto">
               {rightSidebar}
             </div>
           </aside>

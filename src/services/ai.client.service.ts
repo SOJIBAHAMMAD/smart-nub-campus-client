@@ -1,13 +1,16 @@
-/* TODO(AI-PAGE): Known issues to revisit — Phase 18 AI Assistant page. See commit/notes: 1) New-chat URL uses /ai?chat=<id> via createNewSession; confirm this matches desired route (some wanted /ai/<uuid> path segment). 2) Chat history title updates from server on first message — verify it shows promptly. 3) Verify send retry-on-not-found and clean URL across refresh/back-forward. 4) Re-check right sidebar (AI Tools removed per request). */
 import { apiClient } from "@/lib/api-client";
 import { env } from "@/env";
 import { buildQueryString } from "@/lib/utils";
+import { uploadService } from "@/services/upload.service";
 import type {
   AIChatSession,
   SendAIMessagePayload,
   SendAIMessageResponse,
   ListAISessionsParams,
   AISessionListResponse,
+  StreamChunk,
+  StreamChunkCallback,
+  AIAttachment,
 } from "@/types/ai.types";
 
 const API_URL = env.NEXT_PUBLIC_API_URL;
@@ -53,6 +56,64 @@ export const aiClientService = {
     return ((res.data as unknown) as { data: SendAIMessageResponse }).data;
   },
 
+  async sendMessageStream(
+    sessionId: string,
+    payload: SendAIMessagePayload,
+    onChunk: StreamChunkCallback,
+    signal?: AbortSignal,
+  ): Promise<void> {
+    const response = await fetch(
+      `${API_URL}/ai/sessions/${sessionId}/messages/stream`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(payload),
+        signal,
+      },
+    );
+
+    if (!response.ok) {
+      const text = await response.text().catch(() => "Unknown error");
+      throw new Error(
+        `Stream request failed (${response.status}): ${text}`,
+      );
+    }
+
+    const reader = response.body?.getReader();
+    if (!reader) throw new Error("No response body");
+
+    const decoder = new TextDecoder();
+    let buffer = "";
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop() ?? "";
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed.startsWith("data: ")) continue;
+
+        const data = trimmed.slice(6);
+        if (data === "[DONE]") {
+          onChunk({ type: "done" });
+          return;
+        }
+
+        try {
+          const chunk = JSON.parse(data) as StreamChunk;
+          onChunk(chunk);
+        } catch {
+          // skip malformed chunks
+        }
+      }
+    }
+  },
+
   async deleteSession(id: string): Promise<void> {
     await fetch(`${API_URL}/ai/sessions/${id}`, {
       method: "DELETE",
@@ -72,5 +133,20 @@ export const aiClientService = {
   async getStudyStats(): Promise<unknown> {
     const res = await apiClient.get<unknown>("/ai/stats");
     return (res.data as { data: unknown }).data;
+  },
+
+  async uploadAttachment(
+    sessionId: string,
+    file: File,
+  ): Promise<AIAttachment> {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const res = await apiClient.postForm<{ data: AIAttachment }>(
+      `/ai/sessions/${sessionId}/attachments`,
+      formData,
+    );
+
+    return res.data!.data;
   },
 };
