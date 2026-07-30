@@ -22,8 +22,8 @@ const TABS: {
 ];
 
 /**
- * Fixed bottom navigation bar for mobile viewports.
- * Shows the main connection tabs with icon + label + badge count.
+ * Fixed tab bar pinned below the header on mobile.
+ * Shows the connection sub-navigation tabs with icon + label + badge count.
  */
 export function MobileBottomNav({
   activeTab,
@@ -32,7 +32,7 @@ export function MobileBottomNav({
 }: MobileBottomNavProps) {
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-border/60 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/80 md:hidden"
+      className="fixed inset-x-0 top-14 z-30 border-b border-border/60 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/80 shadow-sm md:hidden"
       role="tablist"
       aria-label="Network tabs"
     >
