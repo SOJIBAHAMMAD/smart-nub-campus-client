@@ -10,6 +10,8 @@ export interface AdminDashboardStats {
   totalDiscussions: number;
   totalQuestions: number;
   totalEvents: number;
+  totalJobs: number;
+  totalAlumni: number;
   pendingVerifications: number;
 }
 
@@ -388,6 +390,8 @@ export interface AdminEvent {
   organizerId: string | null;
   status: "UPCOMING" | "ONGOING" | "COMPLETED" | "CANCELLED";
   isFeatured: boolean;
+  audience: "EVERYONE" | "STUDENTS_ONLY" | "ALUMNI_ONLY";
+  reunionBatchYear: number | null;
   createdAt: string;
   updatedAt: string;
   organizer: { id: string; name: string; email: string } | null;
@@ -413,4 +417,96 @@ export interface CreateEventInput {
   organizerId?: string;
   status?: "UPCOMING" | "ONGOING" | "COMPLETED" | "CANCELLED";
   isFeatured?: boolean;
+  audience?: "EVERYONE" | "STUDENTS_ONLY" | "ALUMNI_ONLY";
+  reunionBatchYear?: number | null;
+}
+
+// ── Job Post Management ──────────────────────────────────────────────────────
+
+export interface AdminJob {
+  id: string;
+  title: string;
+  company: string;
+  description: string | null;
+  employmentType: string;
+  location: string | null;
+  salaryRange: string | null;
+  applicationUrl: string | null;
+  deadline: string | null;
+  department: string | null;
+  status: "OPEN" | "FILLED" | "CLOSED";
+  isVerified: boolean;
+  postedById: string;
+  createdAt: string;
+  updatedAt: string;
+  postedBy: { id: string; name: string; email: string; image: string | null };
+  _count: { applications: number };
+}
+
+export interface ListAdminJobsParams {
+  page: number;
+  limit: number;
+  search?: string;
+  status?: "OPEN" | "FILLED" | "CLOSED";
+  isVerified?: boolean;
+}
+
+export interface ListAdminJobsResponse {
+  data: AdminJob[];
+  meta: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
+// ── Alumni Management ────────────────────────────────────────────────────────
+
+export interface AdminAlumni {
+  id: string;
+  name: string;
+  email: string;
+  image: string | null;
+  createdAt: string;
+  student: {
+    department: string | null;
+    admissionYear: number | null;
+    admissionSemester: string | null;
+    academicStatus: string;
+    graduationYear: number | null;
+    graduationSemester: string | null;
+    degreeTitle: string | null;
+    cgpa: number | null;
+    transitionConfirmedAt: string | null;
+  } | null;
+  profile: {
+    currentEmployer: string | null;
+    jobTitle: string | null;
+    industry: string | null;
+    location: string | null;
+    showInAlumniDirectory: boolean;
+    isMentor: boolean;
+    mentorshipTopics: string[];
+  } | null;
+}
+
+export interface ListAdminAlumniParams {
+  page: number;
+  limit: number;
+  q?: string;
+  department?: string;
+  graduationYear?: number;
+  industry?: string;
+  currentEmployer?: string;
+}
+
+export interface ListAdminAlumniResponse {
+  data: AdminAlumni[];
+  meta: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
 }

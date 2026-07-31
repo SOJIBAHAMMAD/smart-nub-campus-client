@@ -12,6 +12,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { EventCardFooterActions, EventMetaRows } from "./event-card";
 import { EventStatusBadge } from "./event-status-badge";
+import { EventAudienceBadge, EventReunionBadge } from "./event-audience-badge";
 
 interface FeaturedEventCardProps {
   event: Event;
@@ -50,6 +51,11 @@ export function FeaturedEventCard({
             Featured
           </Badge>
           <EventStatusBadge status={event.status} withDot />
+          {event.reunionBatchYear ? (
+            <EventReunionBadge batchYear={event.reunionBatchYear} />
+          ) : event.audience !== "EVERYONE" ? (
+            <EventAudienceBadge audience={event.audience} />
+          ) : null}
         </div>
 
         <CardTitle className="text-lg md:text-xl">{event.title}</CardTitle>

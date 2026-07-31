@@ -26,7 +26,9 @@ import {
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Plus, ChevronLeft, ChevronRight, Trash2, Calendar, Users } from "lucide-react";
+import { EventAudienceBadge, EventReunionBadge } from "@/components/events/event-audience-badge";
 import type { AdminEvent } from "@/types/admin.types";
+import type { EventAudience } from "@/types/event.types";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 
@@ -44,6 +46,8 @@ export default function EventsPage() {
     eventDate: "",
     location: "",
     status: "UPCOMING" as string,
+    audience: "EVERYONE" as EventAudience,
+    reunionBatchYear: "",
     isFeatured: false,
   });
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
@@ -77,11 +81,15 @@ export default function EventsPage() {
         eventDate: new Date(form.eventDate).toISOString(),
         location: form.location || undefined,
         status: form.status as "UPCOMING" | "ONGOING" | "COMPLETED" | "CANCELLED",
+        audience: form.audience,
+        reunionBatchYear: form.reunionBatchYear
+          ? Number(form.reunionBatchYear)
+          : null,
         isFeatured: form.isFeatured,
       });
       toast.success("Event created");
       setShowCreate(false);
-      setForm({ title: "", description: "", eventDate: "", location: "", status: "UPCOMING", isFeatured: false });
+      setForm({ title: "", description: "", eventDate: "", location: "", status: "UPCOMING", audience: "EVERYONE", reunionBatchYear: "", isFeatured: false });
       fetchEvents();
     } catch {
       toast.error("Failed to create event");
@@ -149,7 +157,7 @@ export default function EventsPage() {
                 <tr className="border-b bg-gray-50 dark:bg-gray-700/50 text-left text-sm text-muted-foreground">
                   <th className="px-4 py-3 font-medium">Title</th>
                   <th className="px-4 py-3 font-medium">Date</th>
-                  <th className="px-4 py-3 font-medium">Location</th>
+                  <th className="px-4 py-3 font-medium">Audience</th>
                   <th className="px-4 py-3 font-medium">Organizer</th>
                   <th className="px-4 py-3 font-medium">RSVPs</th>
                   <th className="px-4 py-3 font-medium">Status</th>
@@ -172,8 +180,13 @@ export default function EventsPage() {
                         {format(new Date(event.eventDate), "MMM d, yyyy")}
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-sm text-muted-foreground">
-                      {event.location ?? "—"}
+                    <td className="px-4 py-3">
+                      <div className="flex flex-col items-start gap-1">
+                        <EventAudienceBadge audience={event.audience} />
+                        {event.reunionBatchYear && (
+                          <EventReunionBadge batchYear={event.reunionBatchYear} />
+                        )}
+                      </div>
                     </td>
                     <td className="px-4 py-3 text-sm">
                       {event.organizer?.name ?? "—"}
@@ -302,15 +315,44 @@ export default function EventsPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="flex items-end pb-1">
-                <label className="flex items-center gap-2 text-sm">
-                  <Checkbox
-                    checked={form.isFeatured}
-                    onCheckedChange={(checked) => setForm({ ...form, isFeatured: checked === true })}
-                  />
-                  Featured event
-                </label>
+              <div className="space-y-2">
+                <Label>Audience</Label>
+                <Select
+                  value={form.audience}
+                  onValueChange={(val) => setForm({ ...form, audience: (val ?? "EVERYONE") as EventAudience })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="EVERYONE">Everyone</SelectItem>
+                    <SelectItem value="STUDENTS_ONLY">Students only</SelectItem>
+                    <SelectItem value="ALUMNI_ONLY">Alumni only</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
+            </div>
+            {form.audience === "ALUMNI_ONLY" && (
+              <div className="space-y-2">
+                <Label>Reunion batch year</Label>
+                <Input
+                  type="number"
+                  placeholder="e.g. 2020"
+                  min={1990}
+                  max={2100}
+                  value={form.reunionBatchYear}
+                  onChange={(e) => setForm({ ...form, reunionBatchYear: e.target.value })}
+                />
+              </div>
+            )}
+            <div className="flex items-end pb-1">
+              <label className="flex items-center gap-2 text-sm">
+                <Checkbox
+                  checked={form.isFeatured}
+                  onCheckedChange={(checked) => setForm({ ...form, isFeatured: checked === true })}
+                />
+                Featured event
+              </label>
             </div>
           </div>
           <DialogFooter>

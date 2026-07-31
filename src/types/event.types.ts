@@ -23,6 +23,8 @@ export interface Event {
   organizer?: EventOrganizer;
   status: EventStatus;
   isFeatured: boolean;
+  audience: EventAudience;
+  reunionBatchYear?: number | null;
   _count: { rsvps: number };
   isRsvpd: boolean;
   createdAt: string;
@@ -40,6 +42,8 @@ export interface EventRSVP {
 
 export type EventStatus = "UPCOMING" | "ONGOING" | "COMPLETED" | "CANCELLED";
 
+export type EventAudience = "EVERYONE" | "STUDENTS_ONLY" | "ALUMNI_ONLY";
+
 // ── API query / list types ───────────────────────────────────────────────────
 
 export interface ListEventsParams {
@@ -48,6 +52,7 @@ export interface ListEventsParams {
   status?: EventStatus;
   search?: string;
   upcoming?: boolean;
+  type?: "reunion";
 }
 
 export interface EventListResponse {
