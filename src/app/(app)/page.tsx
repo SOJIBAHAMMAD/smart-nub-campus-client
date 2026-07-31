@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { WelcomeStrip } from "@/components/home/welcome-strip";
+import { TransitionBanner } from "@/components/alumni/transition-banner";
 import { QuickActions } from "@/components/home/quick-actions";
 import { RecentActivity } from "@/components/home/recent-activity";
 import { ForYou } from "@/components/home/for-you";
@@ -214,6 +215,10 @@ export default function HomePage() {
       <div className="mx-auto grid max-w-screen-2xl gap-8 px-6 py-8 xl:px-8 lg:grid-cols-[1fr_340px]">
         {/* ── Left Column: Do ─────────────────────────────── */}
         <div className="space-y-10">
+          <Suspense fallback={null}>
+            <TransitionBanner />
+          </Suspense>
+
           <QuickActions />
 
           <Suspense fallback={<ActivitySkeleton />}>

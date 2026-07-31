@@ -9,6 +9,8 @@ interface AppLayoutProps {
   userImage?: string;
   /** Current user's ID for profile link. */
   userId?: string;
+  /** Current user's role (e.g. STUDENT, ALUMNI, ADMIN). */
+  userRole?: string;
 }
 
 /**
@@ -22,11 +24,17 @@ export function AppLayout({
   userName,
   userImage,
   userId,
+  userRole,
 }: AppLayoutProps) {
   return (
     <div className="flex h-full flex-col bg-gray-50 dark:bg-background">
       <SkipToContent />
-      <TopNav userName={userName} userImage={userImage} userId={userId} />
+      <TopNav
+        userName={userName}
+        userImage={userImage}
+        userId={userId}
+        userRole={userRole}
+      />
       <main
         id="main-content"
         tabIndex={-1}

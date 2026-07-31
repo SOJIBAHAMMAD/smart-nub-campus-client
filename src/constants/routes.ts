@@ -22,6 +22,15 @@ const ROUTES = {
   LEADERBOARD: "/leaderboard",
   BADGES: "/badges",
 
+  // ── Alumni ─────────────────────────────────────────────────────────────────
+  ALUMNI: "/alumni",
+  JOBS: "/jobs",
+  NEW_JOB: "/jobs/new",
+  MENTORSHIP: "/mentorship",
+  MENTORSHIP_REQUESTS: "/mentorship/requests",
+  ALUMNI_MEMBER: (id: string) => `/alumni/${id}`,
+  JOB: (id: string) => `/jobs/${id}`,
+
   // ── Info Pages ─────────────────────────────────────────────────────────────
   ABOUT: "/about",
   PRIVACY: "/privacy",

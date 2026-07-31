@@ -26,9 +26,54 @@ export type VerificationStatus =
 export const UserRole = {
   STUDENT: "STUDENT",
   ADMIN: "ADMIN",
+  ALUMNI: "ALUMNI",
 } as const;
 
 export type UserRole = (typeof UserRole)[keyof typeof UserRole];
+
+export const AcademicStatus = {
+  ENROLLED: "ENROLLED",
+  GRADUATED: "GRADUATED",
+} as const;
+
+export type AcademicStatus =
+  (typeof AcademicStatus)[keyof typeof AcademicStatus];
+
+export const VerificationRequestType = {
+  STUDENT: "STUDENT",
+  ALUMNI: "ALUMNI",
+} as const;
+
+export type VerificationRequestType =
+  (typeof VerificationRequestType)[keyof typeof VerificationRequestType];
+
+// ── Alumni feature enums ─────────────────────────────────────────────────────
+
+export const JobType = {
+  FULL_TIME: "FULL_TIME",
+  PART_TIME: "PART_TIME",
+  CONTRACT: "CONTRACT",
+  INTERNSHIP: "INTERNSHIP",
+  REMOTE: "REMOTE",
+} as const;
+
+export type JobType = (typeof JobType)[keyof typeof JobType];
+
+export const JobPostStatus = {
+  OPEN: "OPEN",
+  FILLED: "FILLED",
+  CLOSED: "CLOSED",
+} as const;
+
+export type JobPostStatus = (typeof JobPostStatus)[keyof typeof JobPostStatus];
+
+export const EventAudience = {
+  EVERYONE: "EVERYONE",
+  STUDENTS_ONLY: "STUDENTS_ONLY",
+  ALUMNI_ONLY: "ALUMNI_ONLY",
+} as const;
+
+export type EventAudience = (typeof EventAudience)[keyof typeof EventAudience];
 
 export const UserStatus = {
   ACTIVE: "ACTIVE",
@@ -187,6 +232,12 @@ export const NotificationType = {
   EVENT_REMINDER: "EVENT_REMINDER",
   BADGE_UNLOCKED: "BADGE_UNLOCKED",
   SYSTEM: "SYSTEM",
+  GRADUATION_MARKED: "GRADUATION_MARKED",
+  ALUMNI_TRANSITION_COMPLETE: "ALUMNI_TRANSITION_COMPLETE",
+  JOB_APPLICATION_RECEIVED: "JOB_APPLICATION_RECEIVED",
+  JOB_APPLICATION_UPDATED: "JOB_APPLICATION_UPDATED",
+  MENTORSHIP_REQUEST_RECEIVED: "MENTORSHIP_REQUEST_RECEIVED",
+  MENTORSHIP_REQUEST_UPDATED: "MENTORSHIP_REQUEST_UPDATED",
 } as const;
 
 export type NotificationType =

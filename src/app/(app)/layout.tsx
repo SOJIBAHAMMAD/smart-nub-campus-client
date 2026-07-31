@@ -55,6 +55,7 @@ export default async function AppGroupLayout({
   let userName: string | undefined;
   let userImage: string | undefined;
   let userId: string | undefined;
+  let userRole: string | undefined;
 
   try {
     const result = await serverApi.get<IdentityMeResponse>("/identity/me", {
@@ -63,12 +64,18 @@ export default async function AppGroupLayout({
     userName = result.data?.user?.name;
     userImage = result.data?.user?.image ?? undefined;
     userId = result.data?.user?.id;
+    userRole = result.data?.user?.role;
   } catch {
     // Proxy handles auth redirect; this is a safety fallback.
   }
 
   return (
-    <AppLayout userName={userName} userImage={userImage} userId={userId}>
+    <AppLayout
+      userName={userName}
+      userImage={userImage}
+      userId={userId}
+      userRole={userRole}
+    >
       {children}
     </AppLayout>
   );

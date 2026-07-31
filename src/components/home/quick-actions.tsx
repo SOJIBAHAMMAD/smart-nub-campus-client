@@ -66,6 +66,15 @@ const actions = [
     iconColor: "text-purple-500",
     borderHover: "hover:border-purple-500/30",
   },
+  {
+    title: "Browse Alumni",
+    description: "Find NUB alumni & their careers",
+    icon: GraduationCap,
+    href: ROUTES.ALUMNI,
+    gradient: "from-cyan-500/15 to-cyan-500/5",
+    iconColor: "text-cyan-500",
+    borderHover: "hover:border-cyan-500/30",
+  },
 ];
 
 export function QuickActions() {
