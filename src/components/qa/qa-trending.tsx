@@ -8,13 +8,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { TagPill } from "@/components/ui/tag-pill";
 import { Button } from "@/components/ui/button";
 
-export interface TopContributor {
-  rank: number;
-  name: string;
-  image?: string | null;
-  questionCount: number;
-}
-
 interface QATrendingProps {
   trendingQuestions: Question[];
   popularTags: { id: string; name: string; slug: string }[];

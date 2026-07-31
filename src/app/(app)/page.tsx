@@ -7,7 +7,10 @@ import { RecentActivity } from "@/components/home/recent-activity";
 import { ForYou } from "@/components/home/for-you";
 import { TrendingResources } from "@/components/home/trending-resources";
 import { UpcomingEvents } from "@/components/home/upcoming-events";
-import { TopContributors } from "@/components/home/top-contributors";
+import {
+  TopContributors,
+  TopContributorsSkeleton,
+} from "@/components/contributors/top-contributors";
 import { resourceService } from "@/services/resource.service";
 import { gamificationService } from "@/services/gamification.service";
 import { eventService } from "@/services/event.service";
@@ -132,7 +135,18 @@ async function ContributorsSection() {
       page: 1,
       limit: 4,
     });
-    return <TopContributors contributors={result.data ?? []} />;
+    return (
+      <TopContributors
+        contributors={(result.data ?? []).map((c) => ({
+          rank: c.rank,
+          name: c.user?.name ?? "Unknown",
+          image: c.user?.image,
+          score: c.totalPoints,
+        }))}
+        scoreLabel="points"
+        viewAllHref={ROUTES.LEADERBOARD}
+      />
+    );
   } catch {
     return <TopContributors contributors={[]} error />;
   }
@@ -190,16 +204,6 @@ function EventsSkeleton() {
   );
 }
 
-function ContributorsSkeleton() {
-  return (
-    <div className="space-y-2">
-      <Skeleton className="h-5 w-40" />
-      <Skeleton className="h-16 rounded-lg" />
-      <Skeleton className="h-16 rounded-lg" />
-    </div>
-  );
-}
-
 // ── Page ─────────────────────────────────────────────────────────────
 
 export default function HomePage() {
@@ -231,7 +235,7 @@ export default function HomePage() {
             <EventsSection />
           </Suspense>
 
-          <Suspense fallback={<ContributorsSkeleton />}>
+          <Suspense fallback={<TopContributorsSkeleton />}>
             <ContributorsSection />
           </Suspense>
         </aside>

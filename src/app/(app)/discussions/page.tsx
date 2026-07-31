@@ -16,7 +16,7 @@ import { DiscussionsClient } from "@/components/discussions/discussions-client";
 import { PageLayoutSkeleton } from "@/components/skeletons/page-layout-skeleton";
 import type { Discussion, DiscussionCategory } from "@/types/discussion.types";
 import type { PaginationMeta } from "@/types/resource.types";
-import type { TopContributor } from "@/components/discussions/discussions-trending";
+import type { TopContributor } from "@/components/contributors/top-contributors";
 
 interface PageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -81,7 +81,17 @@ export default async function DiscussionsPage({ searchParams }: PageProps) {
       .slice(0, 16)
       .map(({ id, name, slug }) => ({ id, name, slug }));
     trending = (trendingResult as unknown as Discussion[]) ?? [];
-    contributors = (contributorsResult as unknown as TopContributor[]) ?? [];
+    contributors = ((contributorsResult as unknown as {
+      rank: number;
+      name: string;
+      image?: string | null;
+      discussionCount: number;
+    }[]) ?? []).map((c) => ({
+      rank: c.rank,
+      name: c.name,
+      image: c.image,
+      score: c.discussionCount,
+    }));
 
     // Initial list fetch (only for the "all" tab on the server).
     if (tab === "all") {

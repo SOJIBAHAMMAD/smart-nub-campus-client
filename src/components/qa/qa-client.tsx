@@ -11,7 +11,8 @@ import {
   QASidebar,
   type QATab,
 } from "@/components/qa/qa-sidebar";
-import { QATrending, type TopContributor } from "@/components/qa/qa-trending";
+import { QATrending } from "@/components/qa/qa-trending";
+import type { TopContributor } from "@/components/contributors/top-contributors";
 import { QuestionCard } from "@/components/qa/question-card";
 import {
   QuestionFilters,

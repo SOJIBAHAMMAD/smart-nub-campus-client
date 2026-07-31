@@ -38,7 +38,7 @@ import type {
   DiscussionCategory,
 } from "@/types/discussion.types";
 import type { PaginationMeta } from "@/types/resource.types";
-import type { TopContributor } from "@/components/discussions/discussions-trending";
+import type { TopContributor } from "@/components/contributors/top-contributors";
 import { useSocket, useSocketEvent } from "@/hooks/use-socket";
 import { env } from "@/env";
 

@@ -4,9 +4,11 @@ import { useState } from "react";
 import Link from "next/link";
 import { Plus, Bookmark, MessageCircle, CheckCircle, Users, ChevronDown } from "lucide-react";
 import type { QuestionCategory } from "@/types/qa.types";
-import type { TopContributor } from "@/components/qa/qa-trending";
+import {
+  TopContributors,
+  type TopContributor,
+} from "@/components/contributors/top-contributors";
 import { cn } from "@/lib/utils";
-import Image from "next/image";
 import { Button } from "@/components/ui/button";
 
 export type QATab = "all" | "answered" | "unanswered" | "bookmarked";
@@ -146,38 +148,11 @@ export function QASidebar({
               Top Contributors
             </h3>
           </div>
-          <div className="space-y-1.5">
-            {contributors.map((entry) => (
-              <div
-                key={entry.rank}
-                className="flex items-center gap-2.5 rounded-lg bg-card p-2 ring-1 ring-foreground/10"
-              >
-                <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[10px] font-bold text-primary">
-                  {entry.rank}
-                </span>
-                {entry.image ? (
-                  <Image
-                    src={entry.image}
-                    alt={entry.name ?? "Contributor"}
-                    width={24}
-                    height={24}
-                    unoptimized
-                    className="size-6 rounded-full object-cover"
-                  />
-                ) : (
-                  <div className="flex size-6 items-center justify-center rounded-full bg-muted text-[10px] font-medium text-muted-foreground">
-                    {entry.name?.charAt(0) ?? "?"}
-                  </div>
-                )}
-                <span className="truncate text-xs font-medium text-foreground">
-                  {entry.name ?? "Unknown"}
-                </span>
-                <span className="ml-auto text-[10px] text-muted-foreground">
-                  {entry.questionCount}
-                </span>
-              </div>
-            ))}
-          </div>
+          <TopContributors
+            contributors={contributors}
+            variant="compact"
+            scoreLabel="questions"
+          />
         </div>
       )}
     </div>

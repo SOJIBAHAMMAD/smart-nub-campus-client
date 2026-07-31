@@ -7,15 +7,11 @@ import type { Discussion } from "@/types/discussion.types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { TagPill } from "@/components/ui/tag-pill";
-import { Avatar } from "@/components/ui/avatar";
+import {
+  TopContributors,
+  type TopContributor,
+} from "@/components/contributors/top-contributors";
 import { cn } from "@/lib/utils";
-
-export interface TopContributor {
-  rank: number;
-  name: string;
-  image?: string | null;
-  discussionCount: number;
-}
 
 interface DiscussionsTrendingProps {
   trendingDiscussions: Discussion[];
@@ -120,38 +116,11 @@ export function DiscussionsTrending({
           </div>
           <h3 className="text-sm font-semibold text-foreground">Top Contributors</h3>
         </div>
-        {contributors.length > 0 ? (
-          <div className="space-y-1.5">
-            {contributors.map((entry) => (
-              <div
-                key={entry.rank}
-                className="flex items-center gap-2.5 rounded-lg border bg-card p-2.5 transition-all hover:border-primary/20"
-              >
-                <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[10px] font-bold text-primary">
-                  {entry.rank}
-                </span>
-                <Avatar
-                  id={entry.name}
-                  name={entry.name ?? "?"}
-                  src={entry.image}
-                  className="size-6"
-                />
-                <span className="min-w-0 flex-1 truncate text-xs font-medium text-foreground">
-                  {entry.name ?? "Unknown"}
-                </span>
-                <span className="shrink-0 text-[10px] text-muted-foreground">
-                  {entry.discussionCount}
-                </span>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <Card>
-            <CardContent className="p-4 text-center">
-              <p className="text-xs text-muted-foreground">No contributors yet.</p>
-            </CardContent>
-          </Card>
-        )}
+        <TopContributors
+          contributors={contributors}
+          variant="compact"
+          scoreLabel="discussions"
+        />
       </div>
 
       <Card className="bg-primary/5 border-primary/10">

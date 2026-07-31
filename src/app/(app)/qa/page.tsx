@@ -16,7 +16,7 @@ import { QAClient } from "@/components/qa/qa-client";
 import { PageLayoutSkeleton } from "@/components/skeletons/page-layout-skeleton";
 import type { Question, QuestionCategory } from "@/types/qa.types";
 import type { PaginationMeta } from "@/types/resource.types";
-import type { TopContributor } from "@/components/qa/qa-trending";
+import type { TopContributor } from "@/components/contributors/top-contributors";
 
 interface PageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -78,7 +78,17 @@ export default async function QAPage({ searchParams }: PageProps) {
       .sort((a, b) => b.count - a.count)
       .slice(0, 16)
       .map(({ id, name, slug }) => ({ id, name, slug }));
-    contributors = (contributorsResult as unknown as TopContributor[]) ?? [];
+    contributors = ((contributorsResult as unknown as {
+      rank: number;
+      name: string;
+      image?: string | null;
+      questionCount: number;
+    }[]) ?? []).map((c) => ({
+      rank: c.rank,
+      name: c.name,
+      image: c.image,
+      score: c.questionCount,
+    }));
     trendingQuestions = (trendingResult as unknown as Question[]) ?? [];
 
     // Initial list fetch (server-side for the "all" tab).
