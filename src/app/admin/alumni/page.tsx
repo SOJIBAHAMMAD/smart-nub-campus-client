@@ -153,9 +153,9 @@ export default function AdminAlumniPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All departments</SelectItem>
-            {Object.values(DEPARTMENT_LABELS).map((department) => (
-              <SelectItem key={department} value={department}>
-                {department}
+            {Object.entries(DEPARTMENT_LABELS).map(([code, label]) => (
+              <SelectItem key={code} value={code}>
+                {label}
               </SelectItem>
             ))}
           </SelectContent>
