@@ -45,13 +45,30 @@ export function OnboardingFlow({
       studentId: string;
       idCardImage: string;
       idCardImagePublicId?: string | null;
+      requestType: string;
+      graduationYear?: string;
+      degreeTitle?: string;
     }) => {
       setIsSubmitting(true);
       setError(null);
 
       try {
         // Backend sets the onboarding_step cookie and returns full state
-        const response = await createVerificationRequest(formData);
+        const response = await createVerificationRequest({
+          name: formData.name,
+          email: formData.email,
+          dateOfBirth: formData.dateOfBirth,
+          studentId: formData.studentId,
+          idCardImage: formData.idCardImage,
+          idCardImagePublicId: formData.idCardImagePublicId,
+          requestType: formData.requestType as
+            | "STUDENT"
+            | "ALUMNI",
+          graduationYear: formData.graduationYear
+            ? Number(formData.graduationYear)
+            : undefined,
+          degreeTitle: formData.degreeTitle || undefined,
+        });
         setCurrentStep(response.currentStep);
         setVerificationRequest(response.verificationRequest);
       } catch (err) {
