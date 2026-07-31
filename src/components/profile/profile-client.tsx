@@ -10,6 +10,7 @@ import { ProfileSkillsCard } from "./profile-skills-card";
 import { ProfileAcademicCard } from "./profile-academic-card";
 import { ProfileBadgesCard } from "./profile-badges-card";
 import { ProfileLinksCard } from "./profile-links-card";
+import { ProfileCareerCard } from "./profile-career-card";
 import { ProfileEmptyState } from "./profile-empty-state";
 import { getPublicProfile } from "@/actions/profile.actions";
 import type { ProfileUser } from "@/types/profile.types";
@@ -17,11 +18,13 @@ import type { ProfileUser } from "@/types/profile.types";
 interface ProfileClientProps {
   profileData: ProfileUser;
   currentUserId?: string;
+  userRole?: string;
 }
 
 export function ProfileClient({
   profileData,
   currentUserId,
+  userRole,
 }: ProfileClientProps) {
   const router = useRouter();
   const [previewMode, setPreviewMode] = useState(false);
@@ -138,6 +141,15 @@ export function ProfileClient({
             isOwnProfile={showAsOther}
             onProfileUpdate={handleProfileUpdate}
           />
+
+          {/* Career & Experience — own alumni profile only */}
+          {isOwnProfile && (
+            <ProfileCareerCard
+              currentUserId={currentUserId}
+              userRole={userRole}
+              onProfileUpdate={handleProfileUpdate}
+            />
+          )}
 
           {/* Badges */}
           <ProfileBadgesCard

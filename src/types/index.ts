@@ -6,6 +6,20 @@ export type { PaginationMeta } from "./resource.types";
 export type { OnboardingStateResponse } from "./onboarding.types";
 export type { CreateAccountResponse } from "./account.types";
 
+// ── Alumni ───────────────────────────────────────────────────────────────────
+export type {
+  GraduationInfo,
+  TransitionStatusResponse,
+  TransitionResponse,
+  EmploymentRecord,
+  DirectoryMember,
+  DirectoryMemberDetail,
+  DirectoryFacet,
+  DirectoryStats,
+  DirectoryListParams,
+  DirectoryListResponse,
+} from "./alumni.types";
+
 export type {
   VerificationRequestData,
   CreateVerificationRequestPayload,
@@ -16,6 +30,35 @@ export type {
   VerificationRequest,
   VerificationDetail,
 } from "./verification.types";
+
+// ── Jobs ─────────────────────────────────────────────────────────────────────
+export type {
+  EmploymentType,
+  JobPoster,
+  Job,
+  JobDetail,
+  JobApplicant,
+  JobApplication,
+  ListJobsParams,
+  JobListResponse,
+  JobApplicationsResponse,
+  CreateJobPayload,
+  UpdateJobPayload,
+  ApplyJobPayload,
+} from "./jobs.types";
+
+// ── Mentorship ───────────────────────────────────────────────────────────────
+export type {
+  Mentor,
+  MentorshipRequestUser,
+  MentorshipRequestParty,
+  MentorshipRequest,
+  ListMentorsParams,
+  MentorListResponse,
+  ListMentorshipRequestsParams,
+  MentorshipRequestListResponse,
+  CreateMentorshipRequestPayload,
+} from "./mentorship.types";
 
 // ── Resources ────────────────────────────────────────────────────────────────
 export type {

@@ -66,6 +66,30 @@ export const TAGS = {
 
   /** User badges. */
   PROFILE_BADGES: "profile-badges",
+
+  /** Alumni transition status (home banner). */
+  ALUMNI_TRANSITION_STATUS: "alumni-transition-status",
+
+  /** Alumni directory list (cards + filters). */
+  ALUMNI_DIRECTORY: "alumni-directory",
+
+  /** Single alumni directory member detail. */
+  ALUMNI_DIRECTORY_DETAIL: "alumni-directory-detail",
+
+  /** Alumni directory facet stats (sidebar counts). */
+  ALUMNI_DIRECTORY_STATS: "alumni-directory-stats",
+
+  /** Job posts list (cards + filters). */
+  JOBS: "jobs",
+
+  /** Single job post detail. */
+  JOB_DETAIL: "job-detail",
+
+  /** Mentorship mentor directory. */
+  MENTORS: "mentors",
+
+  /** Mentorship requests (incoming + outgoing). */
+  MENTORSHIP_REQUESTS: "mentorship-requests",
 } as const;
 
 /** All tags that should be invalidated when any resource is created/updated/deleted. */

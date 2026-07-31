@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { profileService } from "@/services/profile.service";
+import { profileService, type EmploymentPayload } from "@/services/profile.service";
 import type { ApiResponse } from "@/types";
 import type { UpdateProfilePayload } from "@/types/profile.types";
 
@@ -83,6 +83,50 @@ export async function removeSkill(userSkillId: string): Promise<ApiResponse> {
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to remove skill.";
+    return { success: false, message };
+  }
+}
+
+export async function createEmploymentAction(
+  data: EmploymentPayload,
+): Promise<ApiResponse> {
+  try {
+    const result = await profileService.createEmployment(data);
+    revalidatePath("/profile");
+    revalidatePath("/alumni");
+    return { success: true, message: "Employment record added.", data: result };
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to add employment record.";
+    return { success: false, message };
+  }
+}
+
+export async function updateEmploymentAction(
+  id: string,
+  data: Partial<EmploymentPayload>,
+): Promise<ApiResponse> {
+  try {
+    const result = await profileService.updateEmployment(id, data);
+    revalidatePath("/profile");
+    revalidatePath("/alumni");
+    return { success: true, message: "Employment record updated.", data: result };
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to update employment record.";
+    return { success: false, message };
+  }
+}
+
+export async function deleteEmploymentAction(id: string): Promise<ApiResponse> {
+  try {
+    await profileService.deleteEmployment(id);
+    revalidatePath("/profile");
+    revalidatePath("/alumni");
+    return { success: true, message: "Employment record removed." };
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to remove employment record.";
     return { success: false, message };
   }
 }
