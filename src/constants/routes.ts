@@ -19,6 +19,8 @@ const ROUTES = {
   NOTIFICATIONS: "/notifications",
   SETTINGS: "/settings",
   MY_PROFILE: "/profile",
+  LEADERBOARD: "/leaderboard",
+  BADGES: "/badges",
 
   // ── Info Pages ─────────────────────────────────────────────────────────────
   ABOUT: "/about",

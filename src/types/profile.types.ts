@@ -1,5 +1,7 @@
 // ── Profile ─────────────────────────────────────────────────────────────────
 
+import type { BadgeCategory, BadgeTier } from "@/types/gamification.types";
+
 export interface UserProfile {
   id: string;
   userId: string;
@@ -31,8 +33,8 @@ export interface ProfileBadge {
     name: string;
     description: string;
     icon: string | null;
-    category: string;
-    tier: string;
+    category: BadgeCategory;
+    tier: BadgeTier;
     points: number;
   };
 }

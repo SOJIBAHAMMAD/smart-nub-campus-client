@@ -29,6 +29,7 @@ import {
   UsersRound,
   MessageCircle,
   Sparkles,
+  Trophy,
   ChevronDown,
   X,
 } from "lucide-react";
@@ -57,6 +58,7 @@ const desktopPrimaryItems: NavItem[] = [
 const desktopMoreItems: NavItem[] = [
   { label: "Discussions", href: ROUTES.DISCUSSIONS, icon: MessageSquare },
   { label: "Q&A", href: ROUTES.QA, icon: HelpCircle },
+  { label: "Leaderboard", href: ROUTES.LEADERBOARD, icon: Trophy },
   { label: "AI Assistant", href: ROUTES.AI, icon: Sparkles },
 ];
 
@@ -71,6 +73,7 @@ const bottomSheetItems: NavItem[] = [
   { label: "My Network", href: ROUTES.MY_NETWORK, icon: UsersRound },
   { label: "Discussions", href: ROUTES.DISCUSSIONS, icon: MessageSquare },
   { label: "Q&A", href: ROUTES.QA, icon: HelpCircle },
+  { label: "Leaderboard", href: ROUTES.LEADERBOARD, icon: Trophy },
   { label: "AI Assistant", href: ROUTES.AI, icon: Sparkles },
 ];
 

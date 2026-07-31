@@ -52,7 +52,7 @@ export function PageLayout({
             role="complementary"
             aria-label={leftSidebarTitle}
           >
-            <div className="sticky top-2 max-h-[calc(100vh-5rem)] overflow-y-auto">
+            <div className="sticky top-2 max-h-[calc(100vh-5rem)] overflow-y-auto scrollbar-none">
               {leftSidebar}
             </div>
           </aside>
@@ -72,9 +72,11 @@ export function PageLayout({
                     </Button>
                   }
                 />
-                <SheetContent side="left" className="w-[280px] sm:max-w-sm">
+                <SheetContent side="left" className="w-70 sm:max-w-sm">
                   <SheetHeader>
-                    <SheetTitle className="text-left">{leftSidebarTitle}</SheetTitle>
+                    <SheetTitle className="text-left">
+                      {leftSidebarTitle}
+                    </SheetTitle>
                   </SheetHeader>
                   <div className="flex-1 overflow-y-auto px-4 pb-4">
                     {leftSidebar}
@@ -92,9 +94,11 @@ export function PageLayout({
                     </Button>
                   }
                 />
-                <SheetContent side="right" className="w-[280px] sm:max-w-sm">
+                <SheetContent side="right" className="w-70 sm:max-w-sm">
                   <SheetHeader>
-                    <SheetTitle className="text-left">{rightSidebarTitle}</SheetTitle>
+                    <SheetTitle className="text-left">
+                      {rightSidebarTitle}
+                    </SheetTitle>
                   </SheetHeader>
                   <div className="flex-1 overflow-y-auto px-4 pb-4">
                     {rightSidebar}
@@ -113,7 +117,7 @@ export function PageLayout({
             role="complementary"
             aria-label={rightSidebarTitle}
           >
-            <div className="sticky top-2 max-h-[calc(100vh-5rem)] overflow-y-auto">
+            <div className="sticky top-2 max-h-[calc(100vh-5rem)] overflow-y-auto scrollbar-none">
               {rightSidebar}
             </div>
           </aside>

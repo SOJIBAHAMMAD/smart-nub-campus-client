@@ -3,6 +3,7 @@
 import { Award, Trophy } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { BadgeIcon } from "@/components/ui/badge-icon";
 import type { ProfileUser, ProfileBadge } from "@/types/profile.types";
 
 interface ProfileBadgesCardProps {
@@ -14,13 +15,6 @@ const TIER_COLORS: Record<string, string> = {
   SILVER: "bg-gray-400/10 text-gray-500 border-gray-400/30",
   GOLD: "bg-yellow-500/10 text-yellow-600 border-yellow-500/30",
   PLATINUM: "bg-purple-500/10 text-purple-600 border-purple-500/30",
-};
-
-const TIER_ICONS: Record<string, string> = {
-  BRONZE: "🥉",
-  SILVER: "🥈",
-  GOLD: "🥇",
-  PLATINUM: "💎",
 };
 
 export function ProfileBadgesCard({ profileData }: ProfileBadgesCardProps) {
@@ -46,9 +40,11 @@ export function ProfileBadgesCard({ profileData }: ProfileBadgesCardProps) {
               key={userBadge.id}
               className="flex items-center gap-3 rounded-lg border p-2.5"
             >
-              <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted text-sm">
-                {userBadge.badge.icon ?? TIER_ICONS[userBadge.badge.tier] ?? "🏆"}
-              </div>
+              <BadgeIcon
+                icon={userBadge.badge.icon}
+                tier={userBadge.badge.tier}
+                size="sm"
+              />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5">
                   <span className="text-sm font-medium">{userBadge.badge.name}</span>
