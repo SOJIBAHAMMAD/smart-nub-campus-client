@@ -19,7 +19,10 @@ interface ProfileClientProps {
   currentUserId?: string;
 }
 
-export function ProfileClient({ profileData, currentUserId }: ProfileClientProps) {
+export function ProfileClient({
+  profileData,
+  currentUserId,
+}: ProfileClientProps) {
   const router = useRouter();
   const [previewMode, setPreviewMode] = useState(false);
   const [previewData, setPreviewData] = useState<ProfileUser | null>(null);
@@ -137,7 +140,10 @@ export function ProfileClient({ profileData, currentUserId }: ProfileClientProps
           />
 
           {/* Badges */}
-          <ProfileBadgesCard profileData={displayData} />
+          <ProfileBadgesCard
+            profileData={displayData}
+            isOwnProfile={isOwnProfile}
+          />
 
           {/* Completion guide for own profile — hides itself at 100% */}
           {isOwnProfile && !previewMode && !dismissedEmptyState && (

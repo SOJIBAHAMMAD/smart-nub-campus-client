@@ -1,13 +1,16 @@
 "use client";
 
 import { Award, Trophy } from "lucide-react";
+import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { BadgeIcon } from "@/components/ui/badge-icon";
 import type { ProfileUser, ProfileBadge } from "@/types/profile.types";
+import ROUTES from "@/constants/routes";
 
 interface ProfileBadgesCardProps {
   profileData: ProfileUser;
+  isOwnProfile: boolean;
 }
 
 const TIER_COLORS: Record<string, string> = {
@@ -17,10 +20,17 @@ const TIER_COLORS: Record<string, string> = {
   PLATINUM: "bg-purple-500/10 text-purple-600 border-purple-500/30",
 };
 
-export function ProfileBadgesCard({ profileData }: ProfileBadgesCardProps) {
+export function ProfileBadgesCard({
+  profileData,
+  isOwnProfile,
+}: ProfileBadgesCardProps) {
   const badgesSummary = profileData.badges;
 
   if (!badgesSummary || badgesSummary.total === 0) return null;
+
+  const viewAllHref = isOwnProfile
+    ? ROUTES.BADGES
+    : ROUTES.USER_BADGES(profileData.id);
 
   return (
     <Card>
@@ -32,6 +42,12 @@ export function ProfileBadgesCard({ profileData }: ProfileBadgesCardProps) {
             {badgesSummary.total}
           </Badge>
         </CardTitle>
+        <Link
+          href={viewAllHref}
+          className="text-xs font-medium text-primary transition-colors hover:text-primary/80"
+        >
+          View all &rarr;
+        </Link>
       </CardHeader>
       <CardContent className="pb-5 sm:pb-6">
         <div className="space-y-2">
@@ -47,7 +63,9 @@ export function ProfileBadgesCard({ profileData }: ProfileBadgesCardProps) {
               />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5">
-                  <span className="text-sm font-medium">{userBadge.badge.name}</span>
+                  <span className="text-sm font-medium">
+                    {userBadge.badge.name}
+                  </span>
                   <Badge
                     variant="outline"
                     className={`text-[10px] ${TIER_COLORS[userBadge.badge.tier] ?? ""}`}
@@ -68,10 +86,13 @@ export function ProfileBadgesCard({ profileData }: ProfileBadgesCardProps) {
             </div>
           ))}
         </div>
-        {badgesSummary.total > 3 && (
-          <p className="mt-2 text-center text-xs text-muted-foreground">
-            +{badgesSummary.total - 3} more badge{badgesSummary.total - 3 > 1 ? "s" : ""}
-          </p>
+        {badgesSummary.total > badgesSummary.items.length && (
+          <Link
+            href={viewAllHref}
+            className="mt-2 block text-center text-xs font-medium text-primary transition-colors hover:text-primary/80"
+          >
+            View all {badgesSummary.total} badges &rarr;
+          </Link>
         )}
       </CardContent>
     </Card>

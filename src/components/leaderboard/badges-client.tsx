@@ -11,15 +11,33 @@ import {
   Trophy,
 } from "lucide-react";
 import type {
-  UserBadge,
   BadgeCategory,
   BadgeTier,
 } from "@/types/gamification.types";
 import { BadgeIcon } from "@/components/ui/badge-icon";
 
+/**
+ * Minimal badge shape shared by both the current-user badges endpoint
+ * (UserBadge[]) and the public-profile badges endpoint (ProfileBadge[]).
+ * The `badge` object is optional because either source may omit it.
+ */
+export interface BadgeDisplayItem {
+  id: string;
+  unlockedAt: string;
+  badge?: {
+    name: string;
+    description: string;
+    icon?: string | null;
+    category: BadgeCategory;
+    tier: BadgeTier;
+    points: number;
+  };
+}
+
 interface BadgesClientProps {
-  badges: UserBadge[];
+  badges: BadgeDisplayItem[];
   totalPoints: number;
+  userName?: string;
 }
 
 const CATEGORY_CONFIG: Record<
@@ -92,7 +110,11 @@ const TIER_STYLES: Record<
   },
 };
 
-export function BadgesClient({ badges, totalPoints }: BadgesClientProps) {
+export function BadgesClient({
+  badges,
+  totalPoints,
+  userName,
+}: BadgesClientProps) {
   const grouped = badges.reduce(
     (acc, ub) => {
       const category = ub.badge?.category ?? "REPUTATION";
@@ -100,7 +122,7 @@ export function BadgesClient({ badges, totalPoints }: BadgesClientProps) {
       acc[category].push(ub);
       return acc;
     },
-    {} as Record<BadgeCategory, UserBadge[]>,
+    {} as Record<BadgeCategory, BadgeDisplayItem[]>,
   );
 
   const categories = Object.keys(grouped) as BadgeCategory[];
@@ -115,11 +137,12 @@ export function BadgesClient({ badges, totalPoints }: BadgesClientProps) {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-2xl font-bold tracking-tight text-foreground">
-            My Badges
+            {userName ? `${userName}'s Badges` : "My Badges"}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Achievements earned by contributing to the Smart NUB Campus
-            community.
+            {userName
+              ? `Achievements ${userName} has earned by contributing to the Smart NUB Campus community.`
+              : "Achievements earned by contributing to the Smart NUB Campus community."}
           </p>
         </div>
 

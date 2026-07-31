@@ -33,6 +33,7 @@ const ROUTES = {
   DISCUSSION: (id: string) => `/discussions/${id}`,
   QUESTION: (id: string) => `/qa/${id}`,
   USER_PROFILE: (id: string) => `/profile/${id}`,
+  USER_BADGES: (id: string) => `/badges/${id}`,
   CONVERSATION: (id: string) => `/messages/${id}`,
 } as const;
 
