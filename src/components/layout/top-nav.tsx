@@ -17,8 +17,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   Search,
-  Moon,
-  Sun,
   LogOut,
   Settings,
   Home,
@@ -33,13 +31,13 @@ import {
   ChevronDown,
   X,
 } from "lucide-react";
-import { useTheme } from "next-themes";
 import { motion, AnimatePresence } from "motion/react";
 import ROUTES from "@/constants/routes";
 import { AcademicCapIcon } from "../ui/icons/academic-cap";
 import Image from "next/image";
 import { authClient } from "@/lib/auth-client";
 import { NotificationBell } from "@/components/notifications/notification-bell";
+import { ThemeToggleButton } from "@/components/theme/theme-toggle";
 
 interface NavItem {
   label: string;
@@ -90,16 +88,12 @@ interface TopNavProps {
 export function TopNav({ userName, userImage, userId }: TopNavProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const { theme, setTheme } = useTheme();
   const [searchQuery, setSearchQuery] = useState("");
-  const [mounted, setMounted] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
   const sheetTriggerRef = useRef<HTMLButtonElement>(null);
   const mobileSearchRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => setMounted(true), []);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10);
@@ -145,7 +139,6 @@ export function TopNav({ userName, userImage, userId }: TopNavProps) {
     router.push(ROUTES.LOGIN);
   }, [router]);
 
-  const isDark = theme === "dark";
   const hasActiveDesktopMore = desktopMoreItems.some((item) =>
     isActive(item.href, pathname),
   );
@@ -290,27 +283,7 @@ export function TopNav({ userName, userImage, userId }: TopNavProps) {
               <Search className="size-4" />
             </Button>
 
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setTheme(isDark ? "light" : "dark")}
-              aria-label={
-                mounted
-                  ? isDark
-                    ? "Switch to light mode"
-                    : "Switch to dark mode"
-                  : "Toggle theme"
-              }
-              className="size-8"
-            >
-              {!mounted ? (
-                <Moon className="size-4" />
-              ) : isDark ? (
-                <Sun className="size-4" />
-              ) : (
-                <Moon className="size-4" />
-              )}
-            </Button>
+            <ThemeToggleButton className="size-8" />
 
             <NotificationBell />
 

@@ -44,7 +44,7 @@ describe("TopNav", () => {
   it("renders the theme toggle button", () => {
     render(<TopNav />);
     expect(
-      screen.getByRole("button", { name: /switch to dark mode/i }),
+      screen.getByRole("button", { name: /toggle theme/i }),
     ).toBeInTheDocument();
   });
 
