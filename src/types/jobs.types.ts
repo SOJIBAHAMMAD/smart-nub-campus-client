@@ -3,7 +3,12 @@
  * Keep in sync with server schema: prisma/schema/job.prisma
  */
 
-import type { JobType, JobPostStatus, ApplicationStatus } from "@/constants/enums";
+import type {
+  JobType,
+  JobPostStatus,
+  ApplicationStatus,
+  JobSource,
+} from "@/constants/enums";
 import type { PaginationMeta } from "./resource.types";
 
 // ── Enums ────────────────────────────────────────────────────────────────────
@@ -37,6 +42,8 @@ export interface Job {
   department: string | null;
   status: JobPostStatus;
   isVerified: boolean;
+  source: JobSource;
+  sourceUrl: string | null;
   postedById: string;
   createdAt: string;
   updatedAt: string;
@@ -112,10 +119,30 @@ export interface CreateJobPayload {
   applicationUrl?: string;
   deadline?: string | null;
   department?: string;
+  source?: JobSource;
+  sourceUrl?: string;
 }
 
 export interface UpdateJobPayload extends Partial<CreateJobPayload> {
   status?: JobPostStatus;
+}
+
+export interface ImportJobPayload {
+  input: string;
+}
+
+export interface ParsedJobDraft {
+  title: string;
+  company: string;
+  description: string;
+  employmentType: JobType | null;
+  location: string;
+  salaryRange: string;
+  deadline: string | null;
+  department: string | null;
+  applicationUrl: string;
+  source: JobSource | null;
+  sourceUrl: string | null;
 }
 
 export interface ApplyJobPayload {

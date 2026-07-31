@@ -67,6 +67,24 @@ export const JobPostStatus = {
 
 export type JobPostStatus = (typeof JobPostStatus)[keyof typeof JobPostStatus];
 
+export const JobSource = {
+  PLATFORM: "PLATFORM",
+  LINKEDIN: "LINKEDIN",
+  FACEBOOK: "FACEBOOK",
+  BDJOBS: "BDJOBS",
+  INDEED: "INDEED",
+  GLASSDOOR: "GLASSDOOR",
+  GOOGLE_JOBS: "GOOGLE_JOBS",
+  BIKROY: "BIKROY",
+  CHAKRI: "CHAKRI",
+  JOBSBD: "JOBSBD",
+  COMPANY_WEBSITE: "COMPANY_WEBSITE",
+  NEWSPAPER: "NEWSPAPER",
+  OTHER: "OTHER",
+} as const;
+
+export type JobSource = (typeof JobSource)[keyof typeof JobSource];
+
 export const EventAudience = {
   EVERYONE: "EVERYONE",
   STUDENTS_ONLY: "STUDENTS_ONLY",

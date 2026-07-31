@@ -9,8 +9,8 @@ import {
 import { TagPill } from "@/components/ui/tag-pill";
 import { Badge } from "@/components/ui/badge";
 import ROUTES from "@/constants/routes";
-import { JobType, JobPostStatus } from "@/constants/enums";
-import { DEPARTMENT_LABELS } from "@/lib/constants";
+import { JobType, JobPostStatus, JobSource } from "@/constants/enums";
+import { DEPARTMENT_LABELS, JOB_SOURCE_LABELS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import type { Job } from "@/types";
 
@@ -114,6 +114,14 @@ export function JobCard({ job }: { job: Job }) {
           )}
           {job.salaryRange && (
             <TagPill name={job.salaryRange} size="xs" variant="brand" showIcon={false} />
+          )}
+          {job.source && job.source !== JobSource.PLATFORM && (
+            <TagPill
+              name={`Shared from ${JOB_SOURCE_LABELS[job.source] ?? job.source}`}
+              size="xs"
+              variant="outline"
+              showIcon={false}
+            />
           )}
         </div>
 

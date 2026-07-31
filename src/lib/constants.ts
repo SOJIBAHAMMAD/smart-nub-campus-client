@@ -45,6 +45,23 @@ export const DEPARTMENT_LABELS: Record<Department, string> = {
   EBTX: "Electronics & Biotechnology",
 };
 
+/** Human-readable labels for job source enum values. */
+export const JOB_SOURCE_LABELS: Record<string, string> = {
+  PLATFORM: "Smart NUB Campus",
+  LINKEDIN: "LinkedIn",
+  FACEBOOK: "Facebook",
+  BDJOBS: "BdJobs",
+  INDEED: "Indeed",
+  GLASSDOOR: "Glassdoor",
+  GOOGLE_JOBS: "Google Jobs",
+  BIKROY: "Bikroy",
+  CHAKRI: "Chakri",
+  JOBSBD: "JobsBD",
+  COMPANY_WEBSITE: "Company website",
+  NEWSPAPER: "Newspaper",
+  OTHER: "Other",
+};
+
 /** Total semesters in an undergraduate program (used for the semester dropdown). */
 export const MAX_SEMESTERS = 12;
 

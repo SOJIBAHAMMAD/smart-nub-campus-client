@@ -45,6 +45,8 @@ export type {
   CreateJobPayload,
   UpdateJobPayload,
   ApplyJobPayload,
+  ImportJobPayload,
+  ParsedJobDraft,
 } from "./jobs.types";
 
 // ── Mentorship ───────────────────────────────────────────────────────────────

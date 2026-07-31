@@ -6,6 +6,7 @@ import type {
   ListJobsParams,
   CreateJobPayload,
   ApplyJobPayload,
+  ImportJobPayload,
 } from "@/types";
 
 export async function listJobsAction(
@@ -45,6 +46,23 @@ export async function createJobAction(
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to post job.";
+    return { success: false, message };
+  }
+}
+
+export async function importJobAction(
+  data: ImportJobPayload,
+): Promise<ApiResponse> {
+  try {
+    const draft = await jobsService.importJob(data);
+    return {
+      success: true,
+      message: "Job details extracted — review and post.",
+      data: draft,
+    };
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to import job details.";
     return { success: false, message };
   }
 }

@@ -38,8 +38,8 @@ import { TagPill } from "@/components/ui/tag-pill";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import ROUTES from "@/constants/routes";
-import { JobType, JobPostStatus, ApplicationStatus, UserRole } from "@/constants/enums";
-import { DEPARTMENT_LABELS } from "@/lib/constants";
+import { JobType, JobPostStatus, ApplicationStatus, UserRole, JobSource } from "@/constants/enums";
+import { DEPARTMENT_LABELS, JOB_SOURCE_LABELS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import {
   applyToJobAction,
@@ -220,6 +220,14 @@ export function JobDetailClient({
                 {job.salaryRange && (
                   <TagPill name={job.salaryRange} size="xs" variant="brand" showIcon={false} />
                 )}
+                {job.source && job.source !== JobSource.PLATFORM && (
+                  <TagPill
+                    name={`Shared from ${JOB_SOURCE_LABELS[job.source] ?? job.source}`}
+                    size="xs"
+                    variant="outline"
+                    showIcon={false}
+                  />
+                )}
               </div>
             </div>
             <CardAction className="shrink-0">
@@ -269,6 +277,17 @@ export function JobDetailClient({
               <CalendarDays className="size-3.5 shrink-0" />
               {expired ? "Deadline passed" : `Deadline ${deadlineLabel}`}
             </span>
+          )}
+          {job.sourceUrl && (
+            <a
+              href={job.sourceUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 font-medium text-primary hover:underline"
+            >
+              <ExternalLink className="size-3.5 shrink-0" />
+              View original post
+            </a>
           )}
         </CardContent>
       </Card>

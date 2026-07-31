@@ -10,6 +10,8 @@ import type {
   UpdateJobPayload,
   ApplyJobPayload,
   JobApplication,
+  ImportJobPayload,
+  ParsedJobDraft,
 } from "@/types";
 
 export const jobsService = {
@@ -55,6 +57,15 @@ export const jobsService = {
     const response = await serverApi.post<Job>("/jobs", data, {
       invalidatesTags: [TAGS.JOBS],
     });
+    return response.data!;
+  },
+
+  /**
+   * Parse a pasted link or raw job description into a prefilled draft.
+   * Does NOT persist anything. Matches backend POST /jobs/import.
+   */
+  async importJob(data: ImportJobPayload): Promise<ParsedJobDraft> {
+    const response = await serverApi.post<ParsedJobDraft>("/jobs/import", data);
     return response.data!;
   },
 
