@@ -34,7 +34,7 @@ export async function getEvent(id: string): Promise<ApiResponse> {
 export async function toggleRsvpEvent(eventId: string): Promise<ApiResponse> {
   try {
     const data = await eventService.toggleRsvp(eventId);
-    return { success: true, message: "RSVP toggled.", data };
+    return { success: true, message: "Attendance updated.", data };
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to toggle RSVP.";
     return { success: false, message };

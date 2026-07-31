@@ -3,31 +3,61 @@
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, CalendarDays, MapPin, Users, AlertCircle } from "lucide-react";
+import {
+  ArrowLeft,
+  CalendarDays,
+  MapPin,
+  Users,
+  UserRound,
+  AlertCircle,
+  Sparkles,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Avatar } from "@/components/ui/avatar";
+import { EventStatusBadge } from "@/components/events/event-status-badge";
+import { EventImage } from "@/components/events/event-image";
+import {
+  formatEventDate,
+  getRelativeDay,
+} from "@/components/events/event-card";
 import { getEvent, toggleRsvpEvent } from "@/actions/event.actions";
 import { toast } from "sonner";
 import type { Event } from "@/types/event.types";
 
-function formatDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString("en-US", {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
+function InfoRow({
+  icon: Icon,
+  children,
+}: {
+  icon: typeof MapPin;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-start gap-3">
+      <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+        <Icon className="size-4 text-primary" />
+      </div>
+      <div className="min-w-0 pt-1 text-sm text-muted-foreground">{children}</div>
+    </div>
+  );
 }
 
 function EventDetailSkeleton() {
   return (
-    <div className="mx-auto max-w-3xl space-y-6 px-4 py-6 sm:px-6">
-      <div className="h-4 w-32 animate-pulse rounded bg-muted" />
-      <div className="h-8 w-3/4 animate-pulse rounded bg-muted" />
-      <div className="h-4 w-1/2 animate-pulse rounded bg-muted" />
-      <div className="h-48 animate-pulse rounded-xl bg-muted" />
+    <div className="mx-auto max-w-4xl space-y-6 px-4 py-6 sm:px-6 lg:py-8">
+      <Skeleton className="h-4 w-32" />
+      <Skeleton className="h-56 w-full rounded-2xl sm:h-72" />
+      <Skeleton className="h-8 w-3/4" />
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Skeleton className="h-16 rounded-xl" />
+        <Skeleton className="h-16 rounded-xl" />
+        <Skeleton className="h-16 rounded-xl" />
+        <Skeleton className="h-16 rounded-xl" />
+      </div>
+      <Skeleton className="h-40 rounded-xl" />
     </div>
   );
 }
@@ -65,7 +95,9 @@ export default function EventDetailPage() {
     }
 
     fetchEvent();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [eventId]);
 
   const handleRsvp = async () => {
@@ -88,12 +120,12 @@ export default function EventDetailPage() {
             },
           };
         });
-        toast.success(isAdding ? "RSVP confirmed!" : "RSVP removed.");
+        toast.success(isAdding ? "You're going!" : "You're not going.");
       } else {
-        toast.error(result.message || "Failed to update RSVP.");
+        toast.error(result.message || "Couldn't update your status.");
       }
     } catch {
-      toast.error("Failed to update RSVP.");
+      toast.error("Couldn't update your status.");
     } finally {
       setRsvpLoading(false);
     }
@@ -121,84 +153,156 @@ export default function EventDetailPage() {
     );
   }
 
+  const { full, time } = formatEventDate(event.eventDate);
+  const relative = getRelativeDay(event.eventDate);
+
   return (
-    <div className="mx-auto max-w-3xl space-y-6 px-4 py-6 sm:px-6">
+    <div className="mx-auto max-w-4xl px-4 py-6 sm:px-6 lg:py-8">
       <Link
         href="/events"
-        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
       >
         <ArrowLeft className="size-4" />
         Back to Events
       </Link>
 
-      <div className="space-y-2">
-        <div className="flex items-start justify-between gap-4">
-          <h1 className="text-2xl font-bold text-foreground">{event.title}</h1>
-          <div className="flex shrink-0 items-center gap-2">
-            {event.isFeatured && (
-              <Badge variant="secondary" className="bg-amber-100 text-amber-700">Featured</Badge>
-            )}
-            {event.status === "UPCOMING" && (
-              <Badge variant="outline" className="border-blue-300 text-blue-700">Upcoming</Badge>
-            )}
-            {event.status === "ONGOING" && (
-              <Badge variant="outline" className="border-green-300 text-green-700">Ongoing</Badge>
-            )}
-            {event.status === "COMPLETED" && (
-              <Badge variant="secondary">Completed</Badge>
-            )}
-            {event.status === "CANCELLED" && (
-              <Badge variant="outline" className="border-red-300 text-red-700">Cancelled</Badge>
-            )}
-          </div>
+      {/* ── Hero media — always rendered, falls back to a branded gradient ── */}
+      <div className="relative mt-4 overflow-hidden rounded-2xl sm:mt-6">
+        <EventImage
+          id={event.id}
+          title={event.title}
+          src={event.imageUrl}
+          aspect="aspect-[16/9]"
+          className="rounded-none sm:aspect-[21/9]"
+          iconClassName="size-14"
+        />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
+        <div className="absolute left-4 top-4 flex flex-wrap items-center gap-2">
+          {event.isFeatured && (
+            <Badge
+              variant="secondary"
+              className="gap-1 border-transparent bg-amber-400/95 text-amber-950 shadow-sm"
+            >
+              <Sparkles className="size-3" aria-hidden="true" />
+              Featured
+            </Badge>
+          )}
+          <EventStatusBadge
+            status={event.status}
+            withDot={false}
+            className="border-transparent bg-black/45 text-white shadow-sm backdrop-blur-sm"
+          />
         </div>
       </div>
 
-      <div className="rounded-xl border bg-card p-6 ring-1 ring-foreground/10 space-y-4">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <CalendarDays className="size-4" />
-          {formatDate(event.eventDate)}
+      <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+            {event.title}
+          </h1>
+          {relative && (
+            <span className="mt-2 inline-block rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
+              {relative}
+            </span>
+          )}
         </div>
-
-        {event.location && (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <MapPin className="size-4" />
-            {event.location}
-          </div>
-        )}
-
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Users className="size-4" />
-          {event._count.rsvps} RSVP{event._count.rsvps !== 1 ? "s" : ""}
-        </div>
-
-        {event.organizer && (
-          <div className="text-sm text-muted-foreground">
-            Organized by <span className="font-medium text-foreground">{event.organizer.name}</span>
-          </div>
-        )}
       </div>
 
+      {/* ── Key facts ─────────────────────────────────────────────── */}
+      <Card className="mt-6">
+        <CardContent className="grid gap-5 p-5 sm:grid-cols-2 sm:p-6">
+          <InfoRow icon={CalendarDays}>
+            <p className="font-medium text-foreground">
+              {full} &middot; {time}
+            </p>
+          </InfoRow>
+          {event.location && (
+            <InfoRow icon={MapPin}>
+              <p className="font-medium text-foreground">{event.location}</p>
+            </InfoRow>
+          )}
+          <InfoRow icon={Users}>
+            <p className="font-medium text-foreground">
+              {event._count.rsvps.toLocaleString()}{" "}
+              {event._count.rsvps === 1 ? "student going" : "students going"}
+            </p>
+          </InfoRow>
+          {event.organizer && (
+            <InfoRow icon={UserRound}>
+              <div className="flex items-center gap-2">
+                <Avatar
+                  id={event.organizer.id}
+                  name={event.organizer.name}
+                  src={event.organizer.image}
+                  className="size-6 text-[10px]"
+                />
+                <div>
+                  <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                    Organized by
+                  </p>
+                  <p className="font-medium text-foreground">
+                    {event.organizer.name}
+                  </p>
+                </div>
+              </div>
+            </InfoRow>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* ── About ─────────────────────────────────────────────────── */}
       {event.description && (
-        <div className="rounded-xl border bg-card p-6 ring-1 ring-foreground/10">
-          <h2 className="mb-2 text-sm font-semibold text-foreground">About this event</h2>
-          <p className="text-sm text-muted-foreground whitespace-pre-wrap">{event.description}</p>
+        <Card className="mt-6">
+          <CardContent className="p-5 sm:p-6">
+            <h2 className="text-sm font-semibold text-foreground">
+              About this event
+            </h2>
+            <Separator className="my-3" />
+            <p className="whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">
+              {event.description}
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* ── CTA ───────────────────────────────────────────────────── */}
+      {event.status === "UPCOMING" && (
+        <div className="mt-6 flex flex-col items-center justify-between gap-3 rounded-2xl border border-primary/20 bg-primary/5 p-5 sm:flex-row sm:p-6">
+          <div className="text-center sm:text-left">
+            <p className="text-sm font-semibold text-foreground">
+              {event.isRsvpd ? "You're going!" : "Don't miss out"}
+            </p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              {event.isRsvpd
+                ? "You're on the list."
+                : `${event._count.rsvps.toLocaleString()} ${
+                    event._count.rsvps === 1 ? "student is" : "students are"
+                  } already going.`}
+            </p>
+          </div>
+          <Button
+            onClick={handleRsvp}
+            disabled={rsvpLoading}
+            variant={event.isRsvpd ? "outline" : "default"}
+            className="w-full sm:w-auto"
+          >
+            {rsvpLoading
+              ? "Updating..."
+              : event.isRsvpd
+                ? "Cancel"
+                : "Going to this event"}
+          </Button>
         </div>
       )}
 
-      {event.status === "UPCOMING" && (
-        <Button
-          onClick={handleRsvp}
-          disabled={rsvpLoading}
-          variant={event.isRsvpd ? "outline" : "default"}
-          className="w-full"
-        >
-          {rsvpLoading
-            ? "Updating..."
-            : event.isRsvpd
-              ? "Cancel RSVP"
-              : "RSVP to this event"}
-        </Button>
+      {event.status !== "UPCOMING" && (
+        <div className="mt-6 rounded-xl border border-border/60 bg-card p-4 text-center text-sm text-muted-foreground">
+          {event.status === "COMPLETED"
+            ? "This event has ended."
+            : event.status === "CANCELLED"
+              ? "This event was cancelled."
+              : "This event is happening right now."}
+        </div>
       )}
     </div>
   );

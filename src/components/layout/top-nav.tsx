@@ -542,8 +542,6 @@ export function TopNav({ userName, userImage, userId }: TopNavProps) {
         </div>
       </nav>
 
-      <div className="md:hidden h-16" aria-hidden="true" />
-
       <AnimatePresence>
         {sheetOpen && (
           <>

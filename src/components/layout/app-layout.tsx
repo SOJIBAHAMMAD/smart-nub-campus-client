@@ -17,12 +17,21 @@ interface AppLayoutProps {
  *
  * Includes a skip-to-content link for keyboard/screen-reader users.
  */
-export function AppLayout({ children, userName, userImage, userId }: AppLayoutProps) {
+export function AppLayout({
+  children,
+  userName,
+  userImage,
+  userId,
+}: AppLayoutProps) {
   return (
     <div className="flex h-full flex-col bg-gray-50 dark:bg-background">
       <SkipToContent />
       <TopNav userName={userName} userImage={userImage} userId={userId} />
-      <main id="main-content" tabIndex={-1} className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+      <main
+        id="main-content"
+        tabIndex={-1}
+        className="flex min-h-0 flex-1 flex-col overflow-y-auto scrollbar-thin"
+      >
         {children}
       </main>
     </div>
