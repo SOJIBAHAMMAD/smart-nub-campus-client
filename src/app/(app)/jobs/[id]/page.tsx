@@ -10,6 +10,16 @@ import {
   EmptyDescription,
 } from "@/components/ui/empty";
 import { Briefcase } from "lucide-react";
+import { stripHtml } from "@/lib/job-utils";
+import { JobSource } from "@/constants/enums";
+
+const EMPLOYMENT_TYPE_MAP: Record<string, string> = {
+  FULL_TIME: "FULL_TIME",
+  PART_TIME: "PART_TIME",
+  CONTRACT: "CONTRACTOR",
+  INTERNSHIP: "INTERN",
+  REMOTE: "FULL_TIME",
+};
 
 export const metadata: Metadata = {
   title: "Job Details",
@@ -62,5 +72,59 @@ export default async function JobDetailPage({
     );
   }
 
-  return <JobDetailClient job={job} userId={userId} userRole={userRole} />;
+  const employmentType = EMPLOYMENT_TYPE_MAP[job.employmentType];
+  const jobPostingJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "JobPosting",
+    title: job.title,
+    description: stripHtml(job.description),
+    datePosted: job.createdAt,
+    ...(job.deadline ? { validThrough: job.deadline } : {}),
+    ...(employmentType ? { employmentType } : {}),
+    hiringOrganization: {
+      "@type": "Organization",
+      name: job.company,
+    },
+    ...(job.location
+      ? {
+          jobLocation: {
+            "@type": "Place",
+            address: {
+              "@type": "PostalAddress",
+              addressLocality: job.location,
+            },
+          },
+        }
+      : {}),
+    ...(job.salaryRange
+      ? {
+          baseSalary: {
+            "@type": "MonetaryAmount",
+            value: {
+              "@type": "QuantitativeValue",
+              value: job.salaryRange,
+              unitText: "per month",
+            },
+          },
+        }
+      : {}),
+    identifier: {
+      "@type": "PropertyValue",
+      name: "Smart NUB Campus",
+      value: job.id,
+    },
+    ...(job.sourceUrl && job.source !== JobSource.PLATFORM
+      ? { url: job.sourceUrl }
+      : {}),
+  };
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jobPostingJsonLd) }}
+      />
+      <JobDetailClient job={job} userId={userId} userRole={userRole} />
+    </>
+  );
 }

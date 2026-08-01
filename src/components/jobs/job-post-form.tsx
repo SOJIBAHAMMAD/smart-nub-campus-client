@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import {
   Select,
   SelectContent,
@@ -34,6 +35,7 @@ import {
   createJobAction,
   importJobAction,
 } from "@/actions/jobs.actions";
+import { stripHtml, textToHtml } from "@/lib/job-utils";
 import type { ParsedJobDraft } from "@/types";
 import { toast } from "sonner";
 
@@ -89,7 +91,9 @@ export function JobPostForm() {
       ...prev,
       title: draft.title || prev.title,
       company: draft.company || prev.company,
-      description: draft.description || prev.description,
+      description: draft.description
+        ? textToHtml(draft.description)
+        : prev.description,
       employmentType,
       location: draft.location || prev.location,
       salaryRange: draft.salaryRange || prev.salaryRange,
@@ -132,10 +136,11 @@ export function JobPostForm() {
     }
 
     startTransition(async () => {
+      const description = form.description.trim();
       const result = await createJobAction({
         title: form.title.trim(),
         company: form.company.trim(),
-        description: form.description.trim() || undefined,
+        description: stripHtml(description).length > 0 ? description : undefined,
         employmentType: form.employmentType,
         location: form.location.trim() || undefined,
         salaryRange: form.salaryRange.trim() || undefined,
@@ -360,14 +365,15 @@ export function JobPostForm() {
 
               <div className="space-y-1.5 sm:col-span-2">
                 <Label>Description (optional)</Label>
-                <Textarea
+                <RichTextEditor
                   value={form.description}
-                  onChange={(e) => setField("description", e.target.value)}
+                  onChange={(v) => setField("description", v)}
                   placeholder="Responsibilities, requirements, and how to apply..."
-                  rows={6}
-                  maxLength={4000}
                   disabled={isPending}
                 />
+                <p className="text-xs text-muted-foreground">
+                  Supports rich text — headings, bold, lists, links, and more.
+                </p>
               </div>
             </div>
 
