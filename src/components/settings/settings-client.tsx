@@ -10,7 +10,6 @@ import { SecuritySettings } from "./security-settings";
 import { AccountManagement } from "./account-management";
 import { BlockedUsers } from "./blocked-users";
 import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
 import {
   getPrivacySettingsAction,
   getNotificationSettingsAction,

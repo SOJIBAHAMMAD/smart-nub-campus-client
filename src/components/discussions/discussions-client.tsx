@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import Link from "next/link";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { AlertCircle, X, LayoutGrid, List, Lightbulb } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { PageLayout } from "@/components/layout/page-layout";
 import { ModuleLayout } from "@/components/layout/module-layout";
 import {
   DiscussionsSidebar,
@@ -576,7 +576,7 @@ Start conversations, upvote or downvote replies.
                   : "Be the first to start a discussion and get the conversation going."}
               </p>
               {!search && !categorySlug && !tagSlug && (
-                <Button render={<a href="/discussions/create" />} nativeButton={false} className="mt-4" size="sm">
+                <Button render={<Link href="/discussions/create" />} nativeButton={false} className="mt-4" size="sm">
                   Start a Discussion
                 </Button>
               )}

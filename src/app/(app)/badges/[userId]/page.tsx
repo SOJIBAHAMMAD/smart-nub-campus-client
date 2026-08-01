@@ -5,7 +5,7 @@ import { profileService } from "@/services/profile.service";
 import { gamificationService } from "@/services/gamification.service";
 import { BadgesClient } from "@/components/leaderboard/badges-client";
 import { BadgesSkeleton } from "@/components/leaderboard/badges-skeleton";
-import type { ProfileBadge, ProfileUser } from "@/types/profile.types";
+import type { ProfileBadge } from "@/types/profile.types";
 
 interface UserBadgesPageProps {
   params: Promise<{ userId: string }>;

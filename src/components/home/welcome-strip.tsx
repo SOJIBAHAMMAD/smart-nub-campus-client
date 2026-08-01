@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useCallback } from "react";
-import { motion } from "motion/react";
 import { Search, Sparkles, Bell, MessageCircle, BookOpen, TrendingUp } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import ROUTES from "@/constants/routes";

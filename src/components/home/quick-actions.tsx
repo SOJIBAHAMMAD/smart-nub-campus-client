@@ -6,7 +6,6 @@ import {
   MessageSquare,
   BookOpen,
   Bot,
-  UserPlus,
   GraduationCap,
 } from "lucide-react";
 import ROUTES from "@/constants/routes";

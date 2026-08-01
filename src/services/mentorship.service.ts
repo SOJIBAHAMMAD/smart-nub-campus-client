@@ -1,7 +1,6 @@
 import serverApi from "@/lib/server-api";
 import { TAGS } from "@/lib/cache-tags";
 import type {
-  Mentor,
   MentorListResponse,
   MentorshipRequest,
   MentorshipRequestListResponse,

@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import {
-  ChevronLeft,
   Bookmark,
   Share2,
   Pin,
@@ -11,11 +10,9 @@ import {
   CheckCircle,
   Eye,
   MessageCircle,
-  Loader2,
   ChevronDown,
   CheckCheck,
   Edit3,
-  Flag,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -49,7 +46,6 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { ReplyCard } from "@/components/discussions/reply-card";
 import { ReplyForm } from "@/components/discussions/reply-form";
-import { ReportDialog } from "@/components/discussions/report-dialog";
 import { DiscussionEditForm } from "@/components/discussions/discussion-edit-form";
 import {
   voteDiscussion,

@@ -11,7 +11,6 @@ import {
   TopContributors,
   type TopContributor,
 } from "@/components/contributors/top-contributors";
-import { cn } from "@/lib/utils";
 
 interface DiscussionsTrendingProps {
   trendingDiscussions: Discussion[];

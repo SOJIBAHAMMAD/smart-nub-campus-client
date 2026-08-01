@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { Check, X, HelpCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import { Check, X, HelpCircle, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "@/lib/utils";
 

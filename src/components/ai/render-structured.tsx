@@ -4,21 +4,6 @@ import { QuizCard, type QuizQuestion } from "./quiz-card";
 import { FlashcardDeck, type Flashcard } from "./flashcard-deck";
 import { SummaryBlock } from "./summary-block";
 
-interface QuizData {
-  questions?: QuizQuestion[];
-  totalQuestions?: number;
-}
-
-interface FlashcardData {
-  cards?: Flashcard[];
-  totalCards?: number;
-}
-
-interface SummaryData {
-  summary?: string;
-  keyPoints?: string[];
-}
-
 interface CodeMeta {
   language?: string;
   title?: string;

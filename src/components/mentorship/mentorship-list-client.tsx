@@ -125,7 +125,7 @@ interface MentorshipListClientProps {
 export function MentorshipListClient({
   initialMentors,
   initialMeta,
-  initialFilters,
+  initialFilters: _initialFilters,
   userRole,
 }: MentorshipListClientProps) {
   const router = useRouter();

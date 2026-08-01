@@ -1,11 +1,8 @@
 import { apiClient } from "@/lib/api-client";
 import type {
   AdminDashboardStats,
-  AdminDiscussion,
   ListAdminDiscussionsParams,
   ListAdminDiscussionsResponse,
-  AdminDiscussionSort,
-  AdminDiscussionStatus,
   AdminDashboardCharts,
   ListAdminUsersParams,
   ListAdminUsersResponse,
@@ -29,10 +26,8 @@ import type {
   CreateEventInput,
   ListAdminReportsResponse,
   AdminReportStatus,
-  AdminJob,
   ListAdminJobsParams,
   ListAdminJobsResponse,
-  AdminAlumni,
   ListAdminAlumniParams,
   ListAdminAlumniResponse,
 } from "@/types/admin.types";

@@ -5,7 +5,6 @@ import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { Bookmark, MessageCircle, SearchX, Plus, LayoutGrid, List, Lightbulb, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { PageLayout } from "@/components/layout/page-layout";
 import { ModuleLayout } from "@/components/layout/module-layout";
 import {
   QASidebar,
