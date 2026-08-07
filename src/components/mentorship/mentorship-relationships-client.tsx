@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import {
-  ArrowLeft,
   ArrowRight,
   CalendarDays,
   Handshake,
@@ -12,8 +11,11 @@ import {
   Sparkles,
   Target,
 } from "lucide-react";
+import { MentorshipNav } from "./mentorship-nav";
+import { MentorshipGuideSidebar } from "./mentorship-guide-sidebar";
+import { PageLayout } from "@/components/layout/page-layout";
 import { Avatar } from "@/components/ui/avatar";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Metric } from "@/components/ui/metric";
@@ -45,8 +47,8 @@ const STATUS_META: Record<
   string,
   { label: string; variant: "default" | "secondary" | "outline" }
 > = {
-  [MentorshipStatus.ACTIVE]: { label: "Active", variant: "default" },
-  [MentorshipStatus.COMPLETED]: { label: "Completed", variant: "secondary" },
+  [MentorshipStatus.ACTIVE]: { label: "Active", variant: "secondary" },
+  [MentorshipStatus.COMPLETED]: { label: "Completed", variant: "outline" },
   [MentorshipStatus.ENDED]: { label: "Ended", variant: "outline" },
 };
 
@@ -174,35 +176,23 @@ export function MentorshipRelationshipsClient({
   ];
 
   return (
-    <div className="mx-auto max-w-3xl space-y-4 p-4 sm:p-6">
-      {/* Header */}
-      <div className="flex items-center justify-between gap-2">
-        <Link
-          href={ROUTES.MENTORSHIP}
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-        >
-          <ArrowLeft className="size-4" />
-          Back to mentorship
-        </Link>
-        <Link
-          href={ROUTES.MENTORSHIP_REQUESTS}
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-        >
-          Requests
-        </Link>
-      </div>
-
-      <div>
-        <h1 className="flex items-center gap-2 text-xl font-bold text-foreground">
-          <Handshake className="size-5 text-primary" />
-          My mentorships
-        </h1>
-        <p className="mt-0.5 text-sm text-muted-foreground">
-          {total > 0
-            ? `${total} relationship${total === 1 ? "" : "s"} with NUB alumni`
-            : "Active mentorship relationships live here once a request is accepted."}
-        </p>
-      </div>
+    <PageLayout
+      leftSidebar={<MentorshipGuideSidebar kind="relationships" />}
+      leftSidebarTitle="Mentorship"
+    >
+      <MentorshipNav />
+      <div className="mt-4 space-y-4">
+        <div>
+          <h1 className="flex items-center gap-2 text-xl font-bold text-foreground">
+            <Handshake className="size-5 text-primary" />
+            My mentorships
+          </h1>
+          <p className="mt-0.5 text-sm text-muted-foreground">
+            {total > 0
+              ? `${total} relationship${total === 1 ? "" : "s"} with NUB alumni`
+              : "Active mentorship relationships live here once a request is accepted."}
+          </p>
+        </div>
 
       {/* Segmented status control */}
       <div
@@ -283,9 +273,9 @@ export function MentorshipRelationshipsClient({
                 <Card
                   key={mentorship.id}
                   size="sm"
-                  className="group overflow-hidden transition-all hover:-translate-y-0.5 hover:shadow-md hover:ring-1 hover:ring-primary/25"
+                  className="group transition-shadow hover:shadow-md"
                 >
-                  <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-start">
+                  <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
                     <div className="relative shrink-0">
                       <Avatar
                         id={mentorship.other.id}
@@ -297,7 +287,7 @@ export function MentorshipRelationshipsClient({
                         className={cn(
                           "absolute -bottom-0.5 -right-0.5 size-3.5 rounded-full border-2 border-background",
                           mentorship.status === MentorshipStatus.ACTIVE
-                            ? "bg-emerald-500"
+                            ? "bg-primary"
                             : "bg-muted",
                         )}
                       />
@@ -345,7 +335,7 @@ export function MentorshipRelationshipsClient({
                           </div>
                           <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-muted">
                             <div
-                              className="h-full rounded-full bg-gradient-to-r from-primary to-fuchsia-400 transition-all"
+                              className="h-full rounded-full bg-primary transition-all"
                               style={{ width: `${goalPct}%` }}
                             />
                           </div>
@@ -366,39 +356,41 @@ export function MentorshipRelationshipsClient({
                           })}
                         </p>
                       )}
-
-                      <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t border-border/60 pt-2.5">
-                        <Metric
-                          icon={Target}
-                          value={`${mentorship.stats.completedGoalCount}/${mentorship.stats.goalCount}`}
-                          label="goals"
-                        />
-                        <Metric
-                          icon={Sparkles}
-                          value={`${mentorship.stats.completedSessionCount}/${mentorship.stats.sessionCount}`}
-                          label="sessions"
-                        />
-                        <Metric
-                          icon={MessagesSquare}
-                          value={mentorship._count.messages}
-                          label="messages"
-                        />
-                      </div>
                     </div>
 
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="shrink-0 gap-1"
-                      render={
-                        <Link href={ROUTES.MENTORSHIP_RELATIONSHIP(mentorship.id)} />
-                      }
-                      nativeButton={false}
-                    >
-                      Open
-                      <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
-                    </Button>
+                    <div className="flex shrink-0">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full gap-1 sm:w-auto"
+                        render={
+                          <Link href={ROUTES.MENTORSHIP_RELATIONSHIP(mentorship.id)} />
+                        }
+                        nativeButton={false}
+                      >
+                        Open
+                        <ArrowRight className="size-3.5" />
+                      </Button>
+                    </div>
                   </CardContent>
+
+                  <CardFooter className="gap-x-5 gap-y-1.5 px-4 py-2.5 sm:px-5">
+                    <Metric
+                      icon={Target}
+                      value={`${mentorship.stats.completedGoalCount}/${mentorship.stats.goalCount}`}
+                      label="goals"
+                    />
+                    <Metric
+                      icon={Sparkles}
+                      value={`${mentorship.stats.completedSessionCount}/${mentorship.stats.sessionCount}`}
+                      label="sessions"
+                    />
+                    <Metric
+                      icon={MessagesSquare}
+                      value={mentorship._count.messages}
+                      label="messages"
+                    />
+                  </CardFooter>
                 </Card>
               );
             })}
@@ -458,6 +450,7 @@ export function MentorshipRelationshipsClient({
           )}
         </>
       )}
-    </div>
+      </div>
+    </PageLayout>
   );
 }

@@ -68,7 +68,7 @@ export default async function MentorshipPage({
   }
 
   return (
-    <Suspense fallback={<PageLayoutSkeleton />}>
+    <Suspense fallback={<PageLayoutSkeleton hasRightSidebar={false} />}>
       <MentorshipListClient
         initialMentors={initialMentors}
         initialMeta={initialMeta}

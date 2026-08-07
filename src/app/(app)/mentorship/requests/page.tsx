@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { serverApi } from "@/lib/server-api";
 import { MentorshipRequestsClient } from "@/components/mentorship/mentorship-requests-client";
+import { PageLayoutSkeleton } from "@/components/skeletons/page-layout-skeleton";
 
 export const metadata: Metadata = {
   title: "My Mentorship Requests",
@@ -22,5 +24,13 @@ export default async function MentorshipRequestsPage() {
     // Proxy handles auth redirect.
   }
 
-  return <MentorshipRequestsClient userRole={userRole} />;
+  return (
+    <Suspense
+      fallback={
+        <PageLayoutSkeleton hasRightSidebar={false} cardCount={3} variant="list" />
+      }
+    >
+      <MentorshipRequestsClient userRole={userRole} />
+    </Suspense>
+  );
 }

@@ -2,22 +2,20 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
-import Link from "next/link";
 import {
   ArrowRight,
   Compass,
   Handshake,
-  MessageSquare,
   Plus,
   Search,
   Sparkles,
   Target,
-  Users,
   X,
 } from "lucide-react";
 import { PageLayout } from "@/components/layout/page-layout";
 import { Avatar } from "@/components/ui/avatar";
 import { MentorCard } from "./mentor-card";
+import { MentorshipNav } from "./mentorship-nav";
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -43,7 +41,6 @@ import {
 import { listMentorsAction, createMentorshipRequestAction } from "@/actions/mentorship.actions";
 import { cn } from "@/lib/utils";
 import { DEPARTMENT_LABELS } from "@/lib/constants";
-import ROUTES from "@/constants/routes";
 import { UserRole } from "@/constants/enums";
 import type { Mentor, PaginationMeta } from "@/types";
 import { toast } from "sonner";
@@ -358,60 +355,19 @@ export function MentorshipListClient({
 
   return (
     <PageLayout leftSidebar={sidebar} leftSidebarTitle="Filters">
-      {/* ── Sub-navigation ─────────────────────────────────────── */}
-      <div
-        role="group"
-        aria-label="Mentorship navigation"
-        className="inline-flex w-full items-center gap-0.5 rounded-full border border-border bg-card p-0.5 sm:w-fit"
-      >
-        <span
-          className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-full bg-primary px-4 py-1.5 text-xs font-medium text-primary-foreground shadow-sm sm:flex-none"
-        >
-          <Compass className="size-3.5" />
-          Find mentors
-        </span>
-        <Link
-          href={ROUTES.MENTORSHIP_REQUESTS}
-          className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:flex-none"
-        >
-          <MessageSquare className="size-3.5" />
-          My requests
-        </Link>
-        <Link
-          href={ROUTES.MENTORSHIP_RELATIONSHIPS}
-          className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:flex-none"
-        >
-          <Users className="size-3.5" />
-          My mentorships
-        </Link>
-      </div>
+      {/* ── Section navigation ────────────────────────────────── */}
+      <MentorshipNav />
 
       {/* ── Hero band ─────────────────────────────────────────── */}
-      <section className="relative overflow-hidden rounded-2xl border bg-card px-5 py-7 sm:px-8 sm:py-9">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -right-24 -top-28 size-72 rounded-full bg-primary/20 blur-3xl"
-        />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -bottom-32 -left-20 size-72 rounded-full bg-fuchsia-400/10 blur-3xl"
-        />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(0,0,0,0.03),transparent_60%)]"
-        />
-
-        <div className="relative">
+      <section className="mt-4 rounded-2xl border bg-card px-5 py-7 sm:px-8 sm:py-9">
+        <div>
           <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-primary">
             <Handshake className="size-3.5" />
             Alumni mentorship program
           </span>
 
           <h1 className="mt-3.5 max-w-xl text-2xl font-bold leading-tight tracking-tight text-foreground sm:text-3xl">
-            Find a mentor who{" "}
-            <span className="bg-gradient-to-r from-primary to-fuchsia-500 bg-clip-text text-transparent">
-              has walked your path
-            </span>
+            Find a mentor who has walked your path
           </h1>
           <p className="mt-2.5 max-w-xl text-sm leading-relaxed text-muted-foreground">
             Get free, 1-on-1 career guidance from NUB alumni. Tell us what you

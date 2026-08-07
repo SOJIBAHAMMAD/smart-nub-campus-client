@@ -2,17 +2,17 @@
 
 import { useState, useEffect, useCallback } from "react";
 import {
-  ArrowLeft,
   CheckCircle2,
   Inbox,
   MessageSquare,
-  Users,
   XCircle,
   Loader2,
 } from "lucide-react";
-import Link from "next/link";
+import { MentorshipNav } from "./mentorship-nav";
+import { MentorshipGuideSidebar } from "./mentorship-guide-sidebar";
+import { PageLayout } from "@/components/layout/page-layout";
 import { Avatar } from "@/components/ui/avatar";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -24,7 +24,6 @@ import {
   EmptyTitle,
   EmptyDescription,
 } from "@/components/ui/empty";
-import ROUTES from "@/constants/routes";
 import { ApplicationStatus, UserRole } from "@/constants/enums";
 import {
   listMentorshipRequestsAction,
@@ -83,7 +82,7 @@ function RequestCard({
 
   return (
     <Card size="sm">
-      <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-start">
+      <CardContent className="flex gap-3 p-4">
         <Avatar
           id={other.id}
           name={other.name}
@@ -97,17 +96,27 @@ function RequestCard({
             </p>
             <Badge
               variant={
-                request.status === ApplicationStatus.ACCEPTED
-                  ? "default"
-                  : request.status === ApplicationStatus.REJECTED
-                    ? "destructive"
+                request.status === ApplicationStatus.PENDING
+                  ? "outline"
+                  : request.status === ApplicationStatus.ACCEPTED
+                    ? "secondary"
                     : request.status === ApplicationStatus.WITHDRAWN
-                      ? "secondary"
+                      ? "ghost"
                       : "outline"
+              }
+              className={
+                request.status === ApplicationStatus.REJECTED
+                  ? "text-muted-foreground"
+                  : undefined
               }
             >
               {STATUS_LABELS[request.status] ?? request.status}
             </Badge>
+            {formatDate(request.createdAt) && (
+              <time className="ml-auto text-[11px] text-muted-foreground/70">
+                {formatDate(request.createdAt)}
+              </time>
+            )}
           </div>
           {subtitle && (
             <p className="mt-0.5 truncate text-xs text-muted-foreground">
@@ -135,50 +144,47 @@ function RequestCard({
               {request.message}
             </p>
           )}
-          <p className="mt-1.5 text-[11px] text-muted-foreground/70">
-            {formatDate(request.createdAt)}
-          </p>
         </div>
+      </CardContent>
 
-        {isPending && (
-          <div className="flex shrink-0 items-center gap-1.5">
-            {isMentor ? (
-              <>
-                <Button
-                  size="sm"
-                  className="h-8 gap-1"
-                  onClick={() => onRespond(request.id, ApplicationStatus.ACCEPTED)}
-                  disabled={busy}
-                >
-                  {busy ? <Loader2 className="size-3.5 animate-spin" /> : <CheckCircle2 className="size-3.5" />}
-                  Accept
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-8 gap-1 text-destructive hover:text-destructive"
-                  onClick={() => onRespond(request.id, ApplicationStatus.REJECTED)}
-                  disabled={busy}
-                >
-                  {busy ? <Loader2 className="size-3.5 animate-spin" /> : <XCircle className="size-3.5" />}
-                  Decline
-                </Button>
-              </>
-            ) : (
+      {isPending && (
+        <CardFooter className="justify-end gap-1.5 border-t px-4 py-2.5 sm:px-5">
+          {isMentor ? (
+            <>
+              <Button
+                size="sm"
+                className="h-8 gap-1"
+                onClick={() => onRespond(request.id, ApplicationStatus.ACCEPTED)}
+                disabled={busy}
+              >
+                {busy ? <Loader2 className="size-3.5 animate-spin" /> : <CheckCircle2 className="size-3.5" />}
+                Accept
+              </Button>
               <Button
                 size="sm"
                 variant="outline"
                 className="h-8 gap-1 text-destructive hover:text-destructive"
-                onClick={() => onRespond(request.id, ApplicationStatus.WITHDRAWN)}
+                onClick={() => onRespond(request.id, ApplicationStatus.REJECTED)}
                 disabled={busy}
               >
                 {busy ? <Loader2 className="size-3.5 animate-spin" /> : <XCircle className="size-3.5" />}
-                Withdraw
+                Decline
               </Button>
-            )}
-          </div>
-        )}
-      </CardContent>
+            </>
+          ) : (
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-8 gap-1 text-destructive hover:text-destructive"
+              onClick={() => onRespond(request.id, ApplicationStatus.WITHDRAWN)}
+              disabled={busy}
+            >
+              {busy ? <Loader2 className="size-3.5 animate-spin" /> : <XCircle className="size-3.5" />}
+              Withdraw
+            </Button>
+          )}
+        </CardFooter>
+      )}
     </Card>
   );
 }
@@ -276,78 +282,70 @@ export function MentorshipRequestsClient({
   };
 
   return (
-    <div className="mx-auto max-w-3xl space-y-4 p-4 sm:p-6">
-      <div className="flex items-center justify-between gap-2">
-        <Link
-          href={ROUTES.MENTORSHIP}
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-        >
-          <ArrowLeft className="size-4" />
-          Back to mentorship
-        </Link>
-        <Link
-          href={ROUTES.MENTORSHIP_RELATIONSHIPS}
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-        >
-          <Users className="size-4" />
-          My mentorships
-        </Link>
-      </div>
-
-      <div>
-        <h1 className="flex items-center gap-2 text-xl font-bold text-foreground">
-          <MessageSquare className="size-5 text-primary" />
-          Mentorship requests
-        </h1>
-        <p className="mt-0.5 text-sm text-muted-foreground">
-          {isMentor
-            ? "Review requests from students and keep track of the ones you've sent."
-            : "Track the requests you've sent and their responses."}
-        </p>
-      </div>
-
-      {isMentor && (
-        <Tabs
-          value={tab}
-          onValueChange={(value) => setTab(value as "incoming" | "outgoing")}
-        >
-          <TabsList className="w-full justify-start gap-1 rounded-full border border-border bg-card p-1 sm:w-fit">
-            <TabsTrigger value="incoming" className="gap-1.5 rounded-full data-active:shadow-sm">
-              Incoming
-              {incoming.length > 0 && ` (${incoming.length})`}
-            </TabsTrigger>
-            <TabsTrigger value="outgoing" className="gap-1.5 rounded-full data-active:shadow-sm">
-              Sent by me
-            </TabsTrigger>
-          </TabsList>
-          <div className="mt-4">
-            {tab === "incoming"
-              ? renderList(
-                  incoming,
-                  "mentor",
-                  "No incoming requests",
-                  "When students request your guidance, their requests will appear here.",
-                )
-              : renderList(
-                  outgoing,
-                  "mentee",
-                  "No outgoing requests",
-                  "Requests you send to mentors will appear here.",
-                )}
-          </div>
-        </Tabs>
-      )}
-
-      {!isMentor && (
+    <PageLayout
+      leftSidebar={<MentorshipGuideSidebar kind="requests" />}
+      leftSidebarTitle="Mentorship"
+    >
+      <MentorshipNav />
+      <div className="mt-4 space-y-4">
         <div>
-          {renderList(
-            outgoing,
-            "mentee",
-            "No requests yet",
-            "Send a request from the mentorship directory to start the conversation.",
-          )}
+          <h1 className="flex items-center gap-2 text-xl font-bold text-foreground">
+            <MessageSquare className="size-5 text-primary" />
+            My requests
+          </h1>
+          <p className="mt-0.5 text-sm text-muted-foreground">
+            {isMentor
+              ? "Review requests from students and keep track of the ones you've sent."
+              : "Track the requests you've sent and their responses."}
+          </p>
         </div>
-      )}
-    </div>
+
+        {isMentor && (
+          <Tabs
+            value={tab}
+            onValueChange={(value) => setTab(value as "incoming" | "outgoing")}
+          >
+            <TabsList
+              variant="line"
+              className="w-full justify-start gap-1 border-b border-border p-0 sm:w-fit"
+            >
+              <TabsTrigger value="incoming" className="gap-1.5 rounded-none px-3 after:bg-primary">
+                Incoming
+                {incoming.length > 0 && ` (${incoming.length})`}
+              </TabsTrigger>
+              <TabsTrigger value="outgoing" className="gap-1.5 rounded-none px-3 after:bg-primary">
+                Sent by me
+              </TabsTrigger>
+            </TabsList>
+            <div className="mt-4">
+              {tab === "incoming"
+                ? renderList(
+                    incoming,
+                    "mentor",
+                    "No incoming requests",
+                    "When students request your guidance, their requests will appear here.",
+                  )
+                : renderList(
+                    outgoing,
+                    "mentee",
+                    "No outgoing requests",
+                    "Requests you send to mentors will appear here.",
+                  )}
+            </div>
+          </Tabs>
+        )}
+
+        {!isMentor && (
+          <div>
+            {renderList(
+              outgoing,
+              "mentee",
+              "No requests yet",
+              "Send a request from the mentorship directory to start the conversation.",
+            )}
+          </div>
+        )}
+      </div>
+    </PageLayout>
   );
 }
