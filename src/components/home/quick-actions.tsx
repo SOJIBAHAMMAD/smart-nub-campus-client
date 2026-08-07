@@ -79,14 +79,8 @@ const actions = [
 export function QuickActions() {
   return (
     <section>
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-4">
         <h2 className="text-lg font-semibold text-foreground">Quick Actions</h2>
-        <Link
-          href={ROUTES.RESOURCES}
-          className="text-sm font-medium text-primary transition-colors hover:text-primary/80"
-        >
-          View all &rarr;
-        </Link>
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">

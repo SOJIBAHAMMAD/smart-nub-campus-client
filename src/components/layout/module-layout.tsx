@@ -43,7 +43,7 @@ export function ModuleLayout({
   return (
     <>
       <PageLayout leftSidebar={leftSidebar} rightSidebar={rightSidebar}>
-        <div className={cn("space-y-4 pb-20 lg:pb-0", className)}>
+        <div className={cn("space-y-4", className)}>
           <div>
             <h1 className="text-2xl font-bold text-foreground">{title}</h1>
             <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
