@@ -29,6 +29,8 @@ const ROUTES = {
   NEW_JOB: "/jobs/new",
   MENTORSHIP: "/mentorship",
   MENTORSHIP_REQUESTS: "/mentorship/requests",
+  MENTORSHIP_RELATIONSHIPS: "/mentorship/relationships",
+  MENTORSHIP_RELATIONSHIP: (id: string) => `/mentorship/relationships/${id}`,
   ALUMNI_MEMBER: (id: string) => `/alumni/${id}`,
   JOB: (id: string) => `/jobs/${id}`,
   JOB_EDIT: (id: string) => `/jobs/${id}/edit`,

@@ -91,6 +91,9 @@ export const TAGS = {
   /** Mentorship requests (incoming + outgoing). */
   MENTORSHIP_REQUESTS: "mentorship-requests",
 
+  /** Mentorship relationships (list + detail). */
+  MENTORSHIPS: "mentorships",
+
   /** Campus-wide activity feed (home + /activity). */
   ACTIVITIES: "activities",
 } as const;

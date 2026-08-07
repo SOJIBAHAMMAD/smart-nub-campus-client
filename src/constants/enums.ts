@@ -256,10 +256,67 @@ export const NotificationType = {
   JOB_APPLICATION_UPDATED: "JOB_APPLICATION_UPDATED",
   MENTORSHIP_REQUEST_RECEIVED: "MENTORSHIP_REQUEST_RECEIVED",
   MENTORSHIP_REQUEST_UPDATED: "MENTORSHIP_REQUEST_UPDATED",
+  MENTORSHIP_ACCEPTED: "MENTORSHIP_ACCEPTED",
+  MENTORSHIP_SESSION_SCHEDULED: "MENTORSHIP_SESSION_SCHEDULED",
+  MENTORSHIP_SESSION_UPDATED: "MENTORSHIP_SESSION_UPDATED",
+  MENTORSHIP_GOAL_UPDATED: "MENTORSHIP_GOAL_UPDATED",
+  MENTORSHIP_MESSAGE: "MENTORSHIP_MESSAGE",
+  MENTORSHIP_COMPLETED: "MENTORSHIP_COMPLETED",
+  MENTORSHIP_ENDED: "MENTORSHIP_ENDED",
+  MENTORSHIP_REMINDER: "MENTORSHIP_REMINDER",
 } as const;
 
 export type NotificationType =
   (typeof NotificationType)[keyof typeof NotificationType];
+
+// ── Mentorship enums ─────────────────────────────────────────────────────────
+
+export const MentorshipCadence = {
+  WEEKLY: "WEEKLY",
+  BIWEEKLY: "BIWEEKLY",
+  MONTHLY: "MONTHLY",
+  FLEXIBLE: "FLEXIBLE",
+} as const;
+
+export type MentorshipCadence =
+  (typeof MentorshipCadence)[keyof typeof MentorshipCadence];
+
+export const MentorshipStatus = {
+  ACTIVE: "ACTIVE",
+  COMPLETED: "COMPLETED",
+  ENDED: "ENDED",
+} as const;
+
+export type MentorshipStatus =
+  (typeof MentorshipStatus)[keyof typeof MentorshipStatus];
+
+export const MentorshipGoalStatus = {
+  ACTIVE: "ACTIVE",
+  COMPLETED: "COMPLETED",
+  CANCELLED: "CANCELLED",
+} as const;
+
+export type MentorshipGoalStatus =
+  (typeof MentorshipGoalStatus)[keyof typeof MentorshipGoalStatus];
+
+export const MentorshipSessionStatus = {
+  SCHEDULED: "SCHEDULED",
+  COMPLETED: "COMPLETED",
+  CANCELLED: "CANCELLED",
+} as const;
+
+export type MentorshipSessionStatus =
+  (typeof MentorshipSessionStatus)[keyof typeof MentorshipSessionStatus];
+
+export const MeetingPreference = {
+  ONLINE: "ONLINE",
+  IN_PERSON: "IN_PERSON",
+  HYBRID: "HYBRID",
+  FLEXIBLE: "FLEXIBLE",
+} as const;
+
+export type MeetingPreference =
+  (typeof MeetingPreference)[keyof typeof MeetingPreference];
 
 // ── Discussion enums ─────────────────────────────────────────────────────────
 

@@ -28,8 +28,8 @@ export type Department = (typeof DEPARTMENTS)[number];
 export const DEPARTMENT_LABELS: Record<Department, string> = {
   CSE: "Computer Science & Engineering",
   ECSE: "Electronics & Computer Systems Engineering",
-  EEE: "Electrical & Electronics Engineering",
-  EEEE: "Electrical & Electronic Engineering",
+  EEE: "Electrical & Electronic Engineering",
+  EEEE: "Electrical & Electronic Engineering (Evening)",
   BBA: "Bachelor of Business Administration",
   MBA: "Master of Business Administration",
   ENGLISH: "English",

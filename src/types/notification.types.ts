@@ -45,7 +45,17 @@ export type NotificationType =
   | "TEAM_APPLICATION_REJECTED"
   | "EVENT_REMINDER"
   | "BADGE_UNLOCKED"
-  | "SYSTEM";
+  | "SYSTEM"
+  | "MENTORSHIP_REQUEST_RECEIVED"
+  | "MENTORSHIP_REQUEST_UPDATED"
+  | "MENTORSHIP_ACCEPTED"
+  | "MENTORSHIP_SESSION_SCHEDULED"
+  | "MENTORSHIP_SESSION_UPDATED"
+  | "MENTORSHIP_GOAL_UPDATED"
+  | "MENTORSHIP_MESSAGE"
+  | "MENTORSHIP_COMPLETED"
+  | "MENTORSHIP_ENDED"
+  | "MENTORSHIP_REMINDER";
 
 // ── Notification type category mapping ───────────────────────────────────────
 
@@ -57,6 +67,7 @@ export type NotificationCategory =
   | "qa"
   | "discussions"
   | "events"
+  | "mentorship"
   | "system";
 
 export const NOTIFICATION_CATEGORY_MAP: Record<NotificationType, NotificationCategory> = {
@@ -78,6 +89,16 @@ export const NOTIFICATION_CATEGORY_MAP: Record<NotificationType, NotificationCat
   EVENT_REMINDER: "events",
   BADGE_UNLOCKED: "system",
   SYSTEM: "system",
+  MENTORSHIP_REQUEST_RECEIVED: "mentorship",
+  MENTORSHIP_REQUEST_UPDATED: "mentorship",
+  MENTORSHIP_ACCEPTED: "mentorship",
+  MENTORSHIP_SESSION_SCHEDULED: "mentorship",
+  MENTORSHIP_SESSION_UPDATED: "mentorship",
+  MENTORSHIP_GOAL_UPDATED: "mentorship",
+  MENTORSHIP_MESSAGE: "mentorship",
+  MENTORSHIP_COMPLETED: "mentorship",
+  MENTORSHIP_ENDED: "mentorship",
+  MENTORSHIP_REMINDER: "mentorship",
 };
 
 // ── API query / list types ───────────────────────────────────────────────────

@@ -6,17 +6,13 @@ import {
   CheckCircle2,
   Inbox,
   MessageSquare,
+  Users,
   XCircle,
   Loader2,
 } from "lucide-react";
 import Link from "next/link";
 import { Avatar } from "@/components/ui/avatar";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -123,6 +119,16 @@ function RequestCard({
               <span className="font-medium text-foreground">Topic:</span>{" "}
               {request.topic}
             </p>
+          )}
+          {request.goals && request.goals.length > 0 && (
+            <div className="mt-1.5 space-y-1">
+              {request.goals.map((goal, index) => (
+                <p key={`${request.id}-goal-${index}`} className="flex items-start gap-1.5 text-xs text-muted-foreground">
+                  <span className="mt-1 size-1 shrink-0 rounded-full bg-primary/60" />
+                  <span className="line-clamp-1">{goal}</span>
+                </p>
+              ))}
+            </div>
           )}
           {request.message && (
             <p className="mt-1 line-clamp-3 whitespace-pre-wrap text-xs leading-relaxed text-muted-foreground">
@@ -271,55 +277,77 @@ export function MentorshipRequestsClient({
 
   return (
     <div className="mx-auto max-w-3xl space-y-4 p-4 sm:p-6">
-      <Link
-        href={ROUTES.MENTORSHIP}
-        className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-      >
-        <ArrowLeft className="size-4" />
-        Back to mentorship
-      </Link>
+      <div className="flex items-center justify-between gap-2">
+        <Link
+          href={ROUTES.MENTORSHIP}
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <ArrowLeft className="size-4" />
+          Back to mentorship
+        </Link>
+        <Link
+          href={ROUTES.MENTORSHIP_RELATIONSHIPS}
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <Users className="size-4" />
+          My mentorships
+        </Link>
+      </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <MessageSquare className="size-4" />
-            Mentorship requests
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {isMentor ? (
-            <Tabs
-              value={tab}
-              onValueChange={(value) => setTab(value as "incoming" | "outgoing")}
-            >
-              <TabsList className="mb-4 w-full justify-start">
-                <TabsTrigger value="incoming">Incoming</TabsTrigger>
-                <TabsTrigger value="outgoing">Sent by me</TabsTrigger>
-              </TabsList>
-              {tab === "incoming"
-                ? renderList(
-                    incoming,
-                    "mentor",
-                    "No incoming requests",
-                    "When students request your guidance, their requests will appear here.",
-                  )
-                : renderList(
-                    outgoing,
-                    "mentee",
-                    "No outgoing requests",
-                    "Requests you send to mentors will appear here.",
-                  )}
-            </Tabs>
-          ) : (
-            renderList(
-              outgoing,
-              "mentee",
-              "No requests yet",
-              "Send a request from the mentorship directory to start the conversation.",
-            )
+      <div>
+        <h1 className="flex items-center gap-2 text-xl font-bold text-foreground">
+          <MessageSquare className="size-5 text-primary" />
+          Mentorship requests
+        </h1>
+        <p className="mt-0.5 text-sm text-muted-foreground">
+          {isMentor
+            ? "Review requests from students and keep track of the ones you've sent."
+            : "Track the requests you've sent and their responses."}
+        </p>
+      </div>
+
+      {isMentor && (
+        <Tabs
+          value={tab}
+          onValueChange={(value) => setTab(value as "incoming" | "outgoing")}
+        >
+          <TabsList className="w-full justify-start gap-1 rounded-full border border-border bg-card p-1 sm:w-fit">
+            <TabsTrigger value="incoming" className="gap-1.5 rounded-full data-active:shadow-sm">
+              Incoming
+              {incoming.length > 0 && ` (${incoming.length})`}
+            </TabsTrigger>
+            <TabsTrigger value="outgoing" className="gap-1.5 rounded-full data-active:shadow-sm">
+              Sent by me
+            </TabsTrigger>
+          </TabsList>
+          <div className="mt-4">
+            {tab === "incoming"
+              ? renderList(
+                  incoming,
+                  "mentor",
+                  "No incoming requests",
+                  "When students request your guidance, their requests will appear here.",
+                )
+              : renderList(
+                  outgoing,
+                  "mentee",
+                  "No outgoing requests",
+                  "Requests you send to mentors will appear here.",
+                )}
+          </div>
+        </Tabs>
+      )}
+
+      {!isMentor && (
+        <div>
+          {renderList(
+            outgoing,
+            "mentee",
+            "No requests yet",
+            "Send a request from the mentorship directory to start the conversation.",
           )}
-        </CardContent>
-      </Card>
+        </div>
+      )}
     </div>
   );
 }
