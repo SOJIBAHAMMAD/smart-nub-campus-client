@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { PageLayout } from "@/components/layout/page-layout";
 import { Avatar } from "@/components/ui/avatar";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { MentorCard } from "./mentor-card";
 import { MentorshipNav } from "./mentorship-nav";
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
@@ -71,23 +72,6 @@ function FacetButton({
       <span className="truncate text-left">{label}</span>
       {active && <X className="size-3 shrink-0" />}
     </button>
-  );
-}
-
-function FacetGroup({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="space-y-1">
-      <p className="px-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-        {title}
-      </p>
-      {children}
-    </div>
   );
 }
 
@@ -313,7 +297,7 @@ export function MentorshipListClient({
   };
 
   const sidebar = (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {hasFilters && (
         <Button
           variant="ghost"
@@ -326,18 +310,87 @@ export function MentorshipListClient({
         </Button>
       )}
 
-      <FacetGroup title="Department">
-        {Object.entries(DEPARTMENT_LABELS).map(([value, label]) => (
-          <FacetButton
-            key={value}
-            label={label}
-            active={department === value}
-            onClick={() =>
-              updateParams({ department: department === value ? null : value })
-            }
-          />
-        ))}
-      </FacetGroup>
+      <Card size="sm">
+        <CardHeader className="px-4 pt-4 sm:px-5 sm:pt-5">
+          <CardTitle>Filter by department</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-1 px-2 pb-3 sm:px-2">
+          {Object.entries(DEPARTMENT_LABELS).map(([value, label]) => (
+            <FacetButton
+              key={value}
+              label={label}
+              active={department === value}
+              onClick={() =>
+                updateParams({ department: department === value ? null : value })
+              }
+            />
+          ))}
+        </CardContent>
+      </Card>
+
+      <Card size="sm">
+        <CardHeader className="px-4 pt-4 sm:px-5 sm:pt-5">
+          <CardTitle>Browse by topic</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-1 px-2 pb-3 sm:px-2">
+          {trendingTopics.length > 0 ? (
+            trendingTopics.map((t) => (
+              <FacetButton
+                key={t}
+                label={t}
+                active={topic === t}
+                onClick={() => {
+                  setQuery(topic === t ? "" : t);
+                  updateParams({ topic: topic === t ? null : t });
+                }}
+              />
+            ))
+          ) : (
+            <p className="px-2 text-[11px] leading-relaxed text-muted-foreground">
+              No topics on the current results yet.
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card size="sm">
+        <CardHeader className="px-4 pt-4 sm:px-5 sm:pt-5">
+          <CardTitle>How it works</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2.5 px-4 pb-4 text-xs sm:px-5 sm:pb-5">
+          {[
+            {
+              n: 1,
+              title: "Browse mentors",
+              desc: "Filter by department or topic to find a good fit.",
+            },
+            {
+              n: 2,
+              title: "Send a request",
+              desc: "Pick up to 5 goals you want to work on together.",
+            },
+            {
+              n: 3,
+              title: "Track progress",
+              desc: "Once accepted, manage the relationship in My mentorships.",
+            },
+          ].map((step) => (
+            <div key={step.n} className="flex gap-2.5">
+              <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[10px] font-bold text-primary">
+                {step.n}
+              </span>
+              <div className="min-w-0">
+                <p className="text-xs font-medium text-foreground">
+                  {step.title}
+                </p>
+                <p className="text-[11px] leading-relaxed text-muted-foreground">
+                  {step.desc}
+                </p>
+              </div>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
 
       {isStudent && (
         <div className="space-y-3 rounded-xl border border-primary/15 bg-primary/5 p-3.5">

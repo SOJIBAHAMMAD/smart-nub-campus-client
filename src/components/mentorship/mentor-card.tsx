@@ -65,7 +65,7 @@ export function MentorCard({
       size="sm"
       className="group flex h-full flex-col transition-all duration-200 hover:shadow-md"
     >
-      <CardHeader className="gap-3 px-4 pt-4 sm:px-5 sm:pt-5">
+      <CardHeader className="flex-col items-stretch gap-3 px-4 pt-4 sm:px-5 sm:pt-5">
         <div className="flex items-start gap-3">
           <Link
             href={ROUTES.ALUMNI_MEMBER(mentor.id)}
