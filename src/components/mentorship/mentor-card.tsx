@@ -4,6 +4,7 @@ import {
   Handshake,
   Hourglass,
   Sparkles,
+  Star,
   UserRound,
 } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
@@ -44,6 +45,8 @@ export function MentorCard({
   const headline = mentor.profile?.mentorHeadline ?? null;
   const available = mentor.stats.slotsAvailable > 0;
   const highMatch = mentor.matchScore > 0;
+  const ratingAverage = mentor.rating?.average ?? null;
+  const ratingCount = mentor.rating?.count ?? 0;
 
   const relationship = mentor.relationshipState ?? "none";
   const isSelf = relationship === "self";
@@ -117,6 +120,18 @@ export function MentorCard({
             <span className="font-semibold">Strong match:</span> &ldquo;
             {mentor.bestMatchTopic}&rdquo;
           </p>
+        )}
+
+        {ratingAverage !== null && ratingCount > 0 && (
+          <div className="flex items-center gap-1.5">
+            <Star className="size-3.5 fill-amber-400 text-amber-400" />
+            <span className="text-xs font-semibold text-foreground">
+              {ratingAverage.toFixed(1)}
+            </span>
+            <span className="text-[11px] text-muted-foreground">
+              · {ratingCount} rating{ratingCount === 1 ? "" : "s"}
+            </span>
+          </div>
         )}
 
         {topics.length > 0 && (

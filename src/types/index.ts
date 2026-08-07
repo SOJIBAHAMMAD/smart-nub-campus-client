@@ -80,6 +80,7 @@ export type {
   UpdateMentorshipSessionPayload,
   SendMentorshipMessagePayload,
   CompleteMentorshipPayload,
+  RateMentorPayload,
 } from "./mentorship.types";
 
 // ── Resources ────────────────────────────────────────────────────────────────

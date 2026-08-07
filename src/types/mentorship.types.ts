@@ -36,6 +36,10 @@ export interface Mentor {
     committedSlots: number;
     slotsAvailable: number;
   };
+  rating: {
+    average: number | null;
+    count: number;
+  };
   matchScore: number;
   bestMatchTopic: string | null;
   /**
@@ -271,6 +275,10 @@ export interface SendMentorshipMessagePayload {
 }
 
 export interface CompleteMentorshipPayload {
+  feedback?: string;
+}
+
+export interface RateMentorPayload {
   rating: number;
   feedback?: string;
 }

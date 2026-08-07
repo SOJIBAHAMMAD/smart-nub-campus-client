@@ -20,6 +20,7 @@ import type {
   UpdateMentorshipSessionPayload,
   SendMentorshipMessagePayload,
   CompleteMentorshipPayload,
+  RateMentorPayload,
 } from "@/types";
 
 export const mentorshipService = {
@@ -244,7 +245,8 @@ export const mentorshipService = {
   },
 
   /**
-   * Mark a relationship as complete with a rating + optional feedback.
+   * Mark a relationship as complete with an optional private closing note
+   * from the mentor to the mentee.
    * Matches backend POST /mentorship/relationships/:id/complete.
    */
   async completeMentorship(
@@ -255,6 +257,24 @@ export const mentorshipService = {
       `/mentorship/relationships/${mentorshipId}/complete`,
       data,
       { invalidatesTags: [TAGS.MENTORSHIPS] },
+    );
+    return response.data!;
+  },
+
+  /**
+   * Rate the mentor after the mentorship has been completed (mentee only).
+   * Matches backend POST /mentorship/relationships/:id/rate.
+   */
+  async rateMentor(
+    mentorshipId: string,
+    data: RateMentorPayload,
+  ): Promise<Mentorship> {
+    const response = await serverApi.post<Mentorship>(
+      `/mentorship/relationships/${mentorshipId}/rate`,
+      data,
+      {
+        invalidatesTags: [TAGS.MENTORSHIPS, TAGS.MENTORS],
+      },
     );
     return response.data!;
   },

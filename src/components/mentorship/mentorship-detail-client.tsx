@@ -85,6 +85,7 @@ import {
   sendMentorshipMessageAction,
   completeMentorshipAction,
   endMentorshipAction,
+  rateMentorAction,
 } from "@/actions/mentorship.actions";
 import {
   MentorshipStatus,
@@ -197,8 +198,10 @@ export function MentorshipDetailClient({
   // ── Closure ────────────────────────────────────────────────────────────
   const [completeOpen, setCompleteOpen] = useState(false);
   const [endOpen, setEndOpen] = useState(false);
+  const [rateOpen, setRateOpen] = useState(false);
   const [rating, setRating] = useState(5);
   const [feedback, setFeedback] = useState("");
+  const [closingNote, setClosingNote] = useState("");
   const [closing, setClosing] = useState(false);
   const [busyGoalId, setBusyGoalId] = useState<string | null>(null);
   const [busySessionId, setBusySessionId] = useState<string | null>(null);
@@ -448,18 +451,41 @@ export function MentorshipDetailClient({
     setClosing(true);
     try {
       const result = await completeMentorshipAction(mentorshipId, {
-        rating,
-        feedback: feedback.trim() || undefined,
+        feedback: closingNote.trim() || undefined,
       });
       if (result.success) {
         toast.success("Mentorship completed. Thanks for being part of it!");
         setCompleteOpen(false);
+        setClosingNote("");
         await refresh({ silent: true });
       } else {
         toast.error(result.message || "Failed to complete mentorship.");
       }
     } catch {
       toast.error("Failed to complete mentorship.");
+    } finally {
+      setClosing(false);
+    }
+  };
+
+  const handleRateMentor = async () => {
+    setClosing(true);
+    try {
+      const result = await rateMentorAction(mentorshipId, {
+        rating,
+        feedback: feedback.trim() || undefined,
+      });
+      if (result.success) {
+        toast.success("Thanks for rating your mentor!");
+        setRateOpen(false);
+        setFeedback("");
+        setRating(5);
+        await refresh({ silent: true });
+      } else {
+        toast.error(result.message || "Failed to rate mentor.");
+      }
+    } catch {
+      toast.error("Failed to rate mentor.");
     } finally {
       setClosing(false);
     }
@@ -821,6 +847,20 @@ export function MentorshipDetailClient({
                 </Button>
               </div>
             )}
+
+            {!isActive && !isMentor && !mentorship.mentorRating && (
+              <div className="flex shrink-0 items-center gap-1.5">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-1.5"
+                  onClick={() => setRateOpen(true)}
+                >
+                  <Star className="size-3.5" />
+                  Rate your mentor
+                </Button>
+              </div>
+            )}
           </div>
 
           {isActive && (
@@ -829,6 +869,52 @@ export function MentorshipDetailClient({
               {isMentor
                 ? "You drive this mentorship — schedule sessions, track goals, and close it when you're done. Your mentee can add goals and message you anytime."
                 : "Your mentor schedules sessions and manages closure. You can add goals and message them anytime."}
+            </p>
+          )}
+
+          {!isMentor && mentorship.menteeFeedback && (
+            <div className="mt-3 rounded-xl border border-border/60 bg-muted/40 p-3.5">
+              <p className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
+                <Star className="size-3.5 text-primary" />
+                Closing note from {mentorship.mentor.name.split(" ")[0]}
+              </p>
+              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                {mentorship.menteeFeedback}
+              </p>
+              <p className="mt-1 text-[11px] text-muted-foreground/60">
+                Private — only you can see this.
+              </p>
+            </div>
+          )}
+
+          {!isActive && !isMentor && !mentorship.mentorRating && (
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-primary/20 bg-primary/5 px-3.5 py-3">
+              <div>
+                <p className="text-xs font-semibold text-foreground">
+                  How was your mentorship?
+                </p>
+                <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
+                  Your rating helps future students choose a mentor. It is shown
+                  as an average on {mentorship.mentor.name.split(" ")[0]}&apos;s
+                  profile.
+                </p>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1.5"
+                onClick={() => setRateOpen(true)}
+              >
+                <Star className="size-3.5" />
+                Rate now
+              </Button>
+            </div>
+          )}
+
+          {!isActive && !isMentor && mentorship.mentorRating && (
+            <p className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/5 px-2.5 py-1 text-xs font-medium text-primary">
+              <Star className="size-3.5 fill-current" />
+              You rated {mentorship.mentor.name.split(" ")[0]} {mentorship.mentorRating}/5
             </p>
           )}
 
@@ -1252,14 +1338,53 @@ export function MentorshipDetailClient({
         </DialogContent>
       </Dialog>
 
-      {/* ── Complete dialog ──────────────────────────────────────────── */}
+      {/* ── Complete dialog (mentor) ──────────────────────────────────── */}
       <Dialog open={completeOpen} onOpenChange={(open) => !open && setCompleteOpen(false)}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Complete this mentorship</DialogTitle>
             <DialogDescription>
-              Thanks for seeing it through! Rate your experience to help us
-              improve matching.
+              Thanks for seeing it through! Leave a private closing note for
+              your mentee to support their growth. Only they can see it.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="complete-note">Closing note for your mentee (optional)</Label>
+              <Textarea
+                id="complete-note"
+                value={closingNote}
+                onChange={(e) => setClosingNote(e.target.value)}
+                rows={4}
+                maxLength={2000}
+                placeholder="What progress did they make? What should they keep working on?"
+                disabled={closing}
+              />
+              <p className="text-[11px] text-muted-foreground/60">
+                Private — only the mentee will see this.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCompleteOpen(false)} disabled={closing}>
+              Cancel
+            </Button>
+            <Button onClick={handleComplete} disabled={closing}>
+              {closing ? <Loader2 className="size-4 animate-spin" /> : <CheckCircle2 className="size-4" />}
+              Complete mentorship
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Rate your mentor dialog (mentee) ───────────────────────────── */}
+      <Dialog open={rateOpen} onOpenChange={(open) => !open && setRateOpen(false)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Rate your mentor</DialogTitle>
+            <DialogDescription>
+              Your rating helps future students choose a mentor. It shows as an
+              average on {other.name.split(" ")[0]}&apos;s profile.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
@@ -1285,9 +1410,9 @@ export function MentorshipDetailClient({
               </div>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="complete-feedback">Feedback (optional)</Label>
+              <Label htmlFor="rate-feedback">Feedback (optional)</Label>
               <Textarea
-                id="complete-feedback"
+                id="rate-feedback"
                 value={feedback}
                 onChange={(e) => setFeedback(e.target.value)}
                 rows={4}
@@ -1298,12 +1423,12 @@ export function MentorshipDetailClient({
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCompleteOpen(false)} disabled={closing}>
+            <Button variant="outline" onClick={() => setRateOpen(false)} disabled={closing}>
               Cancel
             </Button>
-            <Button onClick={handleComplete} disabled={closing}>
-              {closing ? <Loader2 className="size-4 animate-spin" /> : <CheckCircle2 className="size-4" />}
-              Complete mentorship
+            <Button onClick={handleRateMentor} disabled={closing}>
+              {closing ? <Loader2 className="size-4 animate-spin" /> : <Star className="size-4" />}
+              Submit rating
             </Button>
           </DialogFooter>
         </DialogContent>

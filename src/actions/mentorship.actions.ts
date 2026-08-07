@@ -13,6 +13,7 @@ import type {
   UpdateMentorshipSessionPayload,
   SendMentorshipMessagePayload,
   CompleteMentorshipPayload,
+  RateMentorPayload,
 } from "@/types";
 
 export async function listMentorsAction(
@@ -212,6 +213,24 @@ export async function completeMentorshipAction(
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to complete mentorship.";
+    return { success: false, message };
+  }
+}
+
+export async function rateMentorAction(
+  mentorshipId: string,
+  data: RateMentorPayload,
+): Promise<ApiResponse> {
+  try {
+    const mentorship = await mentorshipService.rateMentor(mentorshipId, data);
+    return {
+      success: true,
+      message: "Mentor rated successfully.",
+      data: mentorship,
+    };
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to rate mentor.";
     return { success: false, message };
   }
 }
