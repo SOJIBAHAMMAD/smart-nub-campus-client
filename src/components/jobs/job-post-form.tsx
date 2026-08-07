@@ -7,6 +7,7 @@ import {
   Briefcase,
   Link2,
   Loader2,
+  Save,
   Sparkles,
 } from "lucide-react";
 import Link from "next/link";
@@ -28,15 +29,19 @@ import {
   CardTitle,
   CardContent,
 } from "@/components/ui/card";
+import { ApplicationFormBuilder } from "@/components/teams/application-form-builder";
+import { useUnsavedGuard } from "@/components/ui/unsaved-guard";
 import ROUTES from "@/constants/routes";
-import { JobSource, JobType } from "@/constants/enums";
+import { JobSource, JobType, JobPostStatus } from "@/constants/enums";
+import { DEFAULT_JOB_APPLICATION_FORM } from "@/constants/jobs";
 import { DEPARTMENT_LABELS, JOB_SOURCE_LABELS } from "@/lib/constants";
 import {
   createJobAction,
   importJobAction,
+  updateJobAction,
 } from "@/actions/jobs.actions";
 import { stripHtml, textToHtml } from "@/lib/job-utils";
-import type { ParsedJobDraft } from "@/types";
+import type { Job, JobApplicationFormConfig, ParsedJobDraft } from "@/types";
 import { toast } from "sonner";
 
 const EMPLOYMENT_TYPE_OPTIONS = [
@@ -57,24 +62,38 @@ const SOURCE_OPTIONS = Object.entries(JOB_SOURCE_LABELS).map(
   ([value, label]) => ({ value, label }),
 );
 
-export function JobPostForm() {
+const STATUS_OPTIONS = [
+  { value: JobPostStatus.OPEN, label: "Open" },
+  { value: JobPostStatus.FILLED, label: "Filled" },
+  { value: JobPostStatus.CLOSED, label: "Closed" },
+];
+
+export function JobPostForm({ job }: { job?: Job }) {
+  const isEdit = Boolean(job);
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [isImporting, setIsImporting] = useState(false);
   const [importInput, setImportInput] = useState("");
   const [form, setForm] = useState({
-    title: "",
-    company: "",
-    description: "",
-    employmentType: JobType.FULL_TIME,
-    location: "",
-    salaryRange: "",
-    applicationUrl: "",
-    deadline: "",
-    department: "",
-    source: JobSource.PLATFORM,
-    sourceUrl: "",
+    title: job?.title ?? "",
+    company: job?.company ?? "",
+    description: job?.description ?? "",
+    employmentType: job?.employmentType ?? JobType.FULL_TIME,
+    location: job?.location ?? "",
+    salaryRange: job?.salaryRange ?? "",
+    applicationUrl: job?.applicationUrl ?? "",
+    deadline: job?.deadline
+      ? new Date(job.deadline).toISOString().split("T")[0]
+      : "",
+    department: job?.department ?? "",
+    source: job?.source ?? JobSource.PLATFORM,
+    sourceUrl: job?.sourceUrl ?? "",
+    status: job?.status ?? JobPostStatus.OPEN,
   });
+  const [applicationForm, setApplicationForm] =
+    useState<JobApplicationFormConfig>(
+      job?.applicationForm ?? DEFAULT_JOB_APPLICATION_FORM,
+    );
 
   const setField = <K extends keyof typeof form>(key: K, value: (typeof form)[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -104,6 +123,36 @@ export function JobPostForm() {
       sourceUrl: draft.sourceUrl || prev.sourceUrl,
     }));
   };
+
+  // Unsaved-changes guard for edit mode.
+  const hasChanges = job
+    ? JSON.stringify({ form, applicationForm }) !==
+      JSON.stringify({
+        form: {
+          title: job.title,
+          company: job.company,
+          description: job.description ?? "",
+          employmentType: job.employmentType,
+          location: job.location ?? "",
+          salaryRange: job.salaryRange ?? "",
+          applicationUrl: job.applicationUrl ?? "",
+          deadline: job.deadline
+            ? new Date(job.deadline).toISOString().split("T")[0]
+            : "",
+          department: job.department ?? "",
+          source: job.source,
+          sourceUrl: job.sourceUrl ?? "",
+          status: job.status,
+        },
+        applicationForm: job.applicationForm ?? DEFAULT_JOB_APPLICATION_FORM,
+      })
+    : false;
+
+  useUnsavedGuard({
+    when: isEdit && hasChanges && !isPending,
+    title: "Discard unsaved changes?",
+    description: "You have unsaved changes that will be lost if you leave.",
+  });
 
   const handleImport = async () => {
     if (!importInput.trim()) {
@@ -137,7 +186,7 @@ export function JobPostForm() {
 
     startTransition(async () => {
       const description = form.description.trim();
-      const result = await createJobAction({
+      const payload = {
         title: form.title.trim(),
         company: form.company.trim(),
         description: stripHtml(description).length > 0 ? description : undefined,
@@ -151,12 +200,34 @@ export function JobPostForm() {
         department: form.department || undefined,
         source: form.source,
         sourceUrl: form.sourceUrl.trim() || undefined,
+      };
+
+      if (isEdit && job) {
+        const result = await updateJobAction(job.id, {
+          ...payload,
+          status: form.status,
+          applicationForm:
+            form.source === JobSource.PLATFORM ? applicationForm : null,
+        });
+        if (result.success) {
+          toast.success("Job updated successfully!");
+          router.push(ROUTES.JOB(job.id));
+        } else {
+          toast.error(result.message || "Failed to update job.");
+        }
+        return;
+      }
+
+      const result = await createJobAction({
+        ...payload,
+        applicationForm:
+          form.source === JobSource.PLATFORM ? applicationForm : undefined,
       });
 
       if (result.success && result.data) {
         toast.success("Job posted successfully!");
-        const job = result.data as { id?: string };
-        router.push(job.id ? ROUTES.JOB(job.id) : ROUTES.JOBS);
+        const created = result.data as { id?: string };
+        router.push(created.id ? ROUTES.JOB(created.id) : ROUTES.JOBS);
       } else {
         toast.error(result.message || "Failed to post job.");
       }
@@ -166,55 +237,57 @@ export function JobPostForm() {
   return (
     <div className="mx-auto max-w-2xl space-y-4 p-4 sm:p-6">
       <Link
-        href={ROUTES.JOBS}
+        href={isEdit && job ? ROUTES.JOB(job.id) : ROUTES.JOBS}
         className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
       >
         <ArrowLeft className="size-4" />
-        Back to job board
+        {isEdit ? "Back to job" : "Back to job board"}
       </Link>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Link2 className="size-4" />
-            Share from another platform
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="space-y-1.5">
-            <Label htmlFor="import-input">
-              Paste a job link or the full job description
-            </Label>
-            <Textarea
-              id="import-input"
-              value={importInput}
-              onChange={(e) => setImportInput(e.target.value)}
-              placeholder="e.g. https://www.linkedin.com/jobs/view/... or paste the description text"
-              rows={3}
-              maxLength={20000}
-              disabled={isImporting}
-            />
-          </div>
-          <Button
-            type="button"
-            onClick={handleImport}
-            disabled={isImporting || !importInput.trim()}
-          >
-            {isImporting ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              <Sparkles className="size-4" />
-            )}
-            {isImporting ? "Extracting..." : "Extract details"}
-          </Button>
-        </CardContent>
-      </Card>
+      {!isEdit && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Link2 className="size-4" />
+              Share from another platform
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="import-input">
+                Paste a job link or the full job description
+              </Label>
+              <Textarea
+                id="import-input"
+                value={importInput}
+                onChange={(e) => setImportInput(e.target.value)}
+                placeholder="e.g. https://www.linkedin.com/jobs/view/... or paste the description text"
+                rows={3}
+                maxLength={20000}
+                disabled={isImporting}
+              />
+            </div>
+            <Button
+              type="button"
+              onClick={handleImport}
+              disabled={isImporting || !importInput.trim()}
+            >
+              {isImporting ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Sparkles className="size-4" />
+              )}
+              {isImporting ? "Extracting..." : "Extract details"}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Briefcase className="size-4" />
-            Post a job
+            {isEdit ? "Edit job" : "Post a job"}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -363,6 +436,30 @@ export function JobPostForm() {
                 />
               </div>
 
+              {isEdit && (
+                <div className="space-y-1.5">
+                  <Label>Job status</Label>
+                  <Select
+                    value={form.status}
+                    onValueChange={(v) =>
+                      setField("status", (v ?? JobPostStatus.OPEN) as typeof form.status)
+                    }
+                    disabled={isPending}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {STATUS_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
               <div className="space-y-1.5 sm:col-span-2">
                 <Label>Description (optional)</Label>
                 <RichTextEditor
@@ -377,18 +474,41 @@ export function JobPostForm() {
               </div>
             </div>
 
+            {form.source === JobSource.PLATFORM ? (
+              <ApplicationFormBuilder
+                value={applicationForm}
+                onChange={setApplicationForm}
+                disabled={isPending}
+              />
+            ) : (
+              <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
+                Applications happen on{" "}
+                {JOB_SOURCE_LABELS[form.source] ?? "the original platform"}, so
+                this job uses that platform&apos;s own application flow.
+              </div>
+            )}
+
             <div className="flex items-center justify-end gap-2 pt-2">
               <Button
                 type="button"
                 variant="ghost"
-                onClick={() => router.push(ROUTES.JOBS)}
+                onClick={() =>
+                  router.push(isEdit && job ? ROUTES.JOB(job.id) : ROUTES.JOBS)
+                }
                 disabled={isPending}
               >
                 Cancel
               </Button>
               <Button type="submit" disabled={isPending}>
                 {isPending && <Loader2 className="size-4 animate-spin" />}
-                Post job
+                {isEdit ? (
+                  <>
+                    <Save className="size-4" />
+                    Save changes
+                  </>
+                ) : (
+                  "Post job"
+                )}
               </Button>
             </div>
           </form>

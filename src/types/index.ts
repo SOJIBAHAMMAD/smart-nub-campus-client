@@ -34,6 +34,11 @@ export type {
 // ── Jobs ─────────────────────────────────────────────────────────────────────
 export type {
   EmploymentType,
+  JobApplicationFieldKey,
+  JobApplicationFormField,
+  JobApplicationFormQuestion,
+  JobApplicationFormConfig,
+  JobApplicationResponses,
   JobPoster,
   Job,
   JobDetail,

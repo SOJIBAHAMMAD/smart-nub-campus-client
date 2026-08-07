@@ -31,6 +31,7 @@ import {
   GraduationCap,
   Briefcase,
   Handshake,
+  Activity,
   ChevronDown,
   X,
 } from "lucide-react";
@@ -58,6 +59,7 @@ const desktopPrimaryItems: NavItem[] = [
 ];
 
 const desktopMoreItems: NavItem[] = [
+  { label: "Activity", href: ROUTES.ACTIVITIES, icon: Activity },
   { label: "Discussions", href: ROUTES.DISCUSSIONS, icon: MessageSquare },
   { label: "Q&A", href: ROUTES.QA, icon: HelpCircle },
   { label: "Leaderboard", href: ROUTES.LEADERBOARD, icon: Trophy },
@@ -76,6 +78,7 @@ const bottomNavItems: NavItem[] = [
 
 const bottomSheetItems: NavItem[] = [
   { label: "My Network", href: ROUTES.MY_NETWORK, icon: UsersRound },
+  { label: "Activity", href: ROUTES.ACTIVITIES, icon: Activity },
   { label: "Discussions", href: ROUTES.DISCUSSIONS, icon: MessageSquare },
   { label: "Q&A", href: ROUTES.QA, icon: HelpCircle },
   { label: "Leaderboard", href: ROUTES.LEADERBOARD, icon: Trophy },

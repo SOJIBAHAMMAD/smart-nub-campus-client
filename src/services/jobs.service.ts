@@ -55,7 +55,7 @@ export const jobsService = {
    */
   async createJob(data: CreateJobPayload): Promise<Job> {
     const response = await serverApi.post<Job>("/jobs", data, {
-      invalidatesTags: [TAGS.JOBS],
+      invalidatesTags: [TAGS.JOBS, TAGS.ACTIVITIES],
     });
     return response.data!;
   },
@@ -75,7 +75,7 @@ export const jobsService = {
    */
   async updateJob(id: string, data: UpdateJobPayload): Promise<Job> {
     const response = await serverApi.patch<Job>(`/jobs/${id}`, data, {
-      invalidatesTags: [TAGS.JOBS, TAGS.JOB_DETAIL],
+      invalidatesTags: [TAGS.JOBS, TAGS.JOB_DETAIL, TAGS.ACTIVITIES],
     });
     return response.data!;
   },

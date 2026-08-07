@@ -5,6 +5,7 @@ import type { ApiResponse } from "@/types";
 import type {
   ListJobsParams,
   CreateJobPayload,
+  UpdateJobPayload,
   ApplyJobPayload,
   ImportJobPayload,
 } from "@/types";
@@ -63,6 +64,24 @@ export async function importJobAction(
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to import job details.";
+    return { success: false, message };
+  }
+}
+
+export async function updateJobAction(
+  id: string,
+  data: UpdateJobPayload,
+): Promise<ApiResponse> {
+  try {
+    const updated = await jobsService.updateJob(id, data);
+    return {
+      success: true,
+      message: "Job updated successfully.",
+      data: updated,
+    };
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to update job.";
     return { success: false, message };
   }
 }

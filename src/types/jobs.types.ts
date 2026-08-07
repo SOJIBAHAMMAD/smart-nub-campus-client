@@ -15,6 +15,43 @@ import type { PaginationMeta } from "./resource.types";
 
 export type EmploymentType = JobType;
 
+// ── Application form (platform-sourced jobs) ─────────────────────────────────
+
+/** Built-in profile fields a poster can collect on a job application. */
+export type JobApplicationFieldKey =
+  | "name"
+  | "email"
+  | "github"
+  | "linkedin"
+  | "portfolio"
+  | "website"
+  | "phone"
+  | "location"
+  | "studentId"
+  | "department"
+  | "semester";
+
+export interface JobApplicationFormField {
+  key: JobApplicationFieldKey;
+  required: boolean;
+}
+
+export interface JobApplicationFormQuestion {
+  id: string;
+  label: string;
+  type: "SHORT_TEXT" | "PARAGRAPH";
+  required: boolean;
+}
+
+/** Poster-defined configuration for the job application form. */
+export interface JobApplicationFormConfig {
+  fields: JobApplicationFormField[];
+  questions: JobApplicationFormQuestion[];
+}
+
+/** Snapshot of an applicant's answers keyed by field key / question id. */
+export type JobApplicationResponses = Record<string, string>;
+
 // ── Core models ──────────────────────────────────────────────────────────────
 
 export interface JobPoster {
@@ -44,6 +81,7 @@ export interface Job {
   isVerified: boolean;
   source: JobSource;
   sourceUrl: string | null;
+  applicationForm?: JobApplicationFormConfig | null;
   postedById: string;
   createdAt: string;
   updatedAt: string;
@@ -78,6 +116,7 @@ export interface JobApplication {
   applicantId: string;
   coverLetter: string | null;
   resumeUrl: string | null;
+  responses?: JobApplicationResponses | null;
   status: ApplicationStatus;
   createdAt: string;
   updatedAt: string;
@@ -103,7 +142,11 @@ export interface JobListResponse {
 }
 
 export interface JobApplicationsResponse {
-  job: { id: string; title: string };
+  job: {
+    id: string;
+    title: string;
+    applicationForm?: JobApplicationFormConfig | null;
+  };
   data: JobApplication[];
 }
 
@@ -121,10 +164,13 @@ export interface CreateJobPayload {
   department?: string;
   source?: JobSource;
   sourceUrl?: string;
+  applicationForm?: JobApplicationFormConfig;
 }
 
-export interface UpdateJobPayload extends Partial<CreateJobPayload> {
+export interface UpdateJobPayload
+  extends Omit<Partial<CreateJobPayload>, "applicationForm"> {
   status?: JobPostStatus;
+  applicationForm?: JobApplicationFormConfig | null;
 }
 
 export interface ImportJobPayload {
@@ -148,4 +194,5 @@ export interface ParsedJobDraft {
 export interface ApplyJobPayload {
   coverLetter?: string;
   resumeUrl?: string;
+  responses?: JobApplicationResponses;
 }

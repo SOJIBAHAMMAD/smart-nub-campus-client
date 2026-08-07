@@ -14,6 +14,7 @@ import {
   GraduationCap,
   Loader2,
   MapPin,
+  Pencil,
   Users,
   type LucideIcon,
 } from "lucide-react";
@@ -25,7 +26,7 @@ import {
   CardAction,
   CardContent,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -42,6 +43,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import ROUTES from "@/constants/routes";
 import { JobPostStatus, ApplicationStatus, UserRole, JobSource } from "@/constants/enums";
+import { APPLICATION_FIELD_META, DEFAULT_JOB_APPLICATION_FORM } from "@/constants/jobs";
 import { JOB_SOURCE_LABELS } from "@/lib/constants";
 import {
   departmentLabel,
@@ -51,6 +53,8 @@ import {
   isRichHtml,
 } from "@/lib/job-utils";
 import { cn } from "@/lib/utils";
+import { authClient } from "@/lib/auth-client";
+import { getPublicProfile } from "@/actions/profile.actions";
 import {
   applyToJobAction,
   listJobApplicationsAction,
@@ -61,8 +65,11 @@ import type {
   Job,
   JobDetail,
   JobApplicationsResponse,
+  JobApplicationFormConfig,
+  JobApplicationResponses,
   JobListResponse,
 } from "@/types";
+import type { ProfileUser } from "@/types/profile.types";
 import { toast } from "sonner";
 import { JobCard } from "./job-card";
 import { JobCardSkeleton } from "@/components/skeletons/job-card-skeleton";
@@ -138,6 +145,43 @@ function InfoRow({
   );
 }
 
+/**
+ * Apply CTA. Jobs shared from an external platform (LinkedIn, BdJobs, etc.)
+ * route the applicant to that platform's posting instead of opening the
+ * in-app application modal.
+ */
+function ApplyCTA({
+  href,
+  onApply,
+  size = "default",
+  className,
+}: {
+  href: string | null;
+  onApply: () => void;
+  size?: "default" | "lg" | "sm";
+  className?: string;
+}) {
+  if (href) {
+    return (
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className={buttonVariants({ size, className })}
+      >
+        Apply now
+        <ExternalLink className="size-4" aria-hidden="true" />
+      </a>
+    );
+  }
+  return (
+    <Button size={size} className={className} onClick={onApply}>
+      Apply now
+    </Button>
+  );
+}
+
+/** Flatten an applicant's answers into labeled review rows using the form config. */
 export function JobDetailClient({
   job,
   userId,
@@ -150,10 +194,24 @@ export function JobDetailClient({
   const isOwner = job.postedById === userId;
   const isAdmin = userRole === UserRole.ADMIN;
   const canManage = isOwner || isAdmin;
-  const canApply = !isOwner && job.status === JobPostStatus.OPEN && !job.appliedByMe;
 
   const deadlineInfo = getDeadlineInfo(job.deadline);
   const closed = deadlineInfo?.expired || job.status !== JobPostStatus.OPEN;
+
+  // Jobs shared from an external platform are applied to on that platform,
+  // not through the in-app modal.
+  const isExternalSource = Boolean(
+    job.source && job.source !== JobSource.PLATFORM,
+  );
+  const externalApplyUrl = isExternalSource
+    ? job.applicationUrl || job.sourceUrl
+    : null;
+
+  const canApply =
+    !isOwner &&
+    job.status === JobPostStatus.OPEN &&
+    !job.appliedByMe &&
+    !deadlineInfo?.expired;
 
   const [applyOpen, setApplyOpen] = useState(false);
   const [coverLetter, setCoverLetter] = useState("");
@@ -161,6 +219,19 @@ export function JobDetailClient({
   const [resumeUrlError, setResumeUrlError] = useState("");
   const [applyStatus, setApplyStatus] = useState<"idle" | "success" | "error">("idle");
   const [isApplying, startApplying] = useTransition();
+
+  // Application form (platform-sourced jobs)
+  const { data: session } = authClient.useSession();
+  const sessionUser = session?.user
+    ? {
+        name: session.user.name ?? "",
+        email: session.user.email ?? "",
+      }
+    : { name: "", email: "" };
+  const [formConfig, setFormConfig] = useState<JobApplicationFormConfig | null>(null);
+  const [responses, setResponses] = useState<JobApplicationResponses>({});
+  const [responseErrors, setResponseErrors] = useState<Record<string, string>>({});
+  const [profileData, setProfileData] = useState<ProfileUser | null>(null);
 
   const [applications, setApplications] = useState<JobApplicationsResponse | null>(null);
   const [loadingApps, setLoadingApps] = useState(false);
@@ -238,16 +309,116 @@ export function JobDetailClient({
     setResumeUrlError(validateResumeUrl(value));
   };
 
+  function resolveFieldValue(
+    key: string,
+    profile: ProfileUser | null,
+  ): string {
+    switch (key) {
+      case "name":
+        return sessionUser.name;
+      case "email":
+        return sessionUser.email;
+      case "github":
+        return profile?.profile?.githubUrl ?? "";
+      case "linkedin":
+        return profile?.profile?.linkedinUrl ?? "";
+      case "portfolio":
+        return profile?.profile?.portfolioUrl ?? "";
+      case "website":
+        return profile?.profile?.websiteUrl ?? "";
+      case "phone":
+        return profile?.profile?.phoneNumber ?? "";
+      case "location":
+        return profile?.profile?.location ?? "";
+      case "studentId":
+        return profile?.student?.studentId ?? "";
+      case "department":
+        return profile?.student?.department ?? "";
+      case "semester":
+        return profile?.profile?.currentSemester != null
+          ? String(profile.profile.currentSemester)
+          : "";
+      default:
+        return "";
+    }
+  }
+
+  const buildPrefill = (
+    config: JobApplicationFormConfig,
+    profile: ProfileUser | null,
+  ): JobApplicationResponses => {
+    const prefill: JobApplicationResponses = {};
+    for (const field of config.fields) {
+      const value = resolveFieldValue(field.key, profile);
+      if (value) prefill[field.key] = value;
+    }
+    return prefill;
+  };
+
+  const openApplyDialog = () => {
+    setApplyOpen(true);
+    const config =
+      job.source === JobSource.PLATFORM
+        ? (job.applicationForm ?? DEFAULT_JOB_APPLICATION_FORM)
+        : null;
+    setFormConfig(config);
+    setResponses(config ? buildPrefill(config, profileData) : {});
+    setResponseErrors({});
+
+    if (config && !profileData && userId) {
+      getPublicProfile(userId)
+        .then((res) => {
+          if (res.success && res.data) {
+            const profile = res.data as ProfileUser;
+            setProfileData(profile);
+            setResponses((prev) => ({
+              ...prev,
+              ...buildPrefill(config, profile),
+            }));
+          }
+        })
+        .catch(() => {});
+    }
+  };
+
+  function validateResponses(
+    config: JobApplicationFormConfig,
+  ): Record<string, string> {
+    const errors: Record<string, string> = {};
+    for (const field of config.fields) {
+      if (field.required && !(responses[field.key] ?? "").trim()) {
+        errors[field.key] = `${APPLICATION_FIELD_META[field.key].label} is required.`;
+      }
+    }
+    for (const question of config.questions) {
+      if (question.required && !(responses[question.id] ?? "").trim()) {
+        errors[question.id] = "This question is required.";
+      }
+    }
+    return errors;
+  }
+
   const handleApply = () => {
     const urlError = validateResumeUrl(resumeUrl);
     setResumeUrlError(urlError);
     if (urlError) return;
 
+    const formErrors = formConfig ? validateResponses(formConfig) : {};
+    setResponseErrors(formErrors);
+    if (Object.keys(formErrors).length > 0) {
+      toast.error("Please fill in the required fields.");
+      return;
+    }
+
     startApplying(async () => {
       setApplyStatus("idle");
+      const cleanResponses = Object.fromEntries(
+        Object.entries(responses).filter(([, value]) => value.trim() !== ""),
+      );
       const result = await applyToJobAction(job.id, {
         coverLetter: coverLetter.trim() || undefined,
         resumeUrl: resumeUrl.trim() || undefined,
+        responses: Object.keys(cleanResponses).length > 0 ? cleanResponses : undefined,
       });
       if (result.success) {
         setApplyStatus("success");
@@ -256,6 +427,9 @@ export function JobDetailClient({
         setCoverLetter("");
         setResumeUrl("");
         setResumeUrlError("");
+        setResponses({});
+        setResponseErrors({});
+        setFormConfig(null);
         setTimeout(() => setApplyStatus("idle"), 4000);
       } else {
         setApplyStatus("error");
@@ -349,7 +523,22 @@ export function JobDetailClient({
                         </Badge>
                       )}
                     </div>
-                    <StatusPill closed={closed} status={job.status} />
+                    <div className="flex flex-wrap items-center gap-2">
+                      <StatusPill closed={closed} status={job.status} />
+                      {canManage && (
+                        <Link
+                          href={ROUTES.JOB_EDIT(job.id)}
+                          className={buttonVariants({
+                            size: "sm",
+                            variant: "outline",
+                            className: "gap-1.5",
+                          })}
+                        >
+                          <Pencil className="size-3.5" aria-hidden="true" />
+                          Edit job
+                        </Link>
+                      )}
+                    </div>
                   </div>
                   <p className="mt-1 text-sm text-muted-foreground">
                     {job.company}
@@ -466,9 +655,14 @@ export function JobDetailClient({
               ) : canApply ? (
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                   <p className="flex-1 text-sm text-muted-foreground">
-                    Interested? Submit your application directly to the poster.
+                    {externalApplyUrl
+                      ? `Interested? Apply directly on ${JOB_SOURCE_LABELS[job.source] ?? "the original platform"}.`
+                      : "Interested? Submit your application directly to the poster."}
                   </p>
-                  <Button onClick={() => setApplyOpen(true)}>Apply now</Button>
+                  <ApplyCTA
+                    href={externalApplyUrl}
+                    onApply={openApplyDialog}
+                  />
                 </div>
               ) : isOwner ? (
                 <p className="text-sm text-muted-foreground">
@@ -553,6 +747,47 @@ export function JobDetailClient({
                                   View resume
                                 </a>
                               )}
+                              {app.responses &&
+                                applications.job.applicationForm && (
+                                  <dl className="mt-2 grid grid-cols-1 gap-1.5 rounded-md bg-muted/40 p-2.5 sm:grid-cols-2">
+                                    {applications.job.applicationForm.fields.map(
+                                      (field) => {
+                                        const value = app.responses?.[field.key];
+                                        if (!value || !value.trim()) return null;
+                                        return (
+                                          <div key={field.key} className="min-w-0">
+                                            <dt className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                                              {APPLICATION_FIELD_META[field.key].label}
+                                            </dt>
+                                            <dd className="truncate text-xs text-foreground">
+                                              {value}
+                                            </dd>
+                                          </div>
+                                        );
+                                      },
+                                    )}
+                                    {applications.job.applicationForm.questions.map(
+                                      (question) => {
+                                        const value =
+                                          app.responses?.[question.id];
+                                        if (!value || !value.trim()) return null;
+                                        return (
+                                          <div
+                                            key={question.id}
+                                            className="min-w-0 sm:col-span-2"
+                                          >
+                                            <dt className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                                              {question.label}
+                                            </dt>
+                                            <dd className="whitespace-pre-wrap text-xs text-foreground">
+                                              {value}
+                                            </dd>
+                                          </div>
+                                        );
+                                      },
+                                    )}
+                                  </dl>
+                                )}
                             </div>
                           </div>
 
@@ -610,15 +845,16 @@ export function JobDetailClient({
           {canApply && (
             <Card className="border-primary/20 bg-primary/5">
               <CardContent className="p-4">
-                <Button
+                <ApplyCTA
+                  href={externalApplyUrl}
+                  onApply={openApplyDialog}
                   size="lg"
                   className="w-full"
-                  onClick={() => setApplyOpen(true)}
-                >
-                  Apply now
-                </Button>
+                />
                 <p className="mt-2 text-center text-xs text-muted-foreground">
-                  Free — takes under a minute
+                  {externalApplyUrl
+                    ? `Opens the posting on ${JOB_SOURCE_LABELS[job.source] ?? "the original platform"}`
+                    : "Free — takes under a minute"}
                 </p>
               </CardContent>
             </Card>
@@ -791,24 +1027,25 @@ export function JobDetailClient({
                 {job.company}
               </p>
             </div>
-            <Button
+            <ApplyCTA
+              href={externalApplyUrl}
+              onApply={openApplyDialog}
               size="lg"
               className="h-11 shrink-0"
-              onClick={() => setApplyOpen(true)}
-            >
-              Apply now
-            </Button>
+            />
           </div>
         </div>
       )}
 
       {/* ── Apply dialog ──────────────────────────────────────────── */}
       <Dialog open={applyOpen} onOpenChange={setApplyOpen}>
-        <DialogContent>
+        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Apply to {job.title}</DialogTitle>
             <DialogDescription>
-              Your application will be sent to {job.company}.
+              Your application will be sent to {job.company}. Fields marked with{" "}
+              <span className="text-destructive">*</span> are required, and
+              your info is pre-filled from your profile where available.
             </DialogDescription>
           </DialogHeader>
 
@@ -862,6 +1099,89 @@ export function JobDetailClient({
                 </p>
               )}
             </div>
+
+            {/* Built-in profile fields */}
+            {(formConfig?.fields ?? []).map((field) => {
+              const meta = APPLICATION_FIELD_META[field.key];
+              return (
+                <div key={field.key} className="space-y-1.5">
+                  <Label htmlFor={`apply-field-${field.key}`}>
+                    {meta.label}{" "}
+                    {field.required && (
+                      <span className="text-destructive">*</span>
+                    )}
+                  </Label>
+                  <Input
+                    id={`apply-field-${field.key}`}
+                    type={meta.inputType}
+                    value={responses[field.key] ?? ""}
+                    onChange={(e) =>
+                      setResponses((prev) => ({
+                        ...prev,
+                        [field.key]: e.target.value,
+                      }))
+                    }
+                    placeholder={meta.placeholder}
+                    maxLength={500}
+                    disabled={isApplying}
+                    aria-invalid={responseErrors[field.key] ? true : undefined}
+                  />
+                  {responseErrors[field.key] && (
+                    <p className="text-[11px] font-medium text-destructive">
+                      {responseErrors[field.key]}
+                    </p>
+                  )}
+                </div>
+              );
+            })}
+
+            {/* Custom questions */}
+            {(formConfig?.questions ?? []).map((question) => (
+              <div key={question.id} className="space-y-1.5">
+                <Label htmlFor={`apply-question-${question.id}`}>
+                  {question.label}{" "}
+                  {question.required && (
+                    <span className="text-destructive">*</span>
+                  )}
+                </Label>
+                {question.type === "PARAGRAPH" ? (
+                  <Textarea
+                    id={`apply-question-${question.id}`}
+                    value={responses[question.id] ?? ""}
+                    onChange={(e) =>
+                      setResponses((prev) => ({
+                        ...prev,
+                        [question.id]: e.target.value,
+                      }))
+                    }
+                    rows={3}
+                    maxLength={5000}
+                    className="resize-none"
+                    disabled={isApplying}
+                    aria-invalid={responseErrors[question.id] ? true : undefined}
+                  />
+                ) : (
+                  <Input
+                    id={`apply-question-${question.id}`}
+                    value={responses[question.id] ?? ""}
+                    onChange={(e) =>
+                      setResponses((prev) => ({
+                        ...prev,
+                        [question.id]: e.target.value,
+                      }))
+                    }
+                    maxLength={500}
+                    disabled={isApplying}
+                    aria-invalid={responseErrors[question.id] ? true : undefined}
+                  />
+                )}
+                {responseErrors[question.id] && (
+                  <p className="text-[11px] font-medium text-destructive">
+                    {responseErrors[question.id]}
+                  </p>
+                )}
+              </div>
+            ))}
           </div>
 
           <DialogFooter>

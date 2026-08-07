@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { serverApi } from "@/lib/server-api";
 import { JobPostForm } from "@/components/jobs/job-post-form";
+import { UnsavedGuardProvider } from "@/components/ui/unsaved-guard";
 import {
   Empty,
   EmptyHeader,
@@ -50,5 +51,9 @@ export default async function NewJobPage() {
     );
   }
 
-  return <JobPostForm />;
+  return (
+    <UnsavedGuardProvider>
+      <JobPostForm />
+    </UnsavedGuardProvider>
+  );
 }

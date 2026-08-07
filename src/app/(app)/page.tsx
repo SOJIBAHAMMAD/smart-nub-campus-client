@@ -17,7 +17,7 @@ import { gamificationService } from "@/services/gamification.service";
 import { eventService } from "@/services/event.service";
 import { discussionService } from "@/services/discussion.service";
 import { qaService } from "@/services/qa.service";
-import { notificationService } from "@/services/notification.service";
+import { activityService } from "@/services/activity.service";
 import ROUTES from "@/constants/routes";
 
 export const metadata: Metadata = {
@@ -35,36 +35,15 @@ export const metadata: Metadata = {
 // ── Data sections (server components) ─────────────────────────────────
 
 async function ActivitySection() {
-  const notifications = await notificationService
-    .listNotifications({ limit: 5 })
-    .then((result) => result.data ?? [])
+  const result = await activityService
+    .listActivities({ limit: 5 })
     .catch(() => null);
 
-  if (!notifications) {
+  if (!result) {
     return <RecentActivity activities={[]} error />;
   }
 
-  const activities = notifications.map((n) => {
-    let type: "resource" | "question" | "team" | "discussion" | "connection" = "discussion";
-    const t = n.type;
-    if (t.startsWith("RESOURCE")) type = "resource";
-    else if (t.startsWith("QUESTION")) type = "question";
-    else if (t.startsWith("TEAM")) type = "team";
-    else if (t.startsWith("DISCUSSION")) type = "discussion";
-    else if (t.startsWith("CONNECTION")) type = "connection";
-
-    return {
-      id: n.id,
-      type,
-      action: n.title.toLowerCase(),
-      target: n.message,
-      targetId: n.link?.split("/").pop() ?? n.id,
-      user: { name: n.sender?.name ?? "Someone" },
-      timestamp: n.createdAt,
-    };
-  });
-
-  return <RecentActivity activities={activities} />;
+  return <RecentActivity activities={result.items} />;
 }
 
 async function TrendingSection() {

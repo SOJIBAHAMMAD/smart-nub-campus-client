@@ -1,70 +1,19 @@
 import Link from "next/link";
-import {
-  FileText,
-  HelpCircle,
-  Users,
-  MessageSquare,
-  UserPlus,
-  AlertTriangle,
-  ArrowRight,
-} from "lucide-react";
+import { AlertTriangle, MessageSquare, ArrowRight } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Avatar } from "@/components/ui/avatar";
 import ROUTES from "@/constants/routes";
-
-interface ActivityItem {
-  id: string;
-  type: "resource" | "question" | "team" | "discussion" | "connection";
-  action: string;
-  target: string;
-  targetId: string;
-  user: { name: string };
-  timestamp: string;
-}
+import type { ActivityItem } from "@/types/activity.types";
+import {
+  ACTIVITY_TYPE_META,
+  formatAbsoluteTime,
+  formatRelativeTime,
+  getTargetRoute,
+} from "@/components/activity/activity-utils";
 
 interface RecentActivityProps {
   activities: ActivityItem[];
   error?: boolean;
-}
-
-function getIcon(type: ActivityItem["type"]) {
-  switch (type) {
-    case "resource": return FileText;
-    case "question": return HelpCircle;
-    case "team": return Users;
-    case "discussion": return MessageSquare;
-    case "connection": return UserPlus;
-  }
-}
-
-function getIconBg(type: ActivityItem["type"]) {
-  switch (type) {
-    case "resource": return "bg-violet-500/10 text-violet-500";
-    case "question": return "bg-rose-500/10 text-rose-500";
-    case "team": return "bg-blue-500/10 text-blue-500";
-    case "discussion": return "bg-amber-500/10 text-amber-500";
-    case "connection": return "bg-emerald-500/10 text-emerald-500";
-  }
-}
-
-function timeAgo(dateStr: string) {
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return "just now";
-  if (mins < 60) return `${mins}m ago`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  if (days === 1) return "yesterday";
-  return `${days}d ago`;
-}
-
-function getTargetRoute(type: ActivityItem["type"], targetId: string): string {
-  switch (type) {
-    case "resource": return ROUTES.RESOURCE(targetId);
-    case "question": return ROUTES.QUESTION(targetId);
-    case "team": return ROUTES.TEAM(targetId);
-    case "discussion": return ROUTES.DISCUSSION(targetId);
-    case "connection": return ROUTES.USER_PROFILE(targetId);
-  }
 }
 
 export function RecentActivity({ activities, error }: RecentActivityProps) {
@@ -99,35 +48,67 @@ export function RecentActivity({ activities, error }: RecentActivityProps) {
       ) : (
         <div className="space-y-1">
           {activities.map((item) => {
-            const Icon = getIcon(item.type);
+            const meta = ACTIVITY_TYPE_META[item.type];
+            const TypeIcon = meta.icon;
             return (
               <Link
                 key={item.id}
                 href={getTargetRoute(item.type, item.targetId)}
                 className="group flex items-start gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-muted/50"
               >
-                <div
-                  className={`flex size-8 shrink-0 items-center justify-center rounded-full ${getIconBg(item.type)}`}
-                >
-                  <Icon className="size-4" />
+                <div className="relative shrink-0">
+                  {item.actor ? (
+                    <>
+                      <Avatar
+                        id={item.actor.id}
+                        name={item.actor.name}
+                        src={item.actor.image}
+                        className="size-8"
+                      />
+                      <span
+                        className={cn(
+                          "absolute -bottom-1 -right-1 flex size-3.5 items-center justify-center rounded-full ring-2 ring-background",
+                          meta.chip,
+                        )}
+                      >
+                        <TypeIcon className="size-2" />
+                      </span>
+                    </>
+                  ) : (
+                    <div
+                      className={cn(
+                        "flex size-8 items-center justify-center rounded-full",
+                        meta.chip,
+                      )}
+                    >
+                      <TypeIcon className="size-4" />
+                    </div>
+                  )}
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm text-foreground leading-snug">
-                    <span className="font-medium">{item.user.name}</span>{" "}
-                    {item.action}{" "}
+                    {item.actor && (
+                      <span className="font-medium">{item.actor.name}</span>
+                    )}
+                    {item.actor && " "}
+                    <span className="text-muted-foreground">
+                      {item.action}{" "}
+                    </span>
                     <span className="font-medium text-primary transition-colors group-hover:text-primary/80">
                       {item.target}
                     </span>
                   </p>
                   <p className="mt-0.5 text-xs text-muted-foreground">
-                    {timeAgo(item.timestamp)}
+                    <time title={formatAbsoluteTime(item.timestamp)}>
+                      {formatRelativeTime(item.timestamp)}
+                    </time>
                   </p>
                 </div>
               </Link>
             );
           })}
           <Link
-            href={ROUTES.DISCUSSIONS}
+            href={ROUTES.ACTIVITIES}
             className="mt-2 flex items-center justify-center gap-1 rounded-lg px-3 py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
           >
             View all activity <ArrowRight className="size-3" />
