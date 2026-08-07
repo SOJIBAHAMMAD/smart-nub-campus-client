@@ -368,7 +368,9 @@ export function MentorshipRelationshipsClient({
                         }
                         nativeButton={false}
                       >
-                        Open
+                        {mentorship.status === MentorshipStatus.ACTIVE
+                          ? "Open"
+                          : "View details"}
                         <ArrowRight className="size-3.5" />
                       </Button>
                     </div>
