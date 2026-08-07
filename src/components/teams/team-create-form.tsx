@@ -8,10 +8,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { TagInput, type TagInputTag } from "@/components/ui/tag-input";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
+import { ApplicationFormBuilder } from "@/components/teams/application-form-builder";
 import { createTeamRequest } from "@/actions/team.actions";
 import { createTeamRequestSchema } from "@/schemas/team.schema";
 import type { Tag } from "@/types/resource.types";
-import { TEAM_CATEGORIES, DIFFICULTY_OPTIONS, MEETING_PREFERENCE_OPTIONS } from "@/constants/team";
+import type { ApplicationFormConfig } from "@/types/team.types";
+import {
+  TEAM_CATEGORIES,
+  DIFFICULTY_OPTIONS,
+  MEETING_PREFERENCE_OPTIONS,
+  DEFAULT_APPLICATION_FORM,
+} from "@/constants/team";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useUnsavedGuard } from "@/components/ui/unsaved-guard";
@@ -35,6 +42,9 @@ export function TeamCreateForm({ tags: _tags }: TeamCreateFormProps) {
   const [meetingPreference, setMeetingPreference] = useState<string>("FLEXIBLE");
   const [contactInfo, setContactInfo] = useState("");
   const [selectedSkillIds, setSelectedSkillIds] = useState<TagInputTag[]>([]);
+  const [applicationForm, setApplicationForm] = useState<ApplicationFormConfig>(
+    DEFAULT_APPLICATION_FORM,
+  );
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
@@ -49,7 +59,8 @@ export function TeamCreateForm({ tags: _tags }: TeamCreateFormProps) {
     difficulty !== "" ||
     meetingPreference !== "FLEXIBLE" ||
     contactInfo !== "" ||
-    selectedSkillIds.length > 0;
+    selectedSkillIds.length > 0 ||
+    JSON.stringify(applicationForm) !== JSON.stringify(DEFAULT_APPLICATION_FORM);
 
   useUnsavedGuard({ when: isDirty });
 
@@ -90,6 +101,7 @@ export function TeamCreateForm({ tags: _tags }: TeamCreateFormProps) {
       difficulty: difficulty || undefined,
       meetingPreference: meetingPreference || undefined,
       contactInfo: contactInfo.trim() || undefined,
+      applicationForm,
       skillTagIds: selectedSkillIds.map((t) => t.id),
     };
   }
@@ -321,6 +333,13 @@ export function TeamCreateForm({ tags: _tags }: TeamCreateFormProps) {
         />
         <p className="ml-auto text-[10px] text-muted-foreground">{contactInfo.length}/500</p>
       </div>
+
+      {/* Application Form */}
+      <ApplicationFormBuilder
+        value={applicationForm}
+        onChange={setApplicationForm}
+        disabled={submitting}
+      />
 
       {/* Skills */}
       <div className="space-y-1.5">

@@ -44,6 +44,92 @@ export const POPULAR_SKILLS = [
   "Data Analysis",
 ] as const;
 
+/**
+ * Built-in metadata fields a team leader can ask applicants for.
+ * Values are pre-filled from the applicant's profile where available.
+ */
+export const APPLICATION_FIELD_KEYS = [
+  "name",
+  "email",
+  "github",
+  "linkedin",
+  "portfolio",
+  "website",
+  "phone",
+  "location",
+  "studentId",
+  "department",
+  "semester",
+] as const;
+
+export type ApplicationFieldKey = (typeof APPLICATION_FIELD_KEYS)[number];
+
+export const APPLICATION_FIELD_META: Record<
+  ApplicationFieldKey,
+  { label: string; placeholder: string; description?: string; inputType: "text" | "email" | "url" | "tel" }
+> = {
+  name: {
+    label: "Full Name",
+    placeholder: "Your full name",
+    description: "Pre-filled from your account",
+    inputType: "text",
+  },
+  email: {
+    label: "Email",
+    placeholder: "you@example.com",
+    description: "Pre-filled from your account",
+    inputType: "email",
+  },
+  github: {
+    label: "GitHub",
+    placeholder: "https://github.com/username",
+    inputType: "url",
+  },
+  linkedin: {
+    label: "LinkedIn",
+    placeholder: "https://linkedin.com/in/username",
+    inputType: "url",
+  },
+  portfolio: {
+    label: "Portfolio",
+    placeholder: "https://your-portfolio.com",
+    inputType: "url",
+  },
+  website: {
+    label: "Website",
+    placeholder: "https://...",
+    inputType: "url",
+  },
+  phone: {
+    label: "Phone Number",
+    placeholder: "+880 ...",
+    inputType: "tel",
+  },
+  location: {
+    label: "Location",
+    placeholder: "e.g. Dhaka, Bangladesh",
+    inputType: "text",
+  },
+  studentId: {
+    label: "Student ID",
+    placeholder: "e.g. NUB-201-0000",
+    description: "Pre-filled from your academic profile",
+    inputType: "text",
+  },
+  department: {
+    label: "Department",
+    placeholder: "e.g. CSE",
+    description: "Pre-filled from your academic profile",
+    inputType: "text",
+  },
+  semester: {
+    label: "Current Semester",
+    placeholder: "e.g. 6th",
+    description: "Pre-filled from your academic profile",
+    inputType: "text",
+  },
+};
+
 /** Status badge color classes. OPEN=green, FILLED=yellow, CLOSED=gray. */
 export const TEAM_STATUS_BADGE: Record<
   "OPEN" | "FILLED" | "CLOSED",
@@ -130,4 +216,16 @@ export const MEETING_PREFERENCE_BADGE: Record<
     label: "Flexible",
     className: "bg-gray-500/10 text-gray-600 ring-1 ring-gray-500/30",
   },
+};
+
+/**
+ * Default application form for new teams (and fallback for teams created
+ * before this feature): the "why you're a great fit" message plus name/email.
+ */
+export const DEFAULT_APPLICATION_FORM: import("@/types/team.types").ApplicationFormConfig = {
+  fields: [
+    { key: "name", required: true },
+    { key: "email", required: true },
+  ],
+  questions: [],
 };

@@ -2,7 +2,11 @@
 
 import { teamService } from "@/services/team.service";
 import type { ApiResponse } from "@/types";
-import type { ListTeamRequestsParams, TeamRequestStatus } from "@/types/team.types";
+import type {
+  ApplicationFormConfig,
+  ListTeamRequestsParams,
+  TeamRequestStatus,
+} from "@/types/team.types";
 
 /** List team requests with pagination and filtering. */
 export async function listTeamRequests(
@@ -41,6 +45,7 @@ export async function createTeamRequest(data: {
   difficulty?: string;
   meetingPreference?: string;
   contactInfo?: string;
+  applicationForm?: ApplicationFormConfig;
   skillTagIds: string[];
 }): Promise<ApiResponse> {
   try {
@@ -65,6 +70,7 @@ export async function updateTeamRequest(id: string, data: {
   difficulty?: string;
   meetingPreference?: string;
   contactInfo?: string;
+  applicationForm?: ApplicationFormConfig;
   skillTagIds?: string[];
 }): Promise<ApiResponse> {
   try {
@@ -92,7 +98,7 @@ export async function deleteTeamRequest(id: string): Promise<ApiResponse> {
 /** Apply to a team request. */
 export async function applyToTeam(
   teamRequestId: string,
-  data: { message?: string },
+  data: { message?: string; responses?: Record<string, string> },
 ): Promise<ApiResponse> {
   try {
     const application = await teamService.applyToTeam(teamRequestId, data);

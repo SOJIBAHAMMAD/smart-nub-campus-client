@@ -37,12 +37,17 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 import { cn } from "@/lib/utils";
 import {
   TEAM_STATUS_BADGE,
   DIFFICULTY_BADGE,
   MEETING_PREFERENCE_BADGE,
+  APPLICATION_FIELD_META,
+  DEFAULT_APPLICATION_FORM,
+  type ApplicationFieldKey,
 } from "@/constants/team";
 import {
   applyToTeam,
@@ -51,11 +56,15 @@ import {
   toggleTeamBookmark,
   getTeamRequest,
 } from "@/actions/team.actions";
+import { getPublicProfile } from "@/actions/profile.actions";
 import type {
   TeamRequest,
   TeamApplication,
   TeamMember,
+  ApplicationFormConfig,
+  ApplicationResponses,
 } from "@/types/team.types";
+import type { ProfileUser } from "@/types/profile.types";
 import { ApplicationCard } from "@/components/teams/application-card";
 import { TeamActivityFeed } from "@/components/teams/team-activity-feed";
 import { toast } from "sonner";
@@ -65,6 +74,12 @@ import { env } from "@/env";
 interface TeamDetailProps {
   team: TeamRequest;
   currentUserId?: string | null;
+  currentUser?: {
+    id: string;
+    name: string | null;
+    email: string | null;
+    image?: string | null;
+  } | null;
 }
 
 function formatDeadline(deadline?: string | null): string {
@@ -91,10 +106,15 @@ function getDeadlineUrgency(
 export function TeamDetail({
   team: initialTeam,
   currentUserId,
+  currentUser,
 }: TeamDetailProps) {
   const [team, setTeam] = useState<TeamRequest>(initialTeam);
   const [showApplyDialog, setShowApplyDialog] = useState(false);
   const [applyMessage, setApplyMessage] = useState("");
+  const [formConfig, setFormConfig] = useState<ApplicationFormConfig | null>(null);
+  const [responses, setResponses] = useState<ApplicationResponses>({});
+  const [responseErrors, setResponseErrors] = useState<Record<string, string>>({});
+  const [profileData, setProfileData] = useState<ProfileUser | null>(null);
   const [submittingApply, setSubmittingApply] = useState(false);
   const [hasApplied, setHasApplied] = useState(() => {
     if (!currentUserId) return false;
@@ -154,16 +174,114 @@ export function TeamDetail({
     ),
   );
 
+  // ── Profile prefill for the application form ─────────────────────────
+  useEffect(() => {
+    if (!currentUserId) return;
+    getPublicProfile(currentUserId).then((res) => {
+      if (res.success && res.data) {
+        setProfileData(res.data as ProfileUser);
+      }
+    }).catch(() => {});
+  }, [currentUserId]);
+
+  function resolveFieldValue(
+    key: ApplicationFieldKey,
+    profile: ProfileUser | null,
+  ): string {
+    switch (key) {
+      case "name":
+        return currentUser?.name ?? "";
+      case "email":
+        return currentUser?.email ?? "";
+      case "github":
+        return profile?.profile?.githubUrl ?? "";
+      case "linkedin":
+        return profile?.profile?.linkedinUrl ?? "";
+      case "portfolio":
+        return profile?.profile?.portfolioUrl ?? "";
+      case "website":
+        return profile?.profile?.websiteUrl ?? "";
+      case "phone":
+        return profile?.profile?.phoneNumber ?? "";
+      case "location":
+        return profile?.profile?.location ?? "";
+      case "studentId":
+        return profile?.student?.studentId ?? "";
+      case "department":
+        return profile?.student?.department ?? "";
+      case "semester":
+        return profile?.profile?.currentSemester != null
+          ? String(profile.profile.currentSemester)
+          : "";
+    }
+  }
+
+  async function openApplyDialog() {
+    setShowApplyDialog(true);
+    const config = team.applicationForm ?? DEFAULT_APPLICATION_FORM;
+    setFormConfig(config);
+
+    let profile = profileData;
+    if (!profile && currentUserId) {
+      const res = await getPublicProfile(currentUserId);
+      if (res.success && res.data) {
+        profile = res.data as ProfileUser;
+        setProfileData(profile);
+      }
+    }
+
+    const prefill: ApplicationResponses = {};
+    for (const field of config.fields) {
+      const value = resolveFieldValue(field.key, profile);
+      if (value) prefill[field.key] = value;
+    }
+    setResponses(prefill);
+    setApplyMessage("");
+    setResponseErrors({});
+  }
+
+  function validateResponses(
+    config: ApplicationFormConfig,
+  ): Record<string, string> {
+    const errors: Record<string, string> = {};
+    for (const field of config.fields) {
+      if (field.required && !(responses[field.key] ?? "").trim()) {
+        errors[field.key] = `${APPLICATION_FIELD_META[field.key].label} is required.`;
+      }
+    }
+    for (const question of config.questions) {
+      if (question.required && !(responses[question.id] ?? "").trim()) {
+        errors[question.id] = "This question is required.";
+      }
+    }
+    return errors;
+  }
+
   async function handleApply() {
+    if (!formConfig) return;
+
+    const errors = validateResponses(formConfig);
+    if (Object.keys(errors).length > 0) {
+      setResponseErrors(errors);
+      toast.error("Please fill in the required fields.");
+      return;
+    }
+
     setSubmittingApply(true);
     try {
+      const cleanResponses = Object.fromEntries(
+        Object.entries(responses).filter(([, value]) => value.trim() !== ""),
+      );
       const result = await applyToTeam(team.id, {
         message: applyMessage.trim() || undefined,
+        responses: Object.keys(cleanResponses).length > 0 ? cleanResponses : undefined,
       });
       if (result.success) {
         toast.success("Application submitted!");
         setShowApplyDialog(false);
         setApplyMessage("");
+        setResponses({});
+        setFormConfig(null);
         setHasApplied(true);
       } else {
         toast.error(result.message || "Failed to submit application.");
@@ -387,7 +505,7 @@ export function TeamDetail({
               )}
             </Button>
             {canApply && (
-              <Button size="sm" onClick={() => setShowApplyDialog(true)}>
+              <Button size="sm" onClick={openApplyDialog}>
                 <UserRoundPlus className="size-4" />
                 Apply
               </Button>
@@ -539,6 +657,7 @@ export function TeamDetail({
                   key={application.id}
                   application={application}
                   canReview
+                  formConfig={team.applicationForm}
                   onAccept={(id) => handleReview(id, "ACCEPTED")}
                   onReject={(id) => handleReview(id, "REJECTED")}
                   reviewing={reviewingId === application.id}
@@ -567,24 +686,114 @@ export function TeamDetail({
 
       {/* ── Apply Dialog ─────────────────────────────────────── */}
       <Dialog open={showApplyDialog} onOpenChange={setShowApplyDialog}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Apply to {team.title}</DialogTitle>
             <DialogDescription>
-              Tell the team leader why you&apos;re a great fit.
+              Tell the team leader why you&apos;re a great fit. Fields marked
+              with <span className="text-destructive">*</span> are required.
+              Your info is pre-filled from your profile where available.
             </DialogDescription>
           </DialogHeader>
-          <Textarea
-            value={applyMessage}
-            onChange={(e) => setApplyMessage(e.target.value)}
-            placeholder="I have experience with..."
-            rows={4}
-            maxLength={1000}
-            className="resize-none"
-          />
-          <p className="text-[10px] text-muted-foreground">
-            {applyMessage.length}/1000
-          </p>
+
+          <div className="space-y-4">
+            {/* Message */}
+            <div className="space-y-1.5">
+              <Label htmlFor="apply-message">
+                Why you&apos;re a great fit
+              </Label>
+              <Textarea
+                id="apply-message"
+                value={applyMessage}
+                onChange={(e) => setApplyMessage(e.target.value)}
+                placeholder="I have experience with..."
+                rows={3}
+                maxLength={1000}
+                className="resize-none"
+              />
+              <p className="text-right text-[10px] text-muted-foreground">
+                {applyMessage.length}/1000
+              </p>
+            </div>
+
+            {/* Built-in profile fields */}
+            {(formConfig?.fields ?? []).map((field) => {
+              const meta = APPLICATION_FIELD_META[field.key];
+              return (
+                <div key={field.key} className="space-y-1.5">
+                  <Label htmlFor={`apply-${field.key}`}>
+                    {meta.label}{" "}
+                    {field.required && (
+                      <span className="text-destructive">*</span>
+                    )}
+                  </Label>
+                  <Input
+                    id={`apply-${field.key}`}
+                    type={meta.inputType}
+                    value={responses[field.key] ?? ""}
+                    onChange={(e) =>
+                      setResponses((prev) => ({
+                        ...prev,
+                        [field.key]: e.target.value,
+                      }))
+                    }
+                    placeholder={meta.placeholder}
+                    maxLength={500}
+                  />
+                  {responseErrors[field.key] && (
+                    <p className="text-[11px] text-destructive">
+                      {responseErrors[field.key]}
+                    </p>
+                  )}
+                </div>
+              );
+            })}
+
+            {/* Custom questions */}
+            {(formConfig?.questions ?? []).map((question) => (
+              <div key={question.id} className="space-y-1.5">
+                <Label htmlFor={`apply-question-${question.id}`}>
+                  {question.label}{" "}
+                  {question.required && (
+                    <span className="text-destructive">*</span>
+                  )}
+                </Label>
+                {question.type === "PARAGRAPH" ? (
+                  <Textarea
+                    id={`apply-question-${question.id}`}
+                    value={responses[question.id] ?? ""}
+                    onChange={(e) =>
+                      setResponses((prev) => ({
+                        ...prev,
+                        [question.id]: e.target.value,
+                      }))
+                    }
+                    rows={3}
+                    maxLength={5000}
+                    className="resize-none"
+                  />
+                ) : (
+                  <Input
+                    id={`apply-question-${question.id}`}
+                    value={responses[question.id] ?? ""}
+                    onChange={(e) =>
+                      setResponses((prev) => ({
+                        ...prev,
+                        [question.id]: e.target.value,
+                      }))
+                    }
+                    maxLength={500}
+                  />
+                )}
+                {responseErrors[question.id] && (
+                  <p className="text-[11px] text-destructive">
+                    {responseErrors[question.id]}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+
           <DialogFooter>
             <Button variant="ghost" onClick={() => setShowApplyDialog(false)}>
               Cancel
