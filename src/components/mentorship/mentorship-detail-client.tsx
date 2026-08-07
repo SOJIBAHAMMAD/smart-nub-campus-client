@@ -6,6 +6,8 @@ import {
   ArrowLeft,
   CalendarDays,
   CheckCircle2,
+  ChevronDown,
+  ChevronUp,
   Circle,
   Clock,
   Handshake,
@@ -60,6 +62,12 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
+  RichTextEditor,
+  RichTextEditorContent,
+  RichTextEditorToolbar,
+} from "@/components/ui/rich-text-editor";
+import { stripHtml } from "@/lib/job-utils";
+import {
   Empty,
   EmptyHeader,
   EmptyMedia,
@@ -85,7 +93,7 @@ import {
   MeetingPreference,
 } from "@/constants/enums";
 import ROUTES from "@/constants/routes";
-import { cn } from "@/lib/utils";
+import { cn, toHref } from "@/lib/utils";
 import { useSocket, useSocketEvent } from "@/hooks/use-socket";
 import type { Mentorship, MentorshipGoal, MentorshipSession, MentorshipMessage } from "@/types";
 import type { MentorshipMessageEvent } from "@/lib/types/socket-events";
@@ -194,25 +202,40 @@ export function MentorshipDetailClient({
   const [closing, setClosing] = useState(false);
   const [busyGoalId, setBusyGoalId] = useState<string | null>(null);
   const [busySessionId, setBusySessionId] = useState<string | null>(null);
+  const [expandedAgendaIds, setExpandedAgendaIds] = useState<Set<string>>(
+    new Set(),
+  );
+
+  const toggleAgenda = (sessionId: string) => {
+    setExpandedAgendaIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(sessionId)) next.delete(sessionId);
+      else next.add(sessionId);
+      return next;
+    });
+  };
 
   const isActive = mentorship?.status === MentorshipStatus.ACTIVE;
   const isMentor = mentorship?.role === "mentor";
   const other = mentorship?.other ?? null;
 
-  const refresh = useCallback(async () => {
-    setLoading(true);
-    try {
-      const result = await getMentorshipAction(mentorshipId);
-      if (result.success && result.data) {
-        setMentorship(result.data as Mentorship);
-        setError(null);
-      } else {
-        setError(result.message || "Failed to load mentorship.");
+  const refresh = useCallback(
+    async (opts?: { silent?: boolean }) => {
+      if (!opts?.silent) setLoading(true);
+      try {
+        const result = await getMentorshipAction(mentorshipId);
+        if (result.success && result.data) {
+          setMentorship(result.data as Mentorship);
+          setError(null);
+        } else {
+          setError(result.message || "Failed to load mentorship.");
+        }
+      } finally {
+        if (!opts?.silent) setLoading(false);
       }
-    } finally {
-      setLoading(false);
-    }
-  }, [mentorshipId]);
+    },
+    [mentorshipId],
+  );
 
   useEffect(() => {
     if (!initialMentorship && !initialError) {
@@ -286,7 +309,7 @@ export function MentorshipDetailClient({
         setGoalTitle("");
         setGoalDescription("");
         setGoalDueDate("");
-        await refresh();
+        await refresh({ silent: true });
       } else {
         toast.error(result.message || "Failed to add goal.");
       }
@@ -313,7 +336,7 @@ export function MentorshipDetailClient({
             ? "Goal completed. Nice work!"
             : "Goal reopened.",
         );
-        await refresh();
+        await refresh({ silent: true });
       } else {
         toast.error(result.message || "Failed to update goal.");
       }
@@ -330,7 +353,7 @@ export function MentorshipDetailClient({
       const result = await deleteMentorshipGoalAction(goalId);
       if (result.success) {
         toast.success("Goal removed.");
-        await refresh();
+        await refresh({ silent: true });
       } else {
         toast.error(result.message || "Failed to remove goal.");
       }
@@ -355,7 +378,10 @@ export function MentorshipDetailClient({
         durationMinutes: parseInt(sessionDuration, 10) || 60,
         format: sessionFormat,
         location: sessionLocation.trim() || undefined,
-        agenda: sessionAgenda.trim() || undefined,
+        agenda:
+          sessionAgenda && stripHtml(sessionAgenda).length > 0
+            ? sessionAgenda
+            : undefined,
       });
       if (result.success) {
         toast.success("Session scheduled.");
@@ -363,7 +389,7 @@ export function MentorshipDetailClient({
         setSessionAt("");
         setSessionLocation("");
         setSessionAgenda("");
-        await refresh();
+        await refresh({ silent: true });
       } else {
         toast.error(result.message || "Failed to schedule session.");
       }
@@ -385,7 +411,7 @@ export function MentorshipDetailClient({
       });
       if (result.success) {
         toast.success("Session updated.");
-        await refresh();
+        await refresh({ silent: true });
       } else {
         toast.error(result.message || "Failed to update session.");
       }
@@ -428,7 +454,7 @@ export function MentorshipDetailClient({
       if (result.success) {
         toast.success("Mentorship completed. Thanks for being part of it!");
         setCompleteOpen(false);
-        await refresh();
+        await refresh({ silent: true });
       } else {
         toast.error(result.message || "Failed to complete mentorship.");
       }
@@ -446,7 +472,7 @@ export function MentorshipDetailClient({
       if (result.success) {
         toast.success("Mentorship ended.");
         setEndOpen(false);
-        await refresh();
+        await refresh({ silent: true });
       } else {
         toast.error(result.message || "Failed to end mentorship.");
       }
@@ -583,6 +609,9 @@ export function MentorshipDetailClient({
   const renderSession = (session: MentorshipSession) => {
     const sessionDone = session.status === MentorshipSessionStatus.COMPLETED;
     const sessionCancelled = session.status === MentorshipSessionStatus.CANCELLED;
+    const locationHref = session.location ? toHref(session.location) : null;
+    const agendaExpanded = expandedAgendaIds.has(session.id);
+    const agendaLong = stripHtml(session.agenda).length > 150;
     return (
       <div
         key={session.id}
@@ -617,14 +646,48 @@ export function MentorshipDetailClient({
                 <span className="inline-flex items-center gap-1">
                   {"\u00b7"}
                   <MapPin className="size-3" />
-                  {session.location}
+                  {locationHref ? (
+                    <a
+                      href={locationHref}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="break-all text-primary underline underline-offset-2 hover:opacity-80"
+                    >
+                      {session.location}
+                    </a>
+                  ) : (
+                    <span className="break-all">{session.location}</span>
+                  )}
                 </span>
               )}
             </p>
             {session.agenda && (
-              <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
-                {session.agenda}
-              </p>
+              <div className="mt-1 space-y-1">
+                <div
+                  className={cn(
+                    "prose prose-sm max-w-none dark:prose-invert",
+                    !agendaExpanded && agendaLong && "line-clamp-2",
+                  )}
+                  dangerouslySetInnerHTML={{ __html: session.agenda }}
+                />
+                {agendaLong && (
+                  <button
+                    type="button"
+                    onClick={() => toggleAgenda(session.id)}
+                    className="flex items-center gap-0.5 text-[10px] font-medium text-primary hover:underline"
+                  >
+                    {agendaExpanded ? (
+                      <>
+                        Show less <ChevronUp className="size-3" />
+                      </>
+                    ) : (
+                      <>
+                        Read more <ChevronDown className="size-3" />
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
             )}
             {session.notes && (
               <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
@@ -898,13 +961,96 @@ export function MentorshipDetailClient({
                   Sessions
                 </CardTitle>
                 {isActive && isMentor && (
-                  <Button size="xs" variant="outline" className="gap-1" onClick={() => setSessionOpen(true)}>
-                    <Plus className="size-3" />
-                    Schedule
+                  <Button size="xs" variant="outline" className="gap-1" onClick={() => setSessionOpen((open) => !open)}>
+                    {sessionOpen ? <XCircle className="size-3" /> : <Plus className="size-3" />}
+                    {sessionOpen ? "Close" : "Schedule"}
                   </Button>
                 )}
               </CardHeader>
               <CardContent className="space-y-2">
+                {sessionOpen && (
+                  <div className="rounded-xl border border-primary/20 bg-muted/30 p-3.5">
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div className="space-y-1.5">
+                        <Label htmlFor="session-at">Date and time</Label>
+                        <Input
+                          id="session-at"
+                          type="datetime-local"
+                          value={sessionAt}
+                          onChange={(e) => setSessionAt(e.target.value)}
+                          disabled={sessionBusy}
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="session-duration">Duration (min)</Label>
+                        <Select
+                          value={sessionDuration}
+                          onValueChange={(v) => setSessionDuration(v ?? "60")}
+                        >
+                          <SelectTrigger className="w-full" id="session-duration">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {["30", "45", "60", "90", "120"].map((d) => (
+                              <SelectItem key={d} value={d}>
+                                {d} min
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="session-format">Format</Label>
+                        <Select
+                          value={sessionFormat}
+                          onValueChange={(v) => setSessionFormat(v ?? MeetingPreference.ONLINE)}
+                        >
+                          <SelectTrigger className="w-full" id="session-format">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Object.entries(MEETING_FORMAT_LABELS).map(([value, label]) => (
+                              <SelectItem key={value} value={value}>
+                                {label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="session-location">Location / link (optional)</Label>
+                        <Input
+                          id="session-location"
+                          value={sessionLocation}
+                          onChange={(e) => setSessionLocation(e.target.value)}
+                          placeholder={sessionFormat === MeetingPreference.IN_PERSON ? "Room or address" : "Video call link"}
+                          maxLength={500}
+                          disabled={sessionBusy}
+                        />
+                      </div>
+                    </div>
+                    <div className="mt-3 space-y-1.5">
+                      <Label>Agenda (optional)</Label>
+                      <RichTextEditor
+                        value={sessionAgenda}
+                        onChange={setSessionAgenda}
+                        placeholder="What should this session cover?"
+                      >
+                        <RichTextEditorToolbar />
+                        <RichTextEditorContent className="min-h-[140px]" />
+                      </RichTextEditor>
+                    </div>
+                    <div className="mt-3 flex justify-end gap-2">
+                      <Button variant="outline" onClick={() => setSessionOpen(false)} disabled={sessionBusy}>
+                        Cancel
+                      </Button>
+                      <Button onClick={handleScheduleSession} disabled={sessionBusy}>
+                        {sessionBusy ? <Loader2 className="size-4 animate-spin" /> : <CalendarDays className="size-4" />}
+                        Schedule
+                      </Button>
+                    </div>
+                  </div>
+                )}
                 {mentorship.sessions.length === 0 ? (
                   <p className="py-4 text-center text-xs text-muted-foreground">
                     {isActive && isMentor
@@ -948,7 +1094,7 @@ export function MentorshipDetailClient({
                 ref={scrollRef}
                 className="flex-1 space-y-3 overflow-y-auto p-4"
               >
-                {messagesLoading ? (
+                {messagesLoading && messages.length === 0 ? (
                   <div className="space-y-2">
                     <Skeleton className="h-10 w-2/3" />
                     <Skeleton className="h-10 w-1/2" />
@@ -1101,100 +1247,6 @@ export function MentorshipDetailClient({
             <Button onClick={handleAddGoal} disabled={goalBusy}>
               {goalBusy ? <Loader2 className="size-4 animate-spin" /> : null}
               Add goal
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* ── Schedule session dialog ──────────────────────────────────── */}
-      <Dialog open={sessionOpen} onOpenChange={(open) => !open && setSessionOpen(false)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Schedule a session</DialogTitle>
-            <DialogDescription>
-              Agree on a time that works for both of you.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="session-at">Date and time</Label>
-              <Input
-                id="session-at"
-                type="datetime-local"
-                value={sessionAt}
-                onChange={(e) => setSessionAt(e.target.value)}
-                disabled={sessionBusy}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="session-duration">Duration (min)</Label>
-                <Select
-                  value={sessionDuration}
-                  onValueChange={(v) => setSessionDuration(v ?? "60")}
-                >
-                  <SelectTrigger className="w-full" id="session-duration">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {["30", "45", "60", "90", "120"].map((d) => (
-                      <SelectItem key={d} value={d}>
-                        {d} min
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="session-format">Format</Label>
-                <Select
-                  value={sessionFormat}
-                  onValueChange={(v) => setSessionFormat(v ?? MeetingPreference.ONLINE)}
-                >
-                  <SelectTrigger className="w-full" id="session-format">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(MEETING_FORMAT_LABELS).map(([value, label]) => (
-                      <SelectItem key={value} value={value}>
-                        {label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="session-location">Location / link (optional)</Label>
-              <Input
-                id="session-location"
-                value={sessionLocation}
-                onChange={(e) => setSessionLocation(e.target.value)}
-                placeholder={sessionFormat === MeetingPreference.IN_PERSON ? "Room or address" : "Video call link"}
-                maxLength={500}
-                disabled={sessionBusy}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="session-agenda">Agenda (optional)</Label>
-              <Textarea
-                id="session-agenda"
-                value={sessionAgenda}
-                onChange={(e) => setSessionAgenda(e.target.value)}
-                rows={3}
-                maxLength={2000}
-                placeholder="What should this session cover?"
-                disabled={sessionBusy}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setSessionOpen(false)} disabled={sessionBusy}>
-              Cancel
-            </Button>
-            <Button onClick={handleScheduleSession} disabled={sessionBusy}>
-              {sessionBusy ? <Loader2 className="size-4 animate-spin" /> : <CalendarDays className="size-4" />}
-              Schedule
             </Button>
           </DialogFooter>
         </DialogContent>
