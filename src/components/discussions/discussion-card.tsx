@@ -6,6 +6,7 @@ import {
   Eye,
   Lock,
   CheckCircle,
+  Pin,
   ChevronUp,
   ChevronDown,
   Bookmark,
@@ -75,9 +76,20 @@ export function DiscussionCard({
               </h3>
             </div>
             <div className="flex shrink-0 items-center gap-1.5">
+              {discussion.isPinned && (
+                <Badge
+                  variant="outline"
+                  aria-label="Pinned"
+                  className="h-5 gap-1 border-primary/30 px-1.5 text-[10px] text-primary"
+                >
+                  <Pin className="size-2.5" />
+                  Pinned
+                </Badge>
+              )}
               {discussion.isLocked && (
                 <Badge
                   variant="outline"
+                  aria-label="Locked"
                   className="h-5 gap-1 px-1.5 text-[10px] text-muted-foreground"
                 >
                   <Lock className="size-2.5" />
@@ -87,6 +99,7 @@ export function DiscussionCard({
               {discussion.isSolved && (
                 <Badge
                   variant="outline"
+                  aria-label="Solved"
                   className="h-5 gap-1 border-success/30 px-1.5 text-[10px] text-success"
                 >
                   <CheckCircle className="size-2.5" />

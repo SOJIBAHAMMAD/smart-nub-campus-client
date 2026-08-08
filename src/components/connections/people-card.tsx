@@ -489,6 +489,9 @@ export function PeopleCard({
                       variant="ghost"
                       onClick={handleToggleFavorite}
                       disabled={busy === "fav"}
+                      aria-label={
+                        isFavorited ? "Remove from favorites" : "Add to favorites"
+                      }
                       className={cn(
                         "transition-colors",
                         isFavorited
@@ -512,6 +515,7 @@ export function PeopleCard({
                       variant="ghost"
                       onClick={handleRemove}
                       disabled={busy === "remove"}
+                      aria-label="Remove connection"
                       className="text-muted-foreground hover:text-destructive"
                     />
                   }
