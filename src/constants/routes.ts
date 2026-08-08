@@ -9,6 +9,8 @@ const ROUTES = {
   RESET_PASSWORD: "/auth/reset-password",
 
   // ── Core Platform ──────────────────────────────────────────────────────────
+  SEARCH: "/search",
+  EVENTS: "/events",
   RESOURCES: "/resources",
   TEAMS: "/teams",
   DISCUSSIONS: "/discussions",
