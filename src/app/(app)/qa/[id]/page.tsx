@@ -9,6 +9,8 @@ import { getQuestion } from "@/actions/qa.actions";
 import { authClient } from "@/lib/auth-client";
 import type { Question } from "@/types/qa.types";
 
+export const dynamic = "force-dynamic";
+
 /** Loading skeleton for the question detail page. */
 function QuestionDetailSkeleton() {
   return (
