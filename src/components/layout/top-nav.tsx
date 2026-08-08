@@ -115,8 +115,7 @@ function roleLabel(role?: string): string | null {
 export function TopNav({ userName, userImage, userId, userRole }: TopNavProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const { open: openSearch } = useGlobalSearch();
-  const [scrolled, setScrolled] = useState(false);
+  const { open: openSearch } = useGlobalSearch();  const [scrolled, setScrolled] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
   const sheetTriggerRef = useRef<HTMLButtonElement>(null);
   const userRoleLabel = roleLabel(userRole);
@@ -275,7 +274,7 @@ export function TopNav({ userName, userImage, userId, userRole }: TopNavProps) {
           <div className="ml-auto flex items-center gap-1.5">
             <button
               type="button"
-              onClick={openSearch}
+              onClick={() => openSearch()}
               aria-label="Open global search"
               className="relative hidden h-8 w-36 cursor-text items-center gap-2 rounded-md border border-input bg-background px-2.5 text-sm text-muted-foreground transition-colors hover:bg-muted sm:flex lg:w-48 xl:w-56"
             >
@@ -290,7 +289,7 @@ export function TopNav({ userName, userImage, userId, userRole }: TopNavProps) {
               variant="ghost"
               size="icon"
               className="size-8 sm:hidden"
-              onClick={openSearch}
+              onClick={() => openSearch()}
               aria-label="Open search"
             >
               <Search className="size-4" />

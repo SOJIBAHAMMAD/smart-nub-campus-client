@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState, useCallback } from "react";
 import { Search, Sparkles, Bell, MessageCircle, BookOpen, TrendingUp } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { useGlobalSearch } from "@/hooks/use-global-search";
 import ROUTES from "@/constants/routes";
 
 interface WelcomeStripProps {
@@ -14,19 +14,15 @@ interface WelcomeStripProps {
 }
 
 export function WelcomeStrip({ userName, unreadNotifications = 0, unreadMessages = 0 }: WelcomeStripProps) {
-  const router = useRouter();
+  const { open } = useGlobalSearch();
   const [searchQuery, setSearchQuery] = useState("");
 
   const handleSearch = useCallback(
     (e: React.FormEvent) => {
       e.preventDefault();
-      if (searchQuery.trim()) {
-        router.push(
-          `${ROUTES.RESOURCES}?search=${encodeURIComponent(searchQuery.trim())}`,
-        );
-      }
+      open(searchQuery.trim() || undefined);
     },
-    [router, searchQuery],
+    [open, searchQuery],
   );
 
   const timeOfDay = new Date().getHours() < 12 ? "morning" : new Date().getHours() < 17 ? "afternoon" : "evening";

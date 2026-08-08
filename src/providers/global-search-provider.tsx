@@ -13,7 +13,7 @@ const GlobalSearchContext = React.createContext<GlobalSearchContextValue | null>
 
 export interface GlobalSearchContextValue {
   isOpen: boolean;
-  open: () => void;
+  open: (initialQuery?: string) => void;
   close: () => void;
   toggle: () => void;
   query: string;
@@ -87,8 +87,17 @@ export function GlobalSearchProvider({
   const [isOpen, setIsOpen] = React.useState(false);
   const [query, setQuery] = React.useState("");
   const [recents, setRecents] = React.useState<SearchRecent[]>([]);
+  // When `open("prefilled")` is called, the reset-on-open effect must keep the
+  // query instead of clearing it.
+  const skipResetOnOpenRef = React.useRef(false);
 
-  const open = React.useCallback(() => setIsOpen(true), []);
+  const open = React.useCallback((initialQuery?: string) => {
+    if (typeof initialQuery === "string") {
+      setQuery(initialQuery);
+      skipResetOnOpenRef.current = true;
+    }
+    setIsOpen(true);
+  }, []);
   const close = React.useCallback(() => setIsOpen(false), []);
   const toggle = React.useCallback(() => setIsOpen((prev) => !prev), []);
 
@@ -98,9 +107,10 @@ export function GlobalSearchProvider({
   }, []);
 
   React.useEffect(() => {
-    if (isOpen) {
+    if (isOpen && !skipResetOnOpenRef.current) {
       setQuery("");
     }
+    skipResetOnOpenRef.current = false;
   }, [isOpen]);
 
   const addRecent = React.useCallback(

@@ -12,6 +12,7 @@ function Harness() {
   const {
     isOpen,
     toggle,
+    open,
     query,
     setQuery,
     recents,
@@ -35,6 +36,7 @@ function Harness() {
   return (
     <div>
       <button onClick={toggle}>toggle</button>
+      <button onClick={() => open("database")}>open-with-query</button>
       <span data-testid="open-state">{isOpen ? "open" : "closed"}</span>
       <input
         data-testid="search-input"
@@ -127,6 +129,30 @@ describe("GlobalSearchProvider", () => {
       document.dispatchEvent(new KeyboardEvent("keydown", { key: "/" }));
     });
     expect(screen.getByTestId("open-state")).toHaveTextContent("open");
+  });
+
+  it("open(initialQuery) prefills the query and keeps it after open", () => {
+    renderHarness();
+    act(() => {
+      screen.getByText("open-with-query").click();
+    });
+    expect(screen.getByTestId("open-state")).toHaveTextContent("open");
+    expect(screen.getByTestId("search-input")).toHaveValue("database");
+  });
+
+  it("clears the query when opened again without an initial query", () => {
+    renderHarness();
+    act(() => {
+      screen.getByText("open-with-query").click();
+    });
+    act(() => {
+      screen.getByText("toggle").click();
+    });
+    act(() => {
+      document.dispatchEvent(new KeyboardEvent("keydown", { key: "/" }));
+    });
+    expect(screen.getByTestId("open-state")).toHaveTextContent("open");
+    expect(screen.getByTestId("search-input")).toHaveValue("");
   });
 
   it("does NOT open with '/' while typing in an input", () => {

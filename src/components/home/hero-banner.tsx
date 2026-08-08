@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState, useCallback } from "react";
 import { motion } from "motion/react";
 import { Search, BookOpen, Users, Sparkles } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AvatarGroup } from "@/components/ui/avatar-group";
+import { useGlobalSearch } from "@/hooks/use-global-search";
 import ROUTES from "@/constants/routes";
 
 const students = [
@@ -20,19 +20,15 @@ const students = [
 ];
 
 export function HeroBanner() {
-  const router = useRouter();
+  const { open } = useGlobalSearch();
   const [searchQuery, setSearchQuery] = useState("");
 
   const handleSearch = useCallback(
     (e: React.FormEvent) => {
       e.preventDefault();
-      if (searchQuery.trim()) {
-        router.push(
-          `${ROUTES.RESOURCES}?search=${encodeURIComponent(searchQuery.trim())}`,
-        );
-      }
+      open(searchQuery.trim() || undefined);
     },
-    [router, searchQuery],
+    [open, searchQuery],
   );
 
   return (
