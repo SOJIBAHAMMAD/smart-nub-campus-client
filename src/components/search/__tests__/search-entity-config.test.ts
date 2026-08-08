@@ -57,6 +57,7 @@ describe("search-entity-config", () => {
       { entity: "questions", expected: "/qa/42" },
       { entity: "teams", expected: "/teams/42" },
       { entity: "events", expected: "/events/42" },
+      { entity: "courses", expected: "/courses/42" },
       { entity: "jobs", expected: "/jobs/42" },
     ];
 
@@ -86,9 +87,14 @@ describe("search-entity-config", () => {
     );
   });
 
-  it("returns null for courses (no detail page)", () => {
-    const course = makeItem({ type: "courses", url: null });
-    expect(SEARCH_ENTITY_CONFIG.courses.buildRoute(course)).toBeNull();
+  it("prefers the server-provided url for courses when present", () => {
+    const course = makeItem({
+      type: "courses",
+      url: "/courses/custom",
+    });
+    expect(SEARCH_ENTITY_CONFIG.courses.buildRoute(course)).toBe(
+      "/courses/custom",
+    );
   });
 
   it("treats 'all' as no specific config", () => {

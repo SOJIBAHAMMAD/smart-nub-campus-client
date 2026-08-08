@@ -67,5 +67,7 @@ export interface SearchRecent {
   entity: SearchEntityFilter;
   label: string;
   url: string;
+  /** Original search result id, used for click analytics when reopening a recent. */
+  resultId?: string;
   timestamp: number;
 }

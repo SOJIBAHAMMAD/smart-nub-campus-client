@@ -152,7 +152,11 @@ export function GlobalSearchDialog() {
     router.push(href);
   };
 
-  const handleSelectResult = (item: SearchResultItem, queryUsed: string) => {
+  const handleSelectResult = (
+    item: SearchResultItem,
+    queryUsed: string,
+    position?: number,
+  ) => {
     const route = buildRoute(item);
     if (!route) return;
     close();
@@ -161,12 +165,13 @@ export function GlobalSearchDialog() {
       entity: item.type,
       label: item.title ?? item.subtitle ?? item.id,
       url: route,
+      resultId: item.id,
     });
     void searchClientService.recordClick({
       query: queryUsed,
       entity: item.type,
       resultId: item.id,
-      position: item.rank,
+      ...(position ? { position } : {}),
     });
     router.push(route);
   };
@@ -176,7 +181,7 @@ export function GlobalSearchDialog() {
     void searchClientService.recordClick({
       query: recent.query,
       entity: recent.entity === "all" ? "resources" : recent.entity,
-      resultId: recent.url,
+      resultId: recent.resultId,
     });
     router.push(recent.url);
   };
@@ -291,7 +296,7 @@ export function GlobalSearchDialog() {
                   <SearchResultRow
                     item={data.meta.bestMatch}
                     onSelect={() =>
-                      handleSelectResult(data.meta.bestMatch!, activeQuery)
+                      handleSelectResult(data.meta.bestMatch!, activeQuery, 1)
                     }
                   />
                 </CommandGroup>
@@ -303,13 +308,19 @@ export function GlobalSearchDialog() {
                 const config = SEARCH_ENTITY_CONFIG[entity];
                 return (
                   <CommandGroup key={entity} heading={config.pluralLabel}>
-                    {group.items.map((item) => (
-                      <SearchResultRow
-                        key={itemValue(item)}
-                        item={item}
-                        onSelect={() => handleSelectResult(item, activeQuery)}
-                      />
-                    ))}
+                    {group.items
+                      .filter(
+                        (item) => item.id !== data.meta.bestMatch?.id,
+                      )
+                      .map((item, index) => (
+                        <SearchResultRow
+                          key={itemValue(item)}
+                          item={item}
+                          onSelect={() =>
+                            handleSelectResult(item, activeQuery, index + 1)
+                          }
+                        />
+                      ))}
                   </CommandGroup>
                 );
               })}
@@ -369,7 +380,12 @@ function SearchResultRow({
   const route = config?.buildRoute(item);
 
   return (
-    <CommandItem value={itemValue(item)} onSelect={onSelect}>
+    <CommandItem
+      value={itemValue(item)}
+      onSelect={onSelect}
+      disabled={!route}
+      className={cn(!route && "cursor-default opacity-60")}
+    >
       <span
         className={cn(
           "flex size-7 shrink-0 items-center justify-center rounded-md bg-muted",

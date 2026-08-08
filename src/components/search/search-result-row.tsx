@@ -12,6 +12,8 @@ interface SearchResultRowProps {
   query: string;
   /** Render a richer variant for the "Best match" highlight. */
   bestMatch?: boolean;
+  /** 1-based position of the result in the displayed list, sent to click analytics. */
+  position?: number;
 }
 
 /** Strip HTML fragments that ts_headline may have inserted. */
@@ -57,6 +59,7 @@ export function SearchResultRow({
   item,
   query,
   bestMatch = false,
+  position,
 }: SearchResultRowProps) {
   const config = SEARCH_ENTITY_CONFIG[item.type];
   const Icon = config?.icon;
@@ -66,7 +69,47 @@ export function SearchResultRow({
     ? formatDistanceToNowStrict(new Date(item.createdAt), { addSuffix: true })
     : null;
 
-  if (!route) return null;
+  const card = (
+    <div
+      className={
+        bestMatch
+          ? "flex items-start gap-3 rounded-xl border border-primary/30 bg-primary/5 p-3 transition-colors hover:bg-primary/10"
+          : "flex items-start gap-3 rounded-xl border p-3 transition-colors hover:bg-muted/60"
+      }
+    >
+      {Icon && (
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted">
+          <Icon className="size-4 text-foreground/70" />
+        </span>
+      )}
+      <div className="min-w-0 flex-1">
+        <div className="flex items-baseline justify-between gap-3">
+          <h3 className="truncate text-sm font-semibold group-hover:text-primary">
+            {item.title ?? item.subtitle ?? "Untitled"}
+          </h3>
+          <span className="shrink-0 text-xs text-muted-foreground">
+            {config?.label}
+          </span>
+        </div>
+        {item.snippet && (
+          <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
+            {stripTags(item.snippet)}
+          </p>
+        )}
+        {(meta.length > 0 || time) && (
+          <p className="mt-1 truncate text-xs text-muted-foreground/80">
+            {meta.join(" · ")}
+            {meta.length > 0 && time ? " · " : ""}
+            {time ?? ""}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+
+  if (!route) {
+    return <div className="block">{card}</div>;
+  }
 
   return (
     <Link
@@ -76,47 +119,13 @@ export function SearchResultRow({
           query,
           entity: item.type,
           resultId: item.id,
-          position: item.rank,
+          ...(position ? { position } : {}),
         });
       }}
       className="group block"
       aria-label={`${item.title ?? item.subtitle ?? "Untitled"} — ${config?.pluralLabel ?? item.type}`}
     >
-      <div
-        className={
-          bestMatch
-            ? "flex items-start gap-3 rounded-xl border border-primary/30 bg-primary/5 p-3 transition-colors hover:bg-primary/10"
-            : "flex items-start gap-3 rounded-xl border p-3 transition-colors hover:bg-muted/60"
-        }
-      >
-        {Icon && (
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted">
-            <Icon className="size-4 text-foreground/70" />
-          </span>
-        )}
-        <div className="min-w-0 flex-1">
-          <div className="flex items-baseline justify-between gap-3">
-            <h3 className="truncate text-sm font-semibold group-hover:text-primary">
-              {item.title ?? item.subtitle ?? "Untitled"}
-            </h3>
-            <span className="shrink-0 text-xs text-muted-foreground">
-              {config?.label}
-            </span>
-          </div>
-          {item.snippet && (
-            <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
-              {stripTags(item.snippet)}
-            </p>
-          )}
-          {(meta.length > 0 || time) && (
-            <p className="mt-1 truncate text-xs text-muted-foreground/80">
-              {meta.join(" · ")}
-              {meta.length > 0 && time ? " · " : ""}
-              {time ?? ""}
-            </p>
-          )}
-        </div>
-      </div>
+      {card}
     </Link>
   );
 }

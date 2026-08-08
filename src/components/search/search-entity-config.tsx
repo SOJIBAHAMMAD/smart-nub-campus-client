@@ -81,7 +81,8 @@ export const SEARCH_ENTITY_CONFIG: Record<SearchEntity, SearchEntityConfig> = {
     label: "Course",
     pluralLabel: "Courses",
     icon: GraduationCap,
-    buildRoute: (item) => item.url ?? null,
+    buildRoute: (item) =>
+      item.url ?? (item.id ? ROUTES.COURSE(item.id) : null),
   },
   jobs: {
     entity: "jobs",

@@ -44,6 +44,7 @@ const ROUTES = {
 
   // ── Parameterized Routes ───────────────────────────────────────────────────
   RESOURCE: (id: string) => `/resources/${id}`,
+  COURSE: (id: string) => `/courses/${id}`,
   TEAM: (id: string) => `/teams/${id}`,
   DISCUSSION: (id: string) => `/discussions/${id}`,
   QUESTION: (id: string) => `/qa/${id}`,

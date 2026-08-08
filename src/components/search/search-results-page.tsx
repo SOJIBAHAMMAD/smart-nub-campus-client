@@ -500,6 +500,7 @@ export function SearchResultsPage({ categories, courses }: FacetRefData) {
                           item={data.meta.bestMatch}
                           query={q}
                           bestMatch
+                          position={1}
                         />
                       </section>
                     )}
@@ -522,13 +523,19 @@ export function SearchResultsPage({ categories, courses }: FacetRefData) {
                             </span>
                           </h2>
                           <div className="space-y-2">
-                            {group.items.map((item) => (
-                              <SearchResultRow
-                                key={`${item.type}:${item.id}`}
-                                item={item}
-                                query={q}
-                              />
-                            ))}
+                            {group.items
+                              .filter(
+                                (item) =>
+                                  item.id !== data?.meta.bestMatch?.id,
+                              )
+                              .map((item, index) => (
+                                <SearchResultRow
+                                  key={`${item.type}:${item.id}`}
+                                  item={item}
+                                  query={q}
+                                  position={index + 1}
+                                />
+                              ))}
                           </div>
                           <Link
                             href={viewAllHref}
@@ -545,11 +552,12 @@ export function SearchResultsPage({ categories, courses }: FacetRefData) {
                   /* Scoped tab: paginated list */
                   <>
                     <div className="space-y-2">
-                      {items.map((item) => (
+                      {items.map((item, index) => (
                         <SearchResultRow
                           key={`${item.type}:${item.id}`}
                           item={item}
                           query={q}
+                          position={index + 1}
                         />
                       ))}
                     </div>

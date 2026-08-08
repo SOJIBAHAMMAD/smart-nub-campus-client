@@ -176,7 +176,7 @@ describe("GlobalSearchDialog", () => {
       query: "database",
       entity: "jobs",
       resultId: "job-1",
-      position: 2,
+      position: 1,
     });
   });
 

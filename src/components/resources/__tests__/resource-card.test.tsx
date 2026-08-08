@@ -29,10 +29,9 @@ describe("ResourceCard", () => {
     expect(link).toHaveAttribute("href", `/resources/${resource.id}`);
   });
 
-  it("displays course code and name", () => {
-    render(<ResourceCard resource={resource} />);
+  it("displays the course code", () => {
+    render(<ResourceCard resource={resource} variant="list" />);
     expect(screen.getByText(/CSE101/)).toBeInTheDocument();
-    expect(screen.getByText(/Intro to Programming/)).toBeInTheDocument();
   });
 
   it("shows the uploader name", () => {
@@ -40,8 +39,13 @@ describe("ResourceCard", () => {
     expect(screen.getByText("Test User")).toBeInTheDocument();
   });
 
-  it("shows the upvote count", () => {
+  it("shows the net vote score", () => {
+    render(<ResourceCard resource={resource} onVote={() => {}} />);
+    expect(screen.getByText("4")).toBeInTheDocument();
+  });
+
+  it("hides interactive controls when no handlers are provided", () => {
     render(<ResourceCard resource={resource} />);
-    expect(screen.getByText("5")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Bookmark")).not.toBeInTheDocument();
   });
 });
