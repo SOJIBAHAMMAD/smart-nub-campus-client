@@ -9,6 +9,8 @@ const ROUTES = {
   RESET_PASSWORD: "/auth/reset-password",
 
   // ── Core Platform ──────────────────────────────────────────────────────────
+  SEARCH: "/search",
+  EVENTS: "/events",
   RESOURCES: "/resources",
   TEAMS: "/teams",
   DISCUSSIONS: "/discussions",
@@ -42,6 +44,7 @@ const ROUTES = {
 
   // ── Parameterized Routes ───────────────────────────────────────────────────
   RESOURCE: (id: string) => `/resources/${id}`,
+  COURSE: (id: string) => `/courses/${id}`,
   TEAM: (id: string) => `/teams/${id}`,
   DISCUSSION: (id: string) => `/discussions/${id}`,
   QUESTION: (id: string) => `/qa/${id}`,

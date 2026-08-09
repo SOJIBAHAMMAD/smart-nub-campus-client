@@ -94,6 +94,7 @@ export interface ListQuestionsParams {
   page?: number;
   limit?: number;
   category?: string;
+  courseId?: string;
   tag?: string;
   search?: string;
   answered?: "true" | "false" | null;

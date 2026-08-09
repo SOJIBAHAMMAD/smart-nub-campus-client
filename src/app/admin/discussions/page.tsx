@@ -1,81 +1,21 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-import { format } from "date-fns";
+import { useCallback, useEffect, useState } from "react";
+import { Ban, Lock, MessageSquare, Pin } from "lucide-react";
+import { toast } from "sonner";
 import { adminService } from "@/services/admin.service";
-import { BulkActions } from "@/components/admin/bulk-actions";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Search,
-  ChevronLeft,
-  ChevronRight,
-  ExternalLink,
-  Trash2,
-  Loader2,
-  MoreHorizontal,
-  Eye,
-  Pin,
-  Lock,
-  CheckCircle,
-  MessageSquare,
-  ThumbsUp,
-  ArrowUpDown,
-  XCircle,
-  Ban,
-} from "lucide-react";
 import type {
-  ListAdminDiscussionsResponse,
   AdminDiscussionSort,
   AdminDiscussionStatus,
+  ListAdminDiscussionsResponse,
 } from "@/types/admin.types";
-import { toast } from "sonner";
+import { BulkActions } from "@/components/admin/bulk-actions";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
-
-const SORT_OPTIONS: { value: AdminDiscussionSort; label: string }[] = [
-  { value: "newest", label: "Newest" },
-  { value: "oldest", label: "Oldest" },
-  { value: "popular", label: "Most Upvoted" },
-  { value: "replies", label: "Most Replies" },
-];
-
-const STATUS_OPTIONS: { value: AdminDiscussionStatus; label: string }[] = [
-  { value: "all", label: "All Discussions" },
-  { value: "pinned", label: "Pinned" },
-  { value: "locked", label: "Locked" },
-  { value: "solved", label: "Solved" },
-];
+import { Card } from "@/components/ui/card";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { DiscussionsFilterBar } from "@/components/admin/discussion/discussions-filter-bar";
+import { DiscussionsPagination } from "@/components/admin/discussion/discussions-pagination";
+import { DiscussionsTable } from "@/components/admin/discussion/discussions-table";
 
 export default function AdminDiscussionsPage() {
   const [data, setData] = useState<ListAdminDiscussionsResponse | null>(null);
@@ -94,7 +34,9 @@ export default function AdminDiscussionsPage() {
   const [pinningId, setPinningId] = useState<string | null>(null);
   const [lockingId, setLockingId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
-  const [bulkAction, setBulkAction] = useState<"pin" | "lock" | "delete" | null>(null);
+  const [bulkAction, setBulkAction] = useState<
+    "pin" | "lock" | "delete" | null
+  >(null);
   const [bulkPinValue, setBulkPinValue] = useState(false);
   const [bulkLockValue, setBulkLockValue] = useState(false);
 
@@ -166,7 +108,8 @@ export default function AdminDiscussionsPage() {
     setPage(1);
   };
 
-  const hasActiveFilters = search || statusFilter !== "all" || sort !== "newest";
+  const hasActiveFilters =
+    Boolean(search) || statusFilter !== "all" || sort !== "newest";
 
   const toggleSelection = (id: string) => {
     setSelectedIds((prev) =>
@@ -181,82 +124,50 @@ export default function AdminDiscussionsPage() {
     setSelectedIds(allSelected ? [] : allIds);
   };
 
+  const openDiscussion = (id: string) => {
+    window.open(`/discussions/${id}`, "_blank");
+  };
+
   const totalPages = data?.meta.totalPages ?? 1;
+  const totalDiscussions = data?.meta.total ?? 0;
 
   return (
     <TooltipProvider>
-      <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+      <div className="space-y-4 p-4 sm:space-y-6 sm:p-6">
         {/* Page Header */}
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold">Discussions</h1>
-          <p className="text-xs sm:text-sm text-muted-foreground">
-            Manage discussions, pin/lock, and moderate content
-          </p>
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-xl font-bold sm:text-2xl">Discussions</h1>
+            <p className="text-xs text-muted-foreground sm:text-sm">
+              Moderate, pin, lock, and review community discussions
+            </p>
+          </div>
+          {data && !isLoading && (
+            <span className="inline-flex w-fit items-center gap-1.5 rounded-full border bg-muted/50 px-2.5 py-1 text-xs font-medium text-muted-foreground">
+              <MessageSquare className="size-3" />
+              {totalDiscussions.toLocaleString()}{" "}
+              {totalDiscussions === 1 ? "discussion" : "discussions"}
+            </span>
+          )}
         </div>
 
         {/* Filters */}
-        <div className="space-y-3">
-          <div className="flex gap-2 overflow-x-auto pb-1">
-            <div className="relative min-w-0 w-full sm:w-auto sm:flex-1 sm:max-w-sm">
-              <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="Search discussions..."
-                value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value);
-                  setPage(1);
-                }}
-                className="pl-8 w-full"
-              />
-            </div>
-            <Select
-              value={statusFilter}
-              onValueChange={(val) => {
-                setStatusFilter(val as AdminDiscussionStatus);
-                setPage(1);
-              }}
-            >
-              <SelectTrigger className="w-40 shrink-0">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {STATUS_OPTIONS.map((opt) => (
-                  <SelectItem key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select
-              value={sort}
-              onValueChange={(val) => setSort(val as AdminDiscussionSort)}
-            >
-              <SelectTrigger className="w-38.75 shrink-0">
-                <ArrowUpDown className="size-3.5 mr-1.5" />
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {SORT_OPTIONS.map((opt) => (
-                  <SelectItem key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {hasActiveFilters && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={clearFilters}
-                className="text-muted-foreground shrink-0"
-              >
-                <XCircle className="size-3.5 mr-1" />
-                Clear
-              </Button>
-            )}
-          </div>
-        </div>
+        <DiscussionsFilterBar
+          search={search}
+          statusFilter={statusFilter}
+          sort={sort}
+          hasActiveFilters={hasActiveFilters}
+          onSearchChange={(value) => {
+            setSearch(value);
+            setPage(1);
+          }}
+          onStatusChange={(value) => {
+            setStatusFilter(value);
+            setPage(1);
+          }}
+          onSortChange={(value) => setSort(value)}
+          onClear={clearFilters}
+        />
 
         {/* Bulk Actions */}
         <BulkActions
@@ -309,268 +220,33 @@ export default function AdminDiscussionsPage() {
         />
 
         {/* Table */}
-        <div className="rounded-xl border bg-white shadow-sm overflow-hidden dark:bg-gray-800">
-          {isLoading ? (
-            <div className="p-4 sm:p-6 space-y-3">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Skeleton key={i} className="h-14 w-full" />
-              ))}
-            </div>
-          ) : !data || data.data.length === 0 ? (
-            <div className="p-12 sm:p-16 text-center">
-              <MessageSquare className="size-10 mx-auto mb-3 text-muted-foreground/40" />
-              <p className="text-sm font-medium">No discussions found</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                {hasActiveFilters
-                  ? "Try adjusting your filters"
-                  : "Discussions will appear here once created"}
-              </p>
-              {hasActiveFilters && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="mt-3"
-                  onClick={clearFilters}
-                >
-                  Clear filters
-                </Button>
-              )}
-            </div>
-          ) : (
-            <div className="w-full overflow-x-auto">
-              <div className="min-w-200">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-gray-50 dark:bg-gray-700/50">
-                      <TableHead className="w-10">
-                        <Checkbox
-                          checked={
-                            data.data.length > 0 &&
-                            data.data.every((d) => selectedIds.includes(d.id))
-                          }
-                          onCheckedChange={toggleSelectAll}
-                        />
-                      </TableHead>
-                      <TableHead>Title</TableHead>
-                      <TableHead>Author</TableHead>
-                      <TableHead>Category</TableHead>
-                      <TableHead className="text-center">Status</TableHead>
-                      <TableHead className="text-center">Stats</TableHead>
-                      <TableHead>Created</TableHead>
-                      <TableHead className="w-10" />
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {data.data.map((discussion) => (
-                      <TableRow key={discussion.id}>
-                        <TableCell>
-                          <Checkbox
-                            checked={selectedIds.includes(discussion.id)}
-                            onCheckedChange={() => toggleSelection(discussion.id)}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2 min-w-0 max-w-xs">
-                            <div className="min-w-0">
-                              <p className="text-sm font-medium truncate">
-                                {discussion.isPinned && (
-                                  <Pin className="size-3 inline mr-1 text-primary shrink-0" />
-                                )}
-                                {discussion.title}
-                              </p>
-                              <p className="text-[10px] text-muted-foreground truncate">
-                                {discussion.course
-                                  ? discussion.course.code
-                                  : "No course"}
-                                {" · "}
-                                {discussion.visibility}
-                              </p>
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <span className="text-sm">{discussion.author.name}</span>
-                        </TableCell>
-                        <TableCell>
-                          {discussion.category ? (
-                            <Badge variant="secondary" className="text-[10px]">
-                              {discussion.category.name}
-                            </Badge>
-                          ) : (
-                            <span className="text-sm text-muted-foreground">—</span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center justify-center gap-1">
-                            {discussion.isPinned && (
-                              <Tooltip>
-                                <TooltipTrigger>
-                                  <Pin className="size-3.5 text-primary" />
-                                </TooltipTrigger>
-                                <TooltipContent>Pinned</TooltipContent>
-                              </Tooltip>
-                            )}
-                            {discussion.isLocked && (
-                              <Tooltip>
-                                <TooltipTrigger>
-                                  <Lock className="size-3.5 text-amber-600" />
-                                </TooltipTrigger>
-                                <TooltipContent>Locked</TooltipContent>
-                              </Tooltip>
-                            )}
-                            {discussion.isSolved && (
-                              <Tooltip>
-                                <TooltipTrigger>
-                                  <CheckCircle className="size-3.5 text-green-600" />
-                                </TooltipTrigger>
-                                <TooltipContent>Solved</TooltipContent>
-                              </Tooltip>
-                            )}
-                            {!discussion.isPinned &&
-                              !discussion.isLocked &&
-                              !discussion.isSolved && (
-                                <span className="text-xs text-muted-foreground">—</span>
-                              )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center justify-center gap-3 text-muted-foreground">
-                            <Tooltip>
-                              <TooltipTrigger>
-                                <span className="inline-flex items-center gap-1 text-xs">
-                                  <MessageSquare className="size-3" />
-                                  {discussion.replyCount}
-                                </span>
-                              </TooltipTrigger>
-                              <TooltipContent>Replies</TooltipContent>
-                            </Tooltip>
-                            <Tooltip>
-                              <TooltipTrigger>
-                                <span className="inline-flex items-center gap-1 text-xs">
-                                  <ThumbsUp className="size-3" />
-                                  {discussion.upvoteCount}
-                                </span>
-                              </TooltipTrigger>
-                              <TooltipContent>Upvotes</TooltipContent>
-                            </Tooltip>
-                            <Tooltip>
-                              <TooltipTrigger>
-                                <span className="inline-flex items-center gap-1 text-xs">
-                                  <Eye className="size-3" />
-                                  {discussion.viewCount}
-                                </span>
-                              </TooltipTrigger>
-                              <TooltipContent>Views</TooltipContent>
-                            </Tooltip>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <span className="text-sm text-muted-foreground whitespace-nowrap">
-                            {format(new Date(discussion.createdAt), "MMM d, yyyy")}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger
-                              render={
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="size-8"
-                                />
-                              }
-                            >
-                              <MoreHorizontal className="size-4" />
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem
-                                onClick={() =>
-                                  window.open(
-                                    `/discussions/${discussion.id}`,
-                                    "_blank",
-                                  )
-                                }
-                              >
-                                <ExternalLink className="size-3.5 mr-2" />
-                                View Discussion
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                onClick={() =>
-                                  handleTogglePin(discussion.id, discussion.isPinned)
-                                }
-                                disabled={pinningId === discussion.id}
-                              >
-                                {pinningId === discussion.id ? (
-                                  <Loader2 className="size-3.5 mr-2 animate-spin" />
-                                ) : (
-                                  <Pin className="size-3.5 mr-2" />
-                                )}
-                                {discussion.isPinned ? "Unpin" : "Pin"}
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() =>
-                                  handleToggleLock(discussion.id, discussion.isLocked)
-                                }
-                                disabled={lockingId === discussion.id}
-                              >
-                                {lockingId === discussion.id ? (
-                                  <Loader2 className="size-3.5 mr-2 animate-spin" />
-                                ) : (
-                                  <Lock className="size-3.5 mr-2" />
-                                )}
-                                {discussion.isLocked ? "Unlock" : "Lock"}
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                variant="destructive"
-                                onClick={() => setDeleteTarget(discussion.id)}
-                              >
-                                <Trash2 className="size-3.5 mr-2" />
-                                Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </div>
-          )}
+        <Card className="overflow-hidden shadow-none">
+          <DiscussionsTable
+            isLoading={isLoading}
+            data={data}
+            selectedIds={selectedIds}
+            hasActiveFilters={hasActiveFilters}
+            pinningId={pinningId}
+            lockingId={lockingId}
+            onToggleSelectAll={toggleSelectAll}
+            onToggleSelection={toggleSelection}
+            onClearFilters={clearFilters}
+            onView={openDiscussion}
+            onTogglePin={handleTogglePin}
+            onToggleLock={handleToggleLock}
+            onDelete={(id) => setDeleteTarget(id)}
+          />
 
-          {/* Pagination */}
-          {data && totalPages > 1 && (
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-2 border-t px-4 py-3">
-              <p className="text-xs sm:text-sm text-muted-foreground">
-                Showing {(page - 1) * limit + 1}–
-                {Math.min(page * limit, data.meta.total)} of {data.meta.total}
-              </p>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={page === 1}
-                >
-                  <ChevronLeft className="size-4" />
-                </Button>
-                <span className="text-xs sm:text-sm">
-                  Page {page} of {totalPages}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={page === totalPages}
-                >
-                  <ChevronRight className="size-4" />
-                </Button>
-              </div>
-            </div>
+          {data && totalDiscussions > 0 && (
+            <DiscussionsPagination
+              page={page}
+              totalPages={totalPages}
+              total={totalDiscussions}
+              limit={limit}
+              onPageChange={setPage}
+            />
           )}
-        </div>
+        </Card>
 
         {/* Single Delete Confirm */}
         <ConfirmDialog
@@ -608,8 +284,12 @@ export default function AdminDiscussionsPage() {
             bulkAction === "delete"
               ? "Delete"
               : bulkAction === "pin"
-                ? bulkPinValue ? "Pin" : "Unpin"
-                : bulkLockValue ? "Lock" : "Unlock"
+                ? bulkPinValue
+                  ? "Pin"
+                  : "Unpin"
+                : bulkLockValue
+                  ? "Lock"
+                  : "Unlock"
           }
           confirmVariant={bulkAction === "delete" ? "destructive" : "default"}
           onConfirm={async () => {
@@ -620,10 +300,14 @@ export default function AdminDiscussionsPage() {
                 toast.success(`${selectedIds.length} discussions deleted`);
               } else if (bulkAction === "pin") {
                 await adminService.bulkTogglePin(selectedIds, bulkPinValue);
-                toast.success(`${selectedIds.length} discussions ${bulkPinValue ? "pinned" : "unpinned"}`);
+                toast.success(
+                  `${selectedIds.length} discussions ${bulkPinValue ? "pinned" : "unpinned"}`,
+                );
               } else if (bulkAction === "lock") {
                 await adminService.bulkToggleLock(selectedIds, bulkLockValue);
-                toast.success(`${selectedIds.length} discussions ${bulkLockValue ? "locked" : "unlocked"}`);
+                toast.success(
+                  `${selectedIds.length} discussions ${bulkLockValue ? "locked" : "unlocked"}`,
+                );
               }
               setSelectedIds([]);
               setBulkAction(null);

@@ -5,7 +5,6 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -41,6 +40,7 @@ import { UserRole } from "@/constants/enums";
 import { AcademicCapIcon } from "../ui/icons/academic-cap";
 import Image from "next/image";
 import { authClient } from "@/lib/auth-client";
+import { useGlobalSearch } from "@/hooks/use-global-search";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { ThemeToggleButton } from "@/components/theme/theme-toggle";
 
@@ -115,12 +115,9 @@ function roleLabel(role?: string): string | null {
 export function TopNav({ userName, userImage, userId, userRole }: TopNavProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [scrolled, setScrolled] = useState(false);
-  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const { open: openSearch } = useGlobalSearch();  const [scrolled, setScrolled] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
   const sheetTriggerRef = useRef<HTMLButtonElement>(null);
-  const mobileSearchRef = useRef<HTMLInputElement>(null);
   const userRoleLabel = roleLabel(userRole);
 
   useEffect(() => {
@@ -144,7 +141,6 @@ export function TopNav({ userName, userImage, userId, userRole }: TopNavProps) {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         setSheetOpen(false);
-        setMobileSearchOpen(false);
       }
     };
     document.addEventListener("keydown", onKeyDown);
@@ -153,14 +149,7 @@ export function TopNav({ userName, userImage, userId, userRole }: TopNavProps) {
 
   useEffect(() => {
     setSheetOpen(false);
-    setMobileSearchOpen(false);
   }, [pathname]);
-
-  useEffect(() => {
-    if (mobileSearchOpen) {
-      mobileSearchRef.current?.focus();
-    }
-  }, [mobileSearchOpen]);
 
   const handleSignOut = useCallback(async () => {
     await authClient.signOut();
@@ -283,30 +272,25 @@ export function TopNav({ userName, userImage, userId, userRole }: TopNavProps) {
           </nav>
 
           <div className="ml-auto flex items-center gap-1.5">
-            <div className="relative hidden sm:block">
-              <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                }}
-                role="search"
-              >
-                <Input
-                  type="search"
-                  placeholder="Search..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="h-8 w-36 pl-8 text-sm lg:w-48 xl:w-56"
-                />
-              </form>
-            </div>
+            <button
+              type="button"
+              onClick={() => openSearch()}
+              aria-label="Open global search"
+              className="relative hidden h-8 w-36 cursor-text items-center gap-2 rounded-md border border-input bg-background px-2.5 text-sm text-muted-foreground transition-colors hover:bg-muted sm:flex lg:w-48 xl:w-56"
+            >
+              <Search className="size-4 shrink-0" />
+              <span className="flex-1 truncate text-left">Search...</span>
+              <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-0.5 rounded border border-border bg-muted px-1.5 font-sans text-[10px] font-medium text-muted-foreground">
+                <span className="text-xs">⌘</span>K
+              </kbd>
+            </button>
 
             <Button
               variant="ghost"
               size="icon"
               className="size-8 sm:hidden"
-              onClick={() => setMobileSearchOpen(!mobileSearchOpen)}
-              aria-label={mobileSearchOpen ? "Close search" : "Open search"}
+              onClick={() => openSearch()}
+              aria-label="Open search"
             >
               <Search className="size-4" />
             </Button>
@@ -456,48 +440,6 @@ export function TopNav({ userName, userImage, userId, userRole }: TopNavProps) {
             )}
           </div>
         </div>
-
-        <AnimatePresence>
-          {mobileSearchOpen && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="overflow-hidden border-t sm:hidden"
-            >
-              <div className="px-4 py-2">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-                  <form
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                    }}
-                    role="search"
-                  >
-                    <Input
-                      ref={mobileSearchRef}
-                      type="search"
-                      placeholder="Search resources, people, teams..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="h-10 w-full pl-9 pr-9 text-sm"
-                    />
-                  </form>
-                  {searchQuery && (
-                    <button
-                      onClick={() => setSearchQuery("")}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                      aria-label="Clear search"
-                    >
-                      <X className="size-4" />
-                    </button>
-                  )}
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </header>
 
       <nav
@@ -554,17 +496,17 @@ export function TopNav({ userName, userImage, userId, userRole }: TopNavProps) {
       </nav>
 
       <AnimatePresence>
-        {sheetOpen && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="fixed inset-0 z-50 bg-black/40 md:hidden"
-              onClick={() => setSheetOpen(false)}
-              aria-hidden="true"
-            />
+          {sheetOpen && (
+            <>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="fixed inset-0 z-50 bg-black/40 md:hidden"
+                onClick={() => setSheetOpen(false)}
+                aria-hidden="true"
+              />
 
             <motion.div
               role="dialog"

@@ -11,7 +11,7 @@ describe("PageLayout", () => {
     const outer = container.firstChild as HTMLElement;
     expect(outer).toBeInTheDocument();
     const grid = outer.firstChild as HTMLElement;
-    expect(grid.className).toContain("lg:grid-cols-[240px_1fr_240px]");
+    expect(grid.className).toContain("lg:grid-cols-[260px_1fr_280px]");
     expect(screen.getByText("Main Content")).toBeInTheDocument();
     expect(screen.getByText("Left")).toBeInTheDocument();
     expect(screen.getByText("Right")).toBeInTheDocument();
@@ -25,7 +25,7 @@ describe("PageLayout", () => {
     );
     const outer = container.firstChild as HTMLElement;
     const grid = outer.firstChild as HTMLElement;
-    expect(grid.className).toContain("lg:grid-cols-[240px_1fr]");
+    expect(grid.className).toContain("lg:grid-cols-[260px_1fr]");
     expect(screen.getByText("Main Content")).toBeInTheDocument();
     expect(screen.getByText("Left")).toBeInTheDocument();
     expect(screen.queryByText("Right")).not.toBeInTheDocument();
@@ -39,7 +39,7 @@ describe("PageLayout", () => {
     );
     const outer = container.firstChild as HTMLElement;
     const grid = outer.firstChild as HTMLElement;
-    expect(grid.className).toContain("lg:grid-cols-[1fr_240px]");
+    expect(grid.className).toContain("lg:grid-cols-[1fr_280px]");
     expect(screen.getByText("Main Content")).toBeInTheDocument();
     expect(screen.getByText("Right")).toBeInTheDocument();
     expect(screen.queryByText("Left")).not.toBeInTheDocument();

@@ -142,14 +142,14 @@ export interface ListAdminVerificationsResponse {
 
 export interface AuditLogEntry {
   id: string;
-  adminUserId: string;
+  entityId: string;
+  entityType: string;
+  userId: string;
   action: string;
-  targetType: string;
-  targetId: string | null;
   details: Record<string, unknown> | null;
   ipAddress: string | null;
   createdAt: string;
-  adminUser: {
+  user: {
     id: string;
     name: string;
     email: string;

@@ -17,6 +17,8 @@ const eslintConfig = defineConfig([
     "**/*.test.ts",
     "**/*.test.tsx",
     "e2e/**",
+    // Generated coverage output:
+    "coverage/**",
   ]),
   {
     files: ["**/*.{ts,tsx}"],

@@ -105,3 +105,13 @@ export const getDepartmentByCode = (code: string): Department | undefined => {
     ([, metadata]) => metadata.code === code,
   )?.[0] as Department | undefined;
 };
+
+export const DEPARTMENT_LIST: Array<{
+  value: Department;
+  shortName: string;
+  fullName: string;
+}> = Object.entries(departmentMetadataMap).map(([value, metadata]) => ({
+  value: value as Department,
+  shortName: metadata.shortName,
+  fullName: metadata.fullName,
+}));

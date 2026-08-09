@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState, useCallback } from "react";
 import { motion } from "motion/react";
 import { Search, BookOpen, Users, Sparkles } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AvatarGroup } from "@/components/ui/avatar-group";
+import { useGlobalSearch } from "@/hooks/use-global-search";
 import ROUTES from "@/constants/routes";
 
 const students = [
@@ -20,19 +20,15 @@ const students = [
 ];
 
 export function HeroBanner() {
-  const router = useRouter();
+  const { open } = useGlobalSearch();
   const [searchQuery, setSearchQuery] = useState("");
 
   const handleSearch = useCallback(
     (e: React.FormEvent) => {
       e.preventDefault();
-      if (searchQuery.trim()) {
-        router.push(
-          `${ROUTES.RESOURCES}?search=${encodeURIComponent(searchQuery.trim())}`,
-        );
-      }
+      open(searchQuery.trim() || undefined);
     },
-    [router, searchQuery],
+    [open, searchQuery],
   );
 
   return (
@@ -72,7 +68,7 @@ export function HeroBanner() {
           <h1 className="text-[2rem] font-bold leading-tight tracking-tight text-foreground sm:text-5xl lg:text-6xl">
             Your Academic
             <br />
-            <span className="bg-gradient-to-r from-primary to-[#8b5cf6] bg-clip-text text-transparent">
+            <span className="bg-linear-to-r from-primary to-[#8b5cf6] bg-clip-text text-transparent">
               Command Center
             </span>
           </h1>
@@ -89,7 +85,7 @@ export function HeroBanner() {
             className="mx-auto max-w-lg md:mx-0"
           >
             <div className="group relative">
-              <div className="absolute -inset-0.5 rounded-xl bg-gradient-to-r from-primary/30 to-brand/30 opacity-0 blur transition duration-300 group-hover:opacity-100" />
+              <div className="absolute -inset-0.5 rounded-xl bg-linear-to-r from-primary/30 to-brand/30 opacity-0 blur transition duration-300 group-hover:opacity-100" />
               <div className="relative flex items-center">
                 <Search className="absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground/60" />
                 <Input
@@ -193,8 +189,16 @@ export function HeroBanner() {
 
                 <div className="grid grid-cols-2 gap-3">
                   {[
-                    { label: "Resources", value: "524", color: "text-violet-500" },
-                    { label: "Notes Shared", value: "1,247", color: "text-blue-500" },
+                    {
+                      label: "Resources",
+                      value: "524",
+                      color: "text-violet-500",
+                    },
+                    {
+                      label: "Notes Shared",
+                      value: "1,247",
+                      color: "text-blue-500",
+                    },
                   ].map((stat) => (
                     <div
                       key={stat.label}

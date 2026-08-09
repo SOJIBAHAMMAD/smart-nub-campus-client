@@ -93,6 +93,7 @@ export function DiscussionsClient({
   const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10) || 1);
   const search = searchParams.get("search") ?? "";
   const categorySlug = searchParams.get("category");
+  const courseId = searchParams.get("courseId") ?? undefined;
   const tagSlug = searchParams.get("tag");
   const sort = (searchParams.get("sort") as SortOption) ?? "latest";
   const tab = (searchParams.get("tab") as DiscussionTab) ?? "all";
@@ -163,6 +164,7 @@ export function DiscussionsClient({
           limit: 12,
           search: search || undefined,
           category: categorySlug || undefined,
+          courseId,
           tag: tagSlug || undefined,
           sort,
         });
@@ -206,15 +208,15 @@ export function DiscussionsClient({
     } finally {
       setLoading(false);
     }
-  }, [page, search, categorySlug, tagSlug, sort, tab]);
+  }, [page, search, categorySlug, courseId, tagSlug, sort, tab]);
 
   useEffect(() => {
     if (!hasFetched.current) {
       hasFetched.current = true;
-      return;
+      if (!courseId) return;
     }
     void loadDiscussions();
-  }, [loadDiscussions]);
+  }, [courseId, loadDiscussions]);
 
   const handleVote = useCallback(
     async (discussionId: string, type: "UP" | "DOWN") => {
@@ -313,7 +315,7 @@ export function DiscussionsClient({
     [],
   );
 
-  const activeFilters = search || categorySlug || tagSlug;
+  const activeFilters = search || categorySlug || courseId || tagSlug;
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
@@ -482,6 +484,14 @@ Start conversations, upvote or downvote replies.
                 </button>
               </span>
             )}
+            {courseId && (
+              <span className="flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs text-primary">
+                Course
+                <button onClick={() => updateParams({ courseId: null })}>
+                  <X className="size-3" />
+                </button>
+              </span>
+            )}
             {tagSlug && (
               <span className="flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs text-primary">
                 Tag: {popularTags.find((t) => t.slug === tagSlug)?.name ?? tagSlug}
@@ -571,11 +581,11 @@ Start conversations, upvote or downvote replies.
               </div>
               <p className="text-sm font-medium text-foreground">No discussions found</p>
               <p className="mt-1 text-xs text-muted-foreground max-w-sm">
-                {search || categorySlug || tagSlug
+                {search || categorySlug || courseId || tagSlug
                   ? "Try adjusting your search or filters to find what you're looking for."
                   : "Be the first to start a discussion and get the conversation going."}
               </p>
-              {!search && !categorySlug && !tagSlug && (
+              {!search && !categorySlug && !courseId && !tagSlug && (
                 <Button render={<Link href="/discussions/create" />} nativeButton={false} className="mt-4" size="sm">
                   Start a Discussion
                 </Button>

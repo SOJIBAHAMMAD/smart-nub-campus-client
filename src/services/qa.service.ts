@@ -87,6 +87,7 @@ export const qaService = {
       page: params.page,
       limit: params.limit,
       category: params.category,
+      courseId: params.courseId,
       tag: params.tag,
       search: params.search,
       answered,
