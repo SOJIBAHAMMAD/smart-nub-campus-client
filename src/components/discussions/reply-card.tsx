@@ -18,6 +18,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { AuthorInfo } from "@/components/ui/author-info";
 import { RichTextEditor, RichTextEditorContent } from "@/components/ui/rich-text-editor";
+import { SafeHTML } from "@/components/ui/safe-html";
 import { cn } from "@/lib/utils";
 import { editReply } from "@/actions/discussion.actions";
 import { toast } from "sonner";
@@ -163,9 +164,9 @@ export function ReplyCard({
             </div>
           </div>
         ) : (
-          <div
+          <SafeHTML
             className="prose prose-sm mt-2 max-w-none text-foreground/80 dark:prose-invert"
-            dangerouslySetInnerHTML={{ __html: reply.content }}
+            html={reply.content}
           />
         )}
 

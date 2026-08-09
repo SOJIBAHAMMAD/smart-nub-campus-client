@@ -204,12 +204,21 @@ npm run dev
 
 ## Environment Variables
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `NEXT_PUBLIC_API_URL` | Yes | Backend API URL (e.g., `http://localhost:5000/api/v1`) |
-| `API_URL` | No | Server-side API URL (overrides NEXT_PUBLIC_API_URL for server components) |
-| `NEXT_PUBLIC_BACKEND_URL` | Yes | Backend base URL (for Better Auth client) |
-| `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` | Yes | Cloudinary cloud name |
+All variables below are validated at runtime via `@t3-oss/env-nextjs` (`src/env.ts`). Copy `.env.example` to `.env.local` and fill every value — the app will fail fast at startup if a required variable is missing.
+
+| Variable | Required | Scope | Description |
+|----------|----------|-------|-------------|
+| `BACKEND_URL` | Yes | Server-only | Backend base URL (e.g., `http://localhost:5000`) |
+| `FRONTEND_URL` | Yes | Server-only | Frontend URL (e.g., `http://localhost:3000`) |
+| `API_URL` | Yes | Server-only | Full API endpoint URL (e.g., `http://localhost:5000/api/v1`) |
+| `AUTH_URL` | Yes | Server-only | Better Auth endpoint URL (e.g., `http://localhost:5000/api/v1/auth`) |
+| `NODE_ENV` | Yes | Server-only | `development` or `production` |
+| `NEXT_PUBLIC_BACKEND_URL` | Yes | Public | Backend base URL for the browser (Better Auth client, Socket.IO) |
+| `NEXT_PUBLIC_FRONTEND_URL` | Yes | Public | Frontend URL for the browser |
+| `NEXT_PUBLIC_API_URL` | Yes | Public | Backend API URL for the browser (e.g., `http://localhost:5000/api/v1`) |
+| `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` | Yes | Public | Cloudinary cloud name |
+
+> **Security note:** Never prefix secrets with `NEXT_PUBLIC_` — anything prefixed that way is bundled into the browser. Keep API keys and auth secrets server-only.
 
 ## Scripts
 
@@ -222,6 +231,20 @@ npm run dev
 | `npm run test` | Run Vitest unit tests |
 | `npm run test:watch` | Run tests in watch mode |
 | `npm run test:coverage` | Run tests with coverage |
+
+## Deployment
+
+Production checklist and best-practice gaps are tracked in [`Review/05-DEPLOYMENT-READINESS.md`](../Review/05-DEPLOYMENT-READINESS.md) at the repository root.
+
+```bash
+# Build for production
+npm run build
+
+# Start production server
+npm start
+```
+
+> **Note:** the final pre-deployment security review (2026-08-10) found Critical/High issues that must be resolved before going live. See [`Review/00-EXECUTIVE-SUMMARY.md`](../Review/00-EXECUTIVE-SUMMARY.md).
 
 ## Contributing
 

@@ -14,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
+import { SafeHTML } from "@/components/ui/safe-html";
 import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/components/resources/file-type-utils";
 import {
@@ -201,13 +202,13 @@ export function CommentItem({
                   </div>
                 </div>
               ) : (
-                <div
+                <SafeHTML
                   className="mt-1.5 text-sm text-foreground/90 leading-relaxed
                     [&_p]:my-1 [&_strong]:font-semibold [&_em]:italic [&_code]:rounded [&_code]:bg-muted [&_code]:px-1 [&_code]:py-0.5 [&_code]:text-xs [&_code]:font-mono
                     [&_a]:text-primary [&_a]:underline [&_a]:underline-offset-2 [&_a:hover]:text-primary/80
                     [&_ul]:my-1 [&_ul]:ms-4 [&_ul]:list-disc [&_ol]:my-1 [&_ol]:ms-4 [&_ol]:list-decimal
                     [&_li]:my-0.5 [&_blockquote]:border-l-2 [&_blockquote]:border-primary/30 [&_blockquote]:ps-3 [&_blockquote]:italic [&_blockquote]:text-muted-foreground"
-                  dangerouslySetInnerHTML={{ __html: comment.content }}
+                  html={comment.content}
                 />
               )}
 
