@@ -52,7 +52,7 @@ function auditToActivity(log: AuditLogEntry) {
   const action = mapAuditAction(log.action);
   return {
     id: log.id,
-    userName: log.adminUser.name,
+    userName: log.user?.name ?? "System",
     action: action ?? "USER_SIGNED_UP" as const,
     details: log.details
       ? Object.entries(log.details).map(([k, v]) => `${k}: ${v}`).join(", ")
