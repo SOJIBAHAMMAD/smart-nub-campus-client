@@ -1,63 +1,17 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { format } from "date-fns";
+import { Briefcase } from "lucide-react";
 import { adminService } from "@/services/admin.service";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Avatar } from "@/components/ui/avatar";
-import { Switch } from "@/components/ui/switch";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Search, ChevronLeft, ChevronRight, Trash2, Briefcase } from "lucide-react";
+import { ConfirmDialog } from "@/components/admin/confirm-dialog";
+import { JobsFilterBar } from "@/components/admin/job/jobs-filter-bar";
+import { JobsPagination } from "@/components/admin/job/jobs-pagination";
+import { JobsTable } from "@/components/admin/job/jobs-table";
 import type {
-  AdminJob,
   ListAdminJobsResponse,
   ListAdminJobsParams,
 } from "@/types/admin.types";
 import { toast } from "sonner";
-import { ConfirmDialog } from "@/components/admin/confirm-dialog";
-
-const STATUS_OPTIONS: { value: string; label: string }[] = [
-  { value: "all", label: "All statuses" },
-  { value: "OPEN", label: "Open" },
-  { value: "FILLED", label: "Filled" },
-  { value: "CLOSED", label: "Closed" },
-];
-
-const VERIFY_OPTIONS: { value: string; label: string }[] = [
-  { value: "all", label: "All verification" },
-  { value: "verified", label: "Verified" },
-  { value: "unverified", label: "Unverified" },
-];
-
-function getStatusBadge(status: string) {
-  switch (status) {
-    case "OPEN":
-      return <Badge variant="outline" className="border-emerald-300 text-emerald-700">Open</Badge>;
-    case "FILLED":
-      return <Badge variant="outline" className="border-sky-300 text-sky-700">Filled</Badge>;
-    case "CLOSED":
-      return <Badge variant="secondary">Closed</Badge>;
-    default:
-      return null;
-  }
-}
 
 export default function AdminJobsPage() {
   const [data, setData] = useState<ListAdminJobsResponse | null>(null);
@@ -102,7 +56,16 @@ export default function AdminJobsPage() {
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setPage(1);
-    fetchJobs();
+  };
+
+  const handleStatusChange = (value: string) => {
+    setStatusFilter(value);
+    setPage(1);
+  };
+
+  const handleVerifiedChange = (value: string) => {
+    setVerifiedFilter(value);
+    setPage(1);
   };
 
   const handleVerifyToggle = async (id: string, currentVerified: boolean) => {
@@ -136,7 +99,7 @@ export default function AdminJobsPage() {
     setPage(1);
   };
 
-  const hasActiveFilters = search || statusFilter !== "all" || verifiedFilter !== "all";
+  const hasActiveFilters = !!search || statusFilter !== "all" || verifiedFilter !== "all";
   const meta = data?.meta;
 
   return (
@@ -158,167 +121,39 @@ export default function AdminJobsPage() {
       </div>
 
       {/* ── Filters ─────────────────────────────────────────────────────── */}
-      <div className="flex flex-col gap-3 md:flex-row md:items-center">
-        <form onSubmit={handleSearchSubmit} className="relative w-full md:w-72">
-          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Search title, company..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
-          />
-        </form>
-        <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v ?? "all"); setPage(1); }}>
-          <SelectTrigger className="w-full md:w-44">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {STATUS_OPTIONS.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select value={verifiedFilter} onValueChange={(v) => { setVerifiedFilter(v ?? "all"); setPage(1); }}>
-          <SelectTrigger className="w-full md:w-44">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {VERIFY_OPTIONS.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {hasActiveFilters && (
-          <Button variant="ghost" size="sm" onClick={clearFilters}>
-            Clear filters
-          </Button>
-        )}
-      </div>
+      <JobsFilterBar
+        search={search}
+        onSearchChange={setSearch}
+        onSearchSubmit={handleSearchSubmit}
+        statusFilter={statusFilter}
+        onStatusChange={handleStatusChange}
+        verifiedFilter={verifiedFilter}
+        onVerifiedChange={handleVerifiedChange}
+        hasActiveFilters={hasActiveFilters}
+        onClearFilters={clearFilters}
+      />
 
       {/* ── Table ───────────────────────────────────────────────────────── */}
-      {isLoading ? (
-        <div className="space-y-2">
-          <Skeleton className="h-12 w-full" />
-          <Skeleton className="h-12 w-full" />
-          <Skeleton className="h-12 w-full" />
-        </div>
-      ) : !data || data.data.length === 0 ? (
-        <div className="rounded-xl border border-dashed p-12 text-center">
-          <Briefcase className="mx-auto size-8 text-muted-foreground/50" />
-          <p className="mt-3 text-sm font-medium text-foreground">
-            {hasActiveFilters ? "No jobs match your filters" : "No job posts yet"}
-          </p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            {hasActiveFilters
-              ? "Try adjusting your filters."
-              : "Job posts shared by alumni will appear here."}
-          </p>
-          {hasActiveFilters && (
-            <Button variant="outline" size="sm" className="mt-4" onClick={clearFilters}>
-              Clear filters
-            </Button>
-          )}
-        </div>
-      ) : (
-        <div className="rounded-xl border bg-background">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Job</TableHead>
-                <TableHead>Posted by</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Applications</TableHead>
-                <TableHead>Posted</TableHead>
-                <TableHead>Verified</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {data.data.map((job: AdminJob) => (
-                <TableRow key={job.id}>
-                  <TableCell>
-                    <p className="font-medium text-foreground">{job.title}</p>
-                    <p className="text-xs text-muted-foreground">{job.company}</p>
-                    <p className="mt-0.5 text-xs text-muted-foreground">
-                      {job.employmentType.replace(/_/g, " ").toLowerCase()}
-                      {job.department ? ` · ${job.department}` : ""}
-                    </p>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Avatar id={job.postedById} name={job.postedBy.name} src={job.postedBy.image} className="size-8" />
-                      <div className="min-w-0">
-                        <p className="truncate text-sm text-foreground">{job.postedBy.name}</p>
-                        <p className="truncate text-xs text-muted-foreground">{job.postedBy.email}</p>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>{getStatusBadge(job.status)}</TableCell>
-                  <TableCell>
-                    <span className="text-sm tabular-nums text-muted-foreground">
-                      {job._count.applications}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <span className="text-xs text-muted-foreground">
-                      {format(new Date(job.createdAt), "MMM d, yyyy")}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <Switch
-                      checked={job.isVerified}
-                      onCheckedChange={() => handleVerifyToggle(job.id, job.isVerified)}
-                      disabled={verifyingId === job.id}
-                      aria-label={`Toggle verification for ${job.title}`}
-                    />
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button
-                      variant="ghost"
-                      size="icon-sm"
-                      onClick={() => setDeleteTarget(job.id)}
-                      aria-label={`Delete ${job.title}`}
-                    >
-                      <Trash2 className="size-4 text-destructive" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      )}
-
-      {/* ── Pagination ──────────────────────────────────────────────────── */}
-      {meta && meta.totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <span className="text-xs text-muted-foreground">
-            Page {meta.page} of {meta.totalPages} ({meta.total} jobs)
-          </span>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page <= 1}
-            >
-              <ChevronLeft className="size-4" /> Previous
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPage((p) => p + 1)}
-              disabled={page >= meta.totalPages}
-            >
-              Next <ChevronRight className="size-4" />
-            </Button>
-          </div>
-        </div>
-      )}
+      <div className="overflow-hidden rounded-xl border bg-background">
+        <JobsTable
+          isLoading={isLoading}
+          data={data}
+          hasActiveFilters={hasActiveFilters}
+          verifyingId={verifyingId}
+          onClearFilters={clearFilters}
+          onVerifyToggle={handleVerifyToggle}
+          onDelete={(id) => setDeleteTarget(id)}
+        />
+        {meta && !isLoading && meta.total > 0 && (
+          <JobsPagination
+            page={meta.page}
+            totalPages={meta.totalPages}
+            total={meta.total}
+            limit={limit}
+            onPageChange={setPage}
+          />
+        )}
+      </div>
 
       <ConfirmDialog
         open={deleteTarget !== null}
