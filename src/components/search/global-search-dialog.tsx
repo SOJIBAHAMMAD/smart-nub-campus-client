@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   ArrowRight,
   BookOpen,
@@ -12,9 +12,11 @@ import {
   GraduationCap,
   Handshake,
   HelpCircle,
+  LayoutDashboard,
   Loader2,
   MessageSquare,
   SearchX,
+  ShieldCheck,
   Users,
   X,
 } from "lucide-react";
@@ -39,6 +41,7 @@ import {
   SEARCH_ENTITY_ORDER,
 } from "./search-entity-config";
 import type {
+  SearchEntity,
   SearchRecent,
   SearchResponse,
   SearchResultItem,
@@ -56,6 +59,34 @@ const IDLE_NAV: { label: string; href: string; icon: React.ComponentType<{ class
   { label: "Alumni Directory", href: ROUTES.ALUMNI, icon: GraduationCap },
   { label: "Mentorship", href: ROUTES.MENTORSHIP, icon: Handshake },
 ];
+
+/**
+ * Admin-flavoured idle nav. Shown when the palette opens inside the admin
+ * area, where the member-app shortcuts would bounce back to /admin.
+ */
+const ADMIN_IDLE_NAV: { label: string; href: string; icon: React.ComponentType<{ className?: string }> }[] = [
+  { label: "Admin Dashboard", href: "/admin", icon: LayoutDashboard },
+  { label: "Verification Queue", href: "/admin/verifications", icon: ShieldCheck },
+  { label: "Manage Users", href: "/admin/users", icon: Users },
+  { label: "Resources", href: "/admin/resources", icon: BookOpen },
+  { label: "Discussions", href: "/admin/discussions", icon: MessageSquare },
+  { label: "Courses", href: "/admin/courses", icon: GraduationCap },
+  { label: "Events", href: "/admin/events", icon: CalendarDays },
+  { label: "Job Posts", href: "/admin/jobs", icon: Briefcase },
+];
+
+/**
+ * Admin destinations per search entity. Entities without a management page in
+ * the admin module (Q&A, teams, mentorship) are hidden from admin results.
+ */
+const ADMIN_ENTITY_ROUTES: Partial<Record<SearchEntity, string>> = {
+  resources: "/admin/resources",
+  discussions: "/admin/discussions",
+  events: "/admin/events",
+  courses: "/admin/courses",
+  jobs: "/admin/jobs",
+  people: "/admin/users",
+};
 
 function itemValue(item: SearchResultItem): string {
   return `${item.type}:${item.id}`;
@@ -144,8 +175,12 @@ export function GlobalSearchDialog() {
       });
   }, [activeQuery]);
 
-  const buildRoute = (item: SearchResultItem): string | null =>
-    SEARCH_ENTITY_CONFIG[item.type]?.buildRoute(item) ?? null;
+  const isAdmin = usePathname()?.startsWith("/admin") ?? false;
+
+  const buildRoute = (item: SearchResultItem): string | null => {
+    if (isAdmin) return ADMIN_ENTITY_ROUTES[item.type] ?? null;
+    return SEARCH_ENTITY_CONFIG[item.type]?.buildRoute(item) ?? null;
+  };
 
   const handleOpenFromNav = (href: string) => {
     close();
@@ -213,7 +248,7 @@ export function GlobalSearchDialog() {
         <CommandList>
           {showIdle && (
             <>
-              {recents.length > 0 && (
+              {!isAdmin && recents.length > 0 && (
                 <>
                   <CommandGroup heading="Recent">
                     {recents.map((recent) => (
@@ -253,7 +288,7 @@ export function GlobalSearchDialog() {
                 </>
               )}
               <CommandGroup heading="Go to">
-                {IDLE_NAV.map((item) => {
+                {(isAdmin ? ADMIN_IDLE_NAV : IDLE_NAV).map((item) => {
                   const Icon = item.icon;
                   return (
                     <CommandItem
@@ -291,10 +326,11 @@ export function GlobalSearchDialog() {
 
           {!showIdle && !showLoading && !showError && !showEmpty && data && (
             <>
-              {data.meta.bestMatch && (
+              {data.meta.bestMatch && buildRoute(data.meta.bestMatch) && (
                 <CommandGroup heading="Best match">
                   <SearchResultRow
                     item={data.meta.bestMatch}
+                    route={buildRoute(data.meta.bestMatch)}
                     onSelect={() =>
                       handleSelectResult(data.meta.bestMatch!, activeQuery, 1)
                     }
@@ -305,6 +341,7 @@ export function GlobalSearchDialog() {
               {SEARCH_ENTITY_ORDER.map((entity) => {
                 const group = data.data[entity];
                 if (!group || group.items.length === 0) return null;
+                if (isAdmin && !ADMIN_ENTITY_ROUTES[entity]) return null;
                 const config = SEARCH_ENTITY_CONFIG[entity];
                 return (
                   <CommandGroup key={entity} heading={config.pluralLabel}>
@@ -316,6 +353,7 @@ export function GlobalSearchDialog() {
                         <SearchResultRow
                           key={itemValue(item)}
                           item={item}
+                          route={buildRoute(item)}
                           onSelect={() =>
                             handleSelectResult(item, activeQuery, index + 1)
                           }
@@ -327,7 +365,7 @@ export function GlobalSearchDialog() {
             </>
           )}
 
-          {!showIdle && data && data.meta.total > 0 && (
+          {!isAdmin && !showIdle && data && data.meta.total > 0 && (
             <CommandItem
               value="view-all-results"
               onSelect={() => {
@@ -370,14 +408,15 @@ function Kbd({ children }: { children: React.ReactNode }) {
 
 function SearchResultRow({
   item,
+  route,
   onSelect,
 }: {
   item: SearchResultItem;
+  route: string | null;
   onSelect: () => void;
 }) {
   const config = SEARCH_ENTITY_CONFIG[item.type];
   const Icon = config?.icon ?? SearchX;
-  const route = config?.buildRoute(item);
 
   return (
     <CommandItem

@@ -63,13 +63,13 @@ export function TransitionDialog({ graduation }: TransitionDialogProps) {
   if (dismissed) return null;
 
   const semester = graduation.graduationSemester
-    ? SEMESTER_LABELS[graduation.graduationSemester] ??
-      graduation.graduationSemester
+    ? (SEMESTER_LABELS[graduation.graduationSemester] ??
+      graduation.graduationSemester)
     : null;
   const graduationDate = formatDate(graduation.graduationDate);
 
   return (
-    <div className="relative overflow-hidden rounded-xl border border-brand/20 bg-gradient-to-r from-brand/10 via-brand/5 to-transparent p-4 sm:p-5">
+    <div className="relative overflow-hidden rounded-xl border border-brand/20 bg-linear-to-r from-brand/10 via-brand/5 to-transparent p-4 sm:p-5">
       <div className="flex items-start gap-4">
         <div className="hidden shrink-0 rounded-lg bg-brand/15 p-2.5 sm:block">
           <GraduationCap className="size-6 text-brand" />
@@ -103,8 +103,8 @@ export function TransitionDialog({ graduation }: TransitionDialogProps) {
                 <DialogHeader>
                   <DialogTitle>Become an Alumnus of NUB</DialogTitle>
                   <DialogDescription>
-                    Confirm the details below to join the alumni community.
-                    Your account role will change from Student to Alumni.
+                    Confirm the details below to join the alumni community. Your
+                    account role will change from Student to Alumni.
                   </DialogDescription>
                 </DialogHeader>
 

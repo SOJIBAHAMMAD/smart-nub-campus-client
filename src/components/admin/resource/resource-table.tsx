@@ -127,8 +127,8 @@ export function ResourceTable({
         />
       ) : (
         <>
-          <div className="max-h-[60vh] overflow-auto">
-            <div className="min-w-[1024px]">
+          <div className="max-h-[60vh] overflow-auto scrollbar-none">
+            <div className="min-w-5xl">
               <Table>
                 <TableHeader>
                   <TableRow className="sticky top-0 z-10 bg-muted/80 backdrop-blur-sm dark:bg-muted/80">
@@ -142,14 +142,12 @@ export function ResourceTable({
                         aria-label="Select all resources on this page"
                       />
                     </TableHead>
-                    <TableHead className="min-w-[220px]">Resource</TableHead>
-                    <TableHead className="min-w-[130px]">Uploader</TableHead>
-                    <TableHead className="min-w-[120px]">Category</TableHead>
+                    <TableHead className="min-w-55">Resource</TableHead>
+                    <TableHead className="min-w-32.5">Uploader</TableHead>
+                    <TableHead className="min-w-30">Category</TableHead>
                     <TableHead
                       className="text-right"
-                      aria-sort={
-                        sort === "downloads" ? "descending" : "none"
-                      }
+                      aria-sort={sort === "downloads" ? "descending" : "none"}
                     >
                       <div className="flex justify-end">
                         <ResourceSortHeader
@@ -174,9 +172,9 @@ export function ResourceTable({
                         />
                       </div>
                     </TableHead>
-                    <TableHead className="min-w-[110px]">Status</TableHead>
+                    <TableHead className="min-w-27.5">Status</TableHead>
                     <TableHead
-                      className="min-w-[110px]"
+                      className="min-w-27.5"
                       aria-sort={
                         sort === "newest" || sort === "oldest"
                           ? sort === "oldest"
@@ -358,8 +356,7 @@ function ResourceRow({
           </button>
         ) : (
           <span className="inline-flex items-center justify-end gap-1 text-sm tabular-nums text-muted-foreground">
-            <AlertTriangle className="size-3.5 shrink-0" />
-            0
+            <AlertTriangle className="size-3.5 shrink-0" />0
           </span>
         )}
       </TableCell>
@@ -409,9 +406,7 @@ function ResourceRow({
             )}
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              onClick={() =>
-                onVerifyToggle(resource.id, resource.isVerified)
-              }
+              onClick={() => onVerifyToggle(resource.id, resource.isVerified)}
               disabled={verifying}
             >
               {verifying ? (
@@ -479,18 +474,14 @@ function ResourceEmptyState({
 
 function ResourceTableSkeleton() {
   return (
-    <div className="max-h-[60vh] overflow-auto">
-      <div className="min-w-[1024px]">
+    <div className="max-h-[60vh] overflow-auto scrollbar-none">
+      <div className="min-w-5xl">
         <Table>
           <TableHeader>
             <TableRow>
               {Array.from({ length: 10 }).map((_, i) => (
                 <TableHead key={i}>
-                  <Skeleton
-                    className={cn(
-                      i === 0 ? "size-4" : "h-3.5 w-16",
-                    )}
-                  />
+                  <Skeleton className={cn(i === 0 ? "size-4" : "h-3.5 w-16")} />
                 </TableHead>
               ))}
             </TableRow>

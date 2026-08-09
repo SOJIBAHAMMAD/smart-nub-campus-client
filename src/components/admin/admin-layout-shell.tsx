@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  ArrowLeft,
   GraduationCap,
   LogOut,
   Menu,
@@ -62,11 +61,7 @@ interface IdentityMeResponse {
  * The top bar provides global search (⌘K), notifications, theme toggle and the
  * user menu, matching the student app shell.
  */
-export function AdminLayoutShell({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export function AdminLayoutShell({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [userName, setUserName] = useState<string>("Admin");
   const [userImage, setUserImage] = useState<string | undefined>(undefined);
@@ -137,7 +132,10 @@ export function AdminLayoutShell({
         >
           <div className="flex h-16 items-center border-b border-sidebar-border px-4">
             <Skeleton
-              className={cn("size-9 shrink-0 rounded-lg", collapsed && "mx-auto")}
+              className={cn(
+                "size-9 shrink-0 rounded-lg",
+                collapsed && "mx-auto",
+              )}
             />
             {!collapsed && (
               <div className="ml-2.5 space-y-1.5">
@@ -177,7 +175,7 @@ export function AdminLayoutShell({
           </div>
 
           {/* Main content skeleton */}
-          <main className="h-screen overflow-y-auto p-6 pt-16">
+          <main className="h-screen p-6 pt-16">
             <div className="space-y-4">
               <Skeleton className="h-8 w-48" />
               <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -241,7 +239,7 @@ export function AdminLayoutShell({
           />
 
           {/* Main content */}
-          <main className="h-screen overflow-y-auto pt-16">{children}</main>
+          <main className="h-screen pt-16">{children}</main>
         </div>
       </div>
       <GlobalSearchDialog />
@@ -308,7 +306,9 @@ function AdminTopBar({
 
       {/* Desktop: current section title + breadcrumb */}
       <div className="hidden min-w-0 lg:block">
-        <h1 className="truncate text-sm font-semibold text-foreground">{title}</h1>
+        <h1 className="truncate text-sm font-semibold text-foreground">
+          {title}
+        </h1>
         {subtitle && (
           <p className="truncate text-xs leading-tight text-muted-foreground">
             Admin / {subtitle}
@@ -351,15 +351,24 @@ function AdminTopBar({
             aria-label={`Account menu for ${userName}`}
             className="flex size-8 items-center justify-center rounded-full transition-colors outline-none hover:bg-muted"
           >
-            <Avatar id="admin" name={userName} src={userImage} className="size-7" />
+            <Avatar
+              id="admin"
+              name={userName}
+              src={userImage}
+              className="size-7"
+            />
           </DropdownMenuTrigger>
 
           <DropdownMenuContent align="end" className="w-48">
             <DropdownMenuGroup>
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col gap-0.5">
-                  <span className="truncate text-sm font-medium">{userName}</span>
-                  <span className="text-xs text-muted-foreground">Administrator</span>
+                  <span className="truncate text-sm font-medium">
+                    {userName}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    Administrator
+                  </span>
                 </div>
               </DropdownMenuLabel>
             </DropdownMenuGroup>
@@ -383,15 +392,6 @@ function AdminTopBar({
               >
                 <Settings className="size-4" />
                 Settings
-              </Link>
-            </DropdownMenuItem>
-
-            <DropdownMenuSeparator />
-
-            <DropdownMenuItem>
-              <Link href={ROUTES.HOME} className="flex items-center gap-2 cursor-pointer">
-                <ArrowLeft className="size-4" />
-                Back to app
               </Link>
             </DropdownMenuItem>
 

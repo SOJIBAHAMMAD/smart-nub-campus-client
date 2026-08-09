@@ -1,15 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
-  ArrowLeft,
   BookOpen,
   Briefcase,
   CalendarDays,
+  ChevronsUpDown,
   GraduationCap,
   LayoutDashboard,
+  LogOut,
   MessageSquare,
   PanelLeftClose,
   PanelLeftOpen,
@@ -21,7 +22,17 @@ import {
   X,
 } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { authClient } from "@/lib/auth-client";
 import ROUTES from "@/constants/routes";
 
 // ── Navigation model ─────────────────────────────────────────────────────────
@@ -36,6 +47,8 @@ export interface AdminNavGroup {
   id: string;
   label: string;
   items: AdminNavItem[];
+  /** Keep the group in the nav model (shell title lookup) but skip it in the sidebar body. */
+  renderInNav?: boolean;
 }
 
 /** Grouped admin navigation — the shell derives the top-bar section title from it. */
@@ -68,6 +81,7 @@ export const adminNavGroups: AdminNavGroup[] = [
   {
     id: "account",
     label: "Account",
+    renderInNav: false,
     items: [
       { label: "My Profile", href: "/admin/profile", icon: UserCircle },
       { label: "Settings", href: "/admin/settings", icon: Settings },
@@ -245,6 +259,15 @@ export function AdminSidebar({
 }: AdminSidebarProps) {
   const pathname = usePathname();
   const active = getActiveAdminItem(pathname);
+  const router = useRouter();
+
+  const handleSignOut = async () => {
+    try {
+      await authClient.signOut();
+    } finally {
+      router.push(ROUTES.LOGIN);
+    }
+  };
 
   return (
     <TooltipProvider>
@@ -287,7 +310,9 @@ export function AdminSidebar({
           aria-label="Admin navigation"
           className="flex-1 space-y-5 overflow-y-auto px-3 py-4 scrollbar-thin"
         >
-          {adminNavGroups.map((group) => (
+          {adminNavGroups
+            .filter((group) => group.renderInNav !== false)
+            .map((group) => (
             <div key={group.id}>
               <p
                 className={cn(
@@ -316,57 +341,76 @@ export function AdminSidebar({
 
         {/* ── Footer: user card + collapse toggle ──────────────────── */}
         <div className="shrink-0 border-t border-sidebar-border p-3">
-          {collapsed ? (
-            <div className="flex flex-col items-center">
-              <Tooltip>
-                <TooltipTrigger
-                  render={
-                    <Link
-                      href="/admin/profile"
-                      aria-label={`${userName}, My Profile`}
-                      className="flex size-10 items-center justify-center rounded-full transition-colors hover:bg-sidebar-accent"
-                    />
-                  }
-                >
-                  <Avatar id="admin" name={userName} src={userImage} className="size-9" />
-                </TooltipTrigger>
-                <TooltipContent side="right">{userName}</TooltipContent>
-              </Tooltip>
-            </div>
-          ) : (
-            <div className="rounded-xl border border-sidebar-border bg-sidebar-accent/40">
-              <div className="flex items-center gap-3 p-2.5">
-                <Avatar id="admin" name={userName} src={userImage} className="size-9" />
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-sidebar-foreground">
-                    {userName}
-                  </p>
-                  <p className="truncate text-xs text-sidebar-foreground/60">Administrator</p>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-0.5 border-t border-sidebar-border p-1.5">
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              aria-label={`Account menu for ${userName}`}
+              className={cn(
+                "flex w-full items-center gap-3 rounded-xl border border-sidebar-border bg-sidebar-accent/40 px-2.5 py-2 text-left transition-colors outline-none hover:bg-sidebar-accent",
+                collapsed &&
+                  "flex-col items-center gap-1 border-0 bg-transparent px-0 py-1",
+              )}
+            >
+              <Avatar id="admin" name={userName} src={userImage} className="size-9 shrink-0" />
+              {!collapsed && (
+                <>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-sidebar-foreground">
+                      {userName}
+                    </p>
+                    <p className="truncate text-xs text-sidebar-foreground/60">Administrator</p>
+                  </div>
+                  <ChevronsUpDown className="size-4 shrink-0 text-sidebar-foreground/40" />
+                </>
+              )}
+            </DropdownMenuTrigger>
+
+            <DropdownMenuContent
+              side={collapsed ? "right" : "top"}
+              align="start"
+              className="w-52"
+            >
+              <DropdownMenuGroup>
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col gap-0.5">
+                    <span className="truncate text-sm font-medium">{userName}</span>
+                    <span className="text-xs text-muted-foreground">Administrator</span>
+                  </div>
+                </DropdownMenuLabel>
+              </DropdownMenuGroup>
+
+              <DropdownMenuSeparator />
+
+              <DropdownMenuItem>
                 <Link
                   href="/admin/profile"
-                  className="truncate rounded-md px-2 py-1.5 text-xs font-medium text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                  className="flex items-center gap-2 cursor-pointer"
                 >
+                  <UserCircle className="size-4" />
                   My Profile
                 </Link>
+              </DropdownMenuItem>
+
+              <DropdownMenuItem>
                 <Link
                   href="/admin/settings"
-                  className="truncate rounded-md px-2 py-1.5 text-xs font-medium text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                  className="flex items-center gap-2 cursor-pointer"
                 >
+                  <Settings className="size-4" />
                   Settings
                 </Link>
-              </div>
-              <Link
-                href={ROUTES.HOME}
-                className="flex items-center gap-1.5 border-t border-sidebar-border p-2.5 text-xs font-medium text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
+              </DropdownMenuItem>
+
+              <DropdownMenuSeparator />
+
+              <DropdownMenuItem
+                className="cursor-pointer text-destructive focus:text-destructive"
+                onClick={handleSignOut}
               >
-                <ArrowLeft className="size-3.5 shrink-0" />
-                Back to app
-              </Link>
-            </div>
-          )}
+                <LogOut className="size-4" />
+                Log out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           {onToggleCollapse && (
             <button

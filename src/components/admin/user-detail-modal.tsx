@@ -72,7 +72,9 @@ export function UserDetailModal({
   const loading = open && !user;
 
   /** Handle status change action. */
-  const handleStatusChange = async (status: "ACTIVE" | "SUSPENDED" | "BANNED") => {
+  const handleStatusChange = async (
+    status: "ACTIVE" | "SUSPENDED" | "BANNED",
+  ) => {
     if (!user) return;
     setIsLoading(true);
     try {
@@ -87,7 +89,7 @@ export function UserDetailModal({
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto md:max-w-xl">
+      <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto scrollbar-none md:max-w-xl">
         <DialogHeader>
           <DialogTitle className="sr-only">User details</DialogTitle>
           <DialogDescription className="sr-only">
@@ -101,9 +103,15 @@ export function UserDetailModal({
           <div className="space-y-5 pr-6">
             {/* ── Header ─────────────────────────────────────────────────── */}
             <div className="flex items-center gap-4">
-              <Avatar id={user.id} name={user.name} className="size-14 text-lg" />
+              <Avatar
+                id={user.id}
+                name={user.name}
+                className="size-14 text-lg"
+              />
               <div className="min-w-0 flex-1">
-                <h2 className="truncate text-base font-semibold">{user.name}</h2>
+                <h2 className="truncate text-base font-semibold">
+                  {user.name}
+                </h2>
                 <p className="truncate text-sm text-muted-foreground">
                   {user.email}
                 </p>
@@ -382,9 +390,7 @@ const PROFILE_LABELS: Record<string, string> = {
 };
 
 /** Drop internal identifiers and flatten a profile record into field pairs. */
-function filteredEntries(
-  record: Record<string, unknown>,
-): [string, unknown][] {
+function filteredEntries(record: Record<string, unknown>): [string, unknown][] {
   return (Object.entries(record) as [string, unknown][]).filter(
     ([key]) => !["id", "userId"].includes(key),
   );
@@ -418,7 +424,9 @@ function ProfileSection({
   title: string;
   fields: [string, unknown][];
 }) {
-  const visibleFields = fields.filter(([, value]) => formatValue(value) !== "N/A");
+  const visibleFields = fields.filter(
+    ([, value]) => formatValue(value) !== "N/A",
+  );
   if (visibleFields.length === 0) return null;
 
   return (

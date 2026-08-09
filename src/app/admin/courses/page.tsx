@@ -18,7 +18,11 @@ import { cn } from "@/lib/utils";
 
 // ── Tabs ─────────────────────────────────────────────────────────────────────
 
-type Tab = "courses" | "resource-categories" | "discussion-categories" | "question-categories";
+type Tab =
+  | "courses"
+  | "resource-categories"
+  | "discussion-categories"
+  | "question-categories";
 
 interface TabConfig {
   value: Tab;
@@ -28,10 +32,30 @@ interface TabConfig {
 }
 
 const TABS: TabConfig[] = [
-  { value: "courses", label: "Courses", addLabel: "Add Course", icon: GraduationCap },
-  { value: "resource-categories", label: "Resource Categories", addLabel: "Add Category", icon: FolderOpen },
-  { value: "discussion-categories", label: "Discussion Categories", addLabel: "Add Category", icon: MessageCircle },
-  { value: "question-categories", label: "Question Categories", addLabel: "Add Category", icon: HelpCircle },
+  {
+    value: "courses",
+    label: "Courses",
+    addLabel: "Add Course",
+    icon: GraduationCap,
+  },
+  {
+    value: "resource-categories",
+    label: "Resource Categories",
+    addLabel: "Add Category",
+    icon: FolderOpen,
+  },
+  {
+    value: "discussion-categories",
+    label: "Discussion Categories",
+    addLabel: "Add Category",
+    icon: MessageCircle,
+  },
+  {
+    value: "question-categories",
+    label: "Question Categories",
+    addLabel: "Add Category",
+    icon: HelpCircle,
+  },
 ];
 
 // ── Page ─────────────────────────────────────────────────────────────────────
@@ -49,7 +73,9 @@ export default function CoursesPage() {
   const activeConfig = TABS.find((tab) => tab.value === activeTab) ?? TABS[0];
 
   const handleCountChange = useCallback((tab: Tab, count: number) => {
-    setCounts((prev) => (prev[tab] === count ? prev : { ...prev, [tab]: count }));
+    setCounts((prev) =>
+      prev[tab] === count ? prev : { ...prev, [tab]: count },
+    );
   }, []);
 
   const handleHeaderCreate = () => {
@@ -61,9 +87,12 @@ export default function CoursesPage() {
       {/* Page header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="space-y-1">
-          <h1 className="text-xl font-bold tracking-tight sm:text-2xl">Courses &amp; Categories</h1>
+          <h1 className="text-xl font-bold tracking-tight sm:text-2xl">
+            Courses &amp; Categories
+          </h1>
           <p className="text-sm text-muted-foreground">
-            Manage courses, resource categories, discussion categories, and question categories.
+            Manage courses, resource categories, discussion categories, and
+            question categories.
           </p>
         </div>
         <Button onClick={handleHeaderCreate} className="w-full sm:w-auto">
@@ -73,8 +102,11 @@ export default function CoursesPage() {
       </div>
 
       {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as Tab)}>
-        <TabsList className="w-full justify-start gap-1 overflow-x-auto">
+      <Tabs
+        value={activeTab}
+        onValueChange={(value) => setActiveTab(value as Tab)}
+      >
+        <TabsList className="w-full sm:justify-start sm:gap-1 justify-between overflow-x-auto scrollbar-none">
           {TABS.map((tab) => {
             const Icon = tab.icon;
             const count = counts[tab.value];
@@ -85,13 +117,13 @@ export default function CoursesPage() {
                 className="group/tab flex-none gap-1.5 px-3 sm:flex-1"
               >
                 <Icon className="size-3.5" />
-                <span>{tab.label}</span>
+                <span className="hidden sm:inline">{tab.label}</span>
                 {count !== undefined && (
                   <span
                     className={cn(
                       "rounded-full px-1.5 py-0.5 text-[10px] font-medium leading-none tabular-nums transition-colors",
                       "bg-muted text-muted-foreground",
-                      "group-data-[active]/tab:bg-primary group-data-[active]/tab:text-primary-foreground"
+                      "group-data-active/tab:bg-primary group-data-active/tab:text-primary-foreground",
                     )}
                   >
                     {count}
@@ -114,7 +146,9 @@ export default function CoursesPage() {
       {activeTab === "resource-categories" && (
         <CategoryTab
           createSignal={createSignals["resource-categories"]}
-          onCountChange={(count) => handleCountChange("resource-categories", count)}
+          onCountChange={(count) =>
+            handleCountChange("resource-categories", count)
+          }
           fetcher={() => adminService.listResourceCategories()}
           creator={(data) => adminService.createResourceCategory(data)}
           deleter={(id) => adminService.deleteResourceCategory(id)}
@@ -129,9 +163,13 @@ export default function CoursesPage() {
       {activeTab === "discussion-categories" && (
         <CategoryTab
           createSignal={createSignals["discussion-categories"]}
-          onCountChange={(count) => handleCountChange("discussion-categories", count)}
+          onCountChange={(count) =>
+            handleCountChange("discussion-categories", count)
+          }
           fetcher={() => adminService.listDiscussionCategories()}
-          creator={(data) => adminService.createDiscussionCategory({ name: data.name })}
+          creator={(data) =>
+            adminService.createDiscussionCategory({ name: data.name })
+          }
           deleter={(id) => adminService.deleteDiscussionCategory(id)}
           countKey="discussions"
           countLabel="discussions"
@@ -143,9 +181,13 @@ export default function CoursesPage() {
       {activeTab === "question-categories" && (
         <CategoryTab
           createSignal={createSignals["question-categories"]}
-          onCountChange={(count) => handleCountChange("question-categories", count)}
+          onCountChange={(count) =>
+            handleCountChange("question-categories", count)
+          }
           fetcher={() => adminService.listQuestionCategories()}
-          creator={(data) => adminService.createQuestionCategory({ name: data.name })}
+          creator={(data) =>
+            adminService.createQuestionCategory({ name: data.name })
+          }
           deleter={(id) => adminService.deleteQuestionCategory(id)}
           countKey="questions"
           countLabel="questions"

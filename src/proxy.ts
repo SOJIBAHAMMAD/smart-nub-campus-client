@@ -137,11 +137,17 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // ── All other routes — require authentication ─────────────────────
+  // ── All other routes (member app) — require authentication ────────
   if (!isAuthenticated) {
     const loginUrl = new URL(ROUTES.LOGIN, request.url);
     loginUrl.searchParams.set("redirect", pathname);
     return NextResponse.redirect(loginUrl);
+  }
+
+  // Walled garden: ADMIN accounts stay inside the admin area and never
+  // land on member-app pages (redirect to the admin home).
+  if (role === UserRole.ADMIN) {
+    return NextResponse.redirect(new URL("/admin", request.url));
   }
 
   return NextResponse.next();

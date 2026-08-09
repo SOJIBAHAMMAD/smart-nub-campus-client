@@ -47,7 +47,9 @@ interface VerificationReviewModalProps {
 /** Section heading used inside the modal body. */
 function SectionHeading({ children }: { children: React.ReactNode }) {
   return (
-    <h3 className="mb-2 text-sm font-medium text-muted-foreground">{children}</h3>
+    <h3 className="mb-2 text-sm font-medium text-muted-foreground">
+      {children}
+    </h3>
   );
 }
 
@@ -103,15 +105,15 @@ export function VerificationReviewModal({
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
+      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto scrollbar-none">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 pr-8">
             <span className="truncate">Verification Review</span>
             <VerificationStatusBadge status={verification.status} />
           </DialogTitle>
           <DialogDescription>
-            Review the applicant&apos;s identity details and ID card before making
-            a decision.
+            Review the applicant&apos;s identity details and ID card before
+            making a decision.
           </DialogDescription>
         </DialogHeader>
 

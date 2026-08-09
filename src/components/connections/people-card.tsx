@@ -147,9 +147,8 @@ export function PeopleCard({
       | { tag: { id: string; name: string; slug: string } }[]
       | undefined);
 
-  const mutual = showMutual && user.mutualConnections
-    ? user.mutualConnections
-    : 0;
+  const mutual =
+    showMutual && user.mutualConnections ? user.mutualConnections : 0;
 
   const run = async (
     key: string,
@@ -215,7 +214,9 @@ export function PeopleCard({
       }
       const nowFavorited = !isFavorited;
       setIsFavorited(nowFavorited);
-      toast.success(nowFavorited ? "Added to favorites" : "Removed from favorites");
+      toast.success(
+        nowFavorited ? "Added to favorites" : "Removed from favorites",
+      );
       onChanged?.();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Something went wrong.");
@@ -281,10 +282,7 @@ export function PeopleCard({
     >
       {accent && (
         <div
-          className={cn(
-            "absolute inset-x-0 top-0 h-1 bg-gradient-to-r",
-            accent,
-          )}
+          className={cn("absolute inset-x-0 top-0 h-1 bg-linear-to-r", accent)}
         />
       )}
 
@@ -319,10 +317,7 @@ export function PeopleCard({
               {user.name}
             </p>
             <p className="mt-0.5 text-xs text-muted-foreground">
-              {[
-                department,
-                currentSemester ? `Sem ${currentSemester}` : null,
-              ]
+              {[department, currentSemester ? `Sem ${currentSemester}` : null]
                 .filter(Boolean)
                 .join(" \u00b7 ") || "NUB Student"}
             </p>
@@ -490,7 +485,9 @@ export function PeopleCard({
                       onClick={handleToggleFavorite}
                       disabled={busy === "fav"}
                       aria-label={
-                        isFavorited ? "Remove from favorites" : "Add to favorites"
+                        isFavorited
+                          ? "Remove from favorites"
+                          : "Add to favorites"
                       }
                       className={cn(
                         "transition-colors",
@@ -501,7 +498,9 @@ export function PeopleCard({
                     />
                   }
                 >
-                  <Star className={cn("size-3.5", isFavorited && "fill-amber-500")} />
+                  <Star
+                    className={cn("size-3.5", isFavorited && "fill-amber-500")}
+                  />
                 </TooltipTrigger>
                 <TooltipContent>
                   {isFavorited ? "Remove from favorites" : "Add to favorites"}
@@ -539,10 +538,7 @@ export function PeopleCard({
                   <MoreVertical className="size-4" />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" sideOffset={4}>
-                  <DropdownMenuItem
-                    variant="destructive"
-                    onClick={handleBlock}
-                  >
+                  <DropdownMenuItem variant="destructive" onClick={handleBlock}>
                     <Ban className="size-3.5" />
                     Block User
                   </DropdownMenuItem>

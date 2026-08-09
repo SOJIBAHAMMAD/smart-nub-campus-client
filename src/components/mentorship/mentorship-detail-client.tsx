@@ -23,12 +23,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-} from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -96,7 +91,12 @@ import {
 import ROUTES from "@/constants/routes";
 import { cn, toHref } from "@/lib/utils";
 import { useSocket, useSocketEvent } from "@/hooks/use-socket";
-import type { Mentorship, MentorshipGoal, MentorshipSession, MentorshipMessage } from "@/types";
+import type {
+  Mentorship,
+  MentorshipGoal,
+  MentorshipSession,
+  MentorshipMessage,
+} from "@/types";
 import type { MentorshipMessageEvent } from "@/lib/types/socket-events";
 import { toast } from "sonner";
 
@@ -109,7 +109,10 @@ const STATUS_META: Record<
   [MentorshipStatus.ENDED]: { label: "Ended", variant: "outline" },
 };
 
-const GOAL_STATUS_META: Record<string, { label: string; icon: "done" | "open" }> = {
+const GOAL_STATUS_META: Record<
+  string,
+  { label: string; icon: "done" | "open" }
+> = {
   [MentorshipGoalStatus.ACTIVE]: { label: "In progress", icon: "open" },
   [MentorshipGoalStatus.COMPLETED]: { label: "Completed", icon: "done" },
   [MentorshipGoalStatus.CANCELLED]: { label: "Cancelled", icon: "open" },
@@ -167,10 +170,14 @@ export function MentorshipDetailClient({
 }: MentorshipDetailClientProps) {
   const { socket, isConnected } = useSocket();
 
-  const [mentorship, setMentorship] = useState<Mentorship | null>(initialMentorship);
+  const [mentorship, setMentorship] = useState<Mentorship | null>(
+    initialMentorship,
+  );
   const [error, setError] = useState<string | null>(initialError);
   const [loading, setLoading] = useState(!initialMentorship && !initialError);
-  const [activeTab, setActiveTab] = useState<"overview" | "messages">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "messages">(
+    "overview",
+  );
 
   // ── Goals ──────────────────────────────────────────────────────────────
   const [goalOpen, setGoalOpen] = useState(false);
@@ -183,7 +190,9 @@ export function MentorshipDetailClient({
   const [sessionOpen, setSessionOpen] = useState(false);
   const [sessionAt, setSessionAt] = useState("");
   const [sessionDuration, setSessionDuration] = useState("60");
-  const [sessionFormat, setSessionFormat] = useState<string>(MeetingPreference.ONLINE);
+  const [sessionFormat, setSessionFormat] = useState<string>(
+    MeetingPreference.ONLINE,
+  );
   const [sessionLocation, setSessionLocation] = useState("");
   const [sessionAgenda, setSessionAgenda] = useState("");
   const [sessionBusy, setSessionBusy] = useState(false);
@@ -273,24 +282,28 @@ export function MentorshipDetailClient({
     });
   }, [messages.length, messagesLoading]);
 
-  useSocketEvent(socket, "mentorship:message", (payload: MentorshipMessageEvent) => {
-    if (payload.mentorshipId !== mentorshipId) return;
-    setMessages((prev) => {
-      if (prev.some((m) => m.id === payload.id)) return prev;
-      return [
-        ...prev,
-        {
-          id: payload.id,
-          mentorshipId: payload.mentorshipId,
-          senderId: payload.senderId,
-          sender: payload.sender,
-          body: payload.body,
-          createdAt: payload.createdAt,
-          updatedAt: payload.createdAt,
-        },
-      ];
-    });
-  });
+  useSocketEvent(
+    socket,
+    "mentorship:message",
+    (payload: MentorshipMessageEvent) => {
+      if (payload.mentorshipId !== mentorshipId) return;
+      setMessages((prev) => {
+        if (prev.some((m) => m.id === payload.id)) return prev;
+        return [
+          ...prev,
+          {
+            id: payload.id,
+            mentorshipId: payload.mentorshipId,
+            senderId: payload.senderId,
+            sender: payload.sender,
+            body: payload.body,
+            createdAt: payload.createdAt,
+            updatedAt: payload.createdAt,
+          },
+        ];
+      });
+    },
+  );
 
   // ── Goal handlers ──────────────────────────────────────────────────────
 
@@ -634,7 +647,8 @@ export function MentorshipDetailClient({
 
   const renderSession = (session: MentorshipSession) => {
     const sessionDone = session.status === MentorshipSessionStatus.COMPLETED;
-    const sessionCancelled = session.status === MentorshipSessionStatus.CANCELLED;
+    const sessionCancelled =
+      session.status === MentorshipSessionStatus.CANCELLED;
     const locationHref = session.location ? toHref(session.location) : null;
     const agendaExpanded = expandedAgendaIds.has(session.id);
     const agendaLong = stripHtml(session.agenda).length > 150;
@@ -662,7 +676,9 @@ export function MentorshipDetailClient({
               {formatDateTime(session.scheduledAt)}
             </p>
             <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-muted-foreground">
-              <span>{MEETING_FORMAT_LABELS[session.format] ?? session.format}</span>
+              <span>
+                {MEETING_FORMAT_LABELS[session.format] ?? session.format}
+              </span>
               {session.durationMinutes && (
                 <span>
                   {"\u00b7"} {session.durationMinutes} min
@@ -723,56 +739,68 @@ export function MentorshipDetailClient({
             )}
             {session.actionItems && (
               <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                <span className="font-medium text-foreground">Action items: </span>
+                <span className="font-medium text-foreground">
+                  Action items:{" "}
+                </span>
                 {session.actionItems}
               </p>
             )}
             <p className="mt-1.5 text-[11px] text-muted-foreground/70">
               <Badge
                 variant={sessionDone ? "secondary" : "outline"}
-                className={cn(sessionDone && "text-emerald-600 dark:text-emerald-400")}
+                className={cn(
+                  sessionDone && "text-emerald-600 dark:text-emerald-400",
+                )}
               >
                 {SESSION_STATUS_META[session.status] ?? session.status}
               </Badge>
             </p>
           </div>
 
-          {isActive && isMentor && session.status === MentorshipSessionStatus.SCHEDULED && (
-            <div className="flex shrink-0 gap-1.5">
-              <Button
-                size="xs"
-                variant="outline"
-                className="gap-1"
-                onClick={() =>
-                  handleSessionStatus(session, MentorshipSessionStatus.COMPLETED)
-                }
-                disabled={busySessionId === session.id}
-              >
-                {busySessionId === session.id ? (
-                  <Loader2 className="size-3 animate-spin" />
-                ) : (
-                  <CheckCircle2 className="size-3" />
-                )}
-                Mark done
-              </Button>
-              <Button
-                size="xs"
-                variant="outline"
-                className="gap-1 text-destructive hover:text-destructive"
-                onClick={() =>
-                  handleSessionStatus(session, MentorshipSessionStatus.CANCELLED)
-                }
-                disabled={busySessionId === session.id}
-              >
-                {busySessionId === session.id ? (
-                  <Loader2 className="size-3 animate-spin" />
-                ) : (
-                  <XCircle className="size-3" />
-                )}
-                Cancel
-              </Button>
-            </div>
-          )}
+          {isActive &&
+            isMentor &&
+            session.status === MentorshipSessionStatus.SCHEDULED && (
+              <div className="flex shrink-0 gap-1.5">
+                <Button
+                  size="xs"
+                  variant="outline"
+                  className="gap-1"
+                  onClick={() =>
+                    handleSessionStatus(
+                      session,
+                      MentorshipSessionStatus.COMPLETED,
+                    )
+                  }
+                  disabled={busySessionId === session.id}
+                >
+                  {busySessionId === session.id ? (
+                    <Loader2 className="size-3 animate-spin" />
+                  ) : (
+                    <CheckCircle2 className="size-3" />
+                  )}
+                  Mark done
+                </Button>
+                <Button
+                  size="xs"
+                  variant="outline"
+                  className="gap-1 text-destructive hover:text-destructive"
+                  onClick={() =>
+                    handleSessionStatus(
+                      session,
+                      MentorshipSessionStatus.CANCELLED,
+                    )
+                  }
+                  disabled={busySessionId === session.id}
+                >
+                  {busySessionId === session.id ? (
+                    <Loader2 className="size-3 animate-spin" />
+                  ) : (
+                    <XCircle className="size-3" />
+                  )}
+                  Cancel
+                </Button>
+              </div>
+            )}
         </div>
       </div>
     );
@@ -790,7 +818,7 @@ export function MentorshipDetailClient({
 
       {/* Header */}
       <Card className="overflow-hidden">
-        <div className="relative h-20 bg-gradient-to-r from-primary/20 via-fuchsia-400/15 to-primary/20 sm:h-24">
+        <div className="relative h-20 bg-linear-to-r from-primary/20 via-fuchsia-400/15 to-primary/20 sm:h-24">
           <div
             aria-hidden
             className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(0,0,0,0.06),transparent_60%)]"
@@ -914,7 +942,8 @@ export function MentorshipDetailClient({
           {!isActive && !isMentor && mentorship.mentorRating && (
             <p className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/5 px-2.5 py-1 text-xs font-medium text-primary">
               <Star className="size-3.5 fill-current" />
-              You rated {mentorship.mentor.name.split(" ")[0]} {mentorship.mentorRating}/5
+              You rated {mentorship.mentor.name.split(" ")[0]}{" "}
+              {mentorship.mentorRating}/5
             </p>
           )}
 
@@ -939,7 +968,7 @@ export function MentorshipDetailClient({
             {mentorship.stats.goalCount > 0 && (
               <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-muted">
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-primary to-fuchsia-400"
+                  className="h-full rounded-full bg-linear-to-r from-primary to-fuchsia-400"
                   style={{
                     width: `${Math.round(
                       (mentorship.stats.completedGoalCount /
@@ -962,7 +991,7 @@ export function MentorshipDetailClient({
             {mentorship.stats.sessionCount > 0 && (
               <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-muted">
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-primary to-fuchsia-400"
+                  className="h-full rounded-full bg-linear-to-r from-primary to-fuchsia-400"
                   style={{
                     width: `${Math.round(
                       (mentorship.stats.completedSessionCount /
@@ -996,17 +1025,26 @@ export function MentorshipDetailClient({
       {/* Tabs */}
       <Tabs
         value={activeTab}
-        onValueChange={(value) => setActiveTab(value as "overview" | "messages")}
+        onValueChange={(value) =>
+          setActiveTab(value as "overview" | "messages")
+        }
       >
         <TabsList className="w-full justify-start gap-1 rounded-full border border-border bg-card p-1">
-          <TabsTrigger value="overview" className="gap-1.5 rounded-full data-active:shadow-sm">
+          <TabsTrigger
+            value="overview"
+            className="gap-1.5 rounded-full data-active:shadow-sm"
+          >
             <Target className="size-4" />
             Overview
           </TabsTrigger>
-          <TabsTrigger value="messages" className="gap-1.5 rounded-full data-active:shadow-sm">
+          <TabsTrigger
+            value="messages"
+            className="gap-1.5 rounded-full data-active:shadow-sm"
+          >
             <MessageSquare className="size-4" />
             Messages
-            {mentorship._count.messages > 0 && ` (${mentorship._count.messages})`}
+            {mentorship._count.messages > 0 &&
+              ` (${mentorship._count.messages})`}
           </TabsTrigger>
         </TabsList>
 
@@ -1020,7 +1058,12 @@ export function MentorshipDetailClient({
                   Goals
                 </CardTitle>
                 {isActive && (
-                  <Button size="xs" variant="outline" className="gap-1" onClick={() => setGoalOpen(true)}>
+                  <Button
+                    size="xs"
+                    variant="outline"
+                    className="gap-1"
+                    onClick={() => setGoalOpen(true)}
+                  >
                     <Plus className="size-3" />
                     Add goal
                   </Button>
@@ -1047,8 +1090,17 @@ export function MentorshipDetailClient({
                   Sessions
                 </CardTitle>
                 {isActive && isMentor && (
-                  <Button size="xs" variant="outline" className="gap-1" onClick={() => setSessionOpen((open) => !open)}>
-                    {sessionOpen ? <XCircle className="size-3" /> : <Plus className="size-3" />}
+                  <Button
+                    size="xs"
+                    variant="outline"
+                    className="gap-1"
+                    onClick={() => setSessionOpen((open) => !open)}
+                  >
+                    {sessionOpen ? (
+                      <XCircle className="size-3" />
+                    ) : (
+                      <Plus className="size-3" />
+                    )}
                     {sessionOpen ? "Close" : "Schedule"}
                   </Button>
                 )}
@@ -1073,7 +1125,10 @@ export function MentorshipDetailClient({
                           value={sessionDuration}
                           onValueChange={(v) => setSessionDuration(v ?? "60")}
                         >
-                          <SelectTrigger className="w-full" id="session-duration">
+                          <SelectTrigger
+                            className="w-full"
+                            id="session-duration"
+                          >
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -1089,27 +1144,37 @@ export function MentorshipDetailClient({
                         <Label htmlFor="session-format">Format</Label>
                         <Select
                           value={sessionFormat}
-                          onValueChange={(v) => setSessionFormat(v ?? MeetingPreference.ONLINE)}
+                          onValueChange={(v) =>
+                            setSessionFormat(v ?? MeetingPreference.ONLINE)
+                          }
                         >
                           <SelectTrigger className="w-full" id="session-format">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            {Object.entries(MEETING_FORMAT_LABELS).map(([value, label]) => (
-                              <SelectItem key={value} value={value}>
-                                {label}
-                              </SelectItem>
-                            ))}
+                            {Object.entries(MEETING_FORMAT_LABELS).map(
+                              ([value, label]) => (
+                                <SelectItem key={value} value={value}>
+                                  {label}
+                                </SelectItem>
+                              ),
+                            )}
                           </SelectContent>
                         </Select>
                       </div>
                       <div className="space-y-1.5">
-                        <Label htmlFor="session-location">Location / link (optional)</Label>
+                        <Label htmlFor="session-location">
+                          Location / link (optional)
+                        </Label>
                         <Input
                           id="session-location"
                           value={sessionLocation}
                           onChange={(e) => setSessionLocation(e.target.value)}
-                          placeholder={sessionFormat === MeetingPreference.IN_PERSON ? "Room or address" : "Video call link"}
+                          placeholder={
+                            sessionFormat === MeetingPreference.IN_PERSON
+                              ? "Room or address"
+                              : "Video call link"
+                          }
                           maxLength={500}
                           disabled={sessionBusy}
                         />
@@ -1123,15 +1188,26 @@ export function MentorshipDetailClient({
                         placeholder="What should this session cover?"
                       >
                         <RichTextEditorToolbar />
-                        <RichTextEditorContent className="min-h-[140px]" />
+                        <RichTextEditorContent className="min-h-35" />
                       </RichTextEditor>
                     </div>
                     <div className="mt-3 flex justify-end gap-2">
-                      <Button variant="outline" onClick={() => setSessionOpen(false)} disabled={sessionBusy}>
+                      <Button
+                        variant="outline"
+                        onClick={() => setSessionOpen(false)}
+                        disabled={sessionBusy}
+                      >
                         Cancel
                       </Button>
-                      <Button onClick={handleScheduleSession} disabled={sessionBusy}>
-                        {sessionBusy ? <Loader2 className="size-4 animate-spin" /> : <CalendarDays className="size-4" />}
+                      <Button
+                        onClick={handleScheduleSession}
+                        disabled={sessionBusy}
+                      >
+                        {sessionBusy ? (
+                          <Loader2 className="size-4 animate-spin" />
+                        ) : (
+                          <CalendarDays className="size-4" />
+                        )}
                         Schedule
                       </Button>
                     </div>
@@ -1175,7 +1251,7 @@ export function MentorshipDetailClient({
 
         {activeTab === "messages" && (
           <Card className="mt-4">
-            <CardContent className="flex h-[28rem] flex-col gap-3 p-0">
+            <CardContent className="flex h-112 flex-col gap-3 p-0">
               <div
                 ref={scrollRef}
                 className="flex-1 space-y-3 overflow-y-auto p-4"
@@ -1274,7 +1350,8 @@ export function MentorshipDetailClient({
                         isConnected ? "bg-emerald-500" : "bg-muted",
                       )}
                     />
-                    {isConnected ? "Connected" : "Reconnecting"} — messages sync in realtime
+                    {isConnected ? "Connected" : "Reconnecting"} — messages sync
+                    in realtime
                   </p>
                 </div>
               )}
@@ -1284,7 +1361,10 @@ export function MentorshipDetailClient({
       </Tabs>
 
       {/* ── Add goal dialog ──────────────────────────────────────────── */}
-      <Dialog open={goalOpen} onOpenChange={(open) => !open && setGoalOpen(false)}>
+      <Dialog
+        open={goalOpen}
+        onOpenChange={(open) => !open && setGoalOpen(false)}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Add a goal</DialogTitle>
@@ -1327,7 +1407,11 @@ export function MentorshipDetailClient({
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setGoalOpen(false)} disabled={goalBusy}>
+            <Button
+              variant="outline"
+              onClick={() => setGoalOpen(false)}
+              disabled={goalBusy}
+            >
               Cancel
             </Button>
             <Button onClick={handleAddGoal} disabled={goalBusy}>
@@ -1339,7 +1423,10 @@ export function MentorshipDetailClient({
       </Dialog>
 
       {/* ── Complete dialog (mentor) ──────────────────────────────────── */}
-      <Dialog open={completeOpen} onOpenChange={(open) => !open && setCompleteOpen(false)}>
+      <Dialog
+        open={completeOpen}
+        onOpenChange={(open) => !open && setCompleteOpen(false)}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Complete this mentorship</DialogTitle>
@@ -1350,7 +1437,9 @@ export function MentorshipDetailClient({
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-1.5">
-              <Label htmlFor="complete-note">Closing note for your mentee (optional)</Label>
+              <Label htmlFor="complete-note">
+                Closing note for your mentee (optional)
+              </Label>
               <Textarea
                 id="complete-note"
                 value={closingNote}
@@ -1366,11 +1455,19 @@ export function MentorshipDetailClient({
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCompleteOpen(false)} disabled={closing}>
+            <Button
+              variant="outline"
+              onClick={() => setCompleteOpen(false)}
+              disabled={closing}
+            >
               Cancel
             </Button>
             <Button onClick={handleComplete} disabled={closing}>
-              {closing ? <Loader2 className="size-4 animate-spin" /> : <CheckCircle2 className="size-4" />}
+              {closing ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <CheckCircle2 className="size-4" />
+              )}
               Complete mentorship
             </Button>
           </DialogFooter>
@@ -1378,7 +1475,10 @@ export function MentorshipDetailClient({
       </Dialog>
 
       {/* ── Rate your mentor dialog (mentee) ───────────────────────────── */}
-      <Dialog open={rateOpen} onOpenChange={(open) => !open && setRateOpen(false)}>
+      <Dialog
+        open={rateOpen}
+        onOpenChange={(open) => !open && setRateOpen(false)}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Rate your mentor</DialogTitle>
@@ -1423,11 +1523,19 @@ export function MentorshipDetailClient({
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setRateOpen(false)} disabled={closing}>
+            <Button
+              variant="outline"
+              onClick={() => setRateOpen(false)}
+              disabled={closing}
+            >
               Cancel
             </Button>
             <Button onClick={handleRateMentor} disabled={closing}>
-              {closing ? <Loader2 className="size-4 animate-spin" /> : <Star className="size-4" />}
+              {closing ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Star className="size-4" />
+              )}
               Submit rating
             </Button>
           </DialogFooter>
@@ -1435,7 +1543,10 @@ export function MentorshipDetailClient({
       </Dialog>
 
       {/* ── End confirm dialog ───────────────────────────────────────── */}
-      <AlertDialog open={endOpen} onOpenChange={(open) => !open && setEndOpen(false)}>
+      <AlertDialog
+        open={endOpen}
+        onOpenChange={(open) => !open && setEndOpen(false)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>End this mentorship?</AlertDialogTitle>

@@ -2,7 +2,14 @@
 
 import Link from "next/link";
 import { useState, useCallback } from "react";
-import { Search, Sparkles, Bell, MessageCircle, BookOpen, TrendingUp } from "lucide-react";
+import {
+  Search,
+  Sparkles,
+  Bell,
+  MessageCircle,
+  BookOpen,
+  TrendingUp,
+} from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useGlobalSearch } from "@/hooks/use-global-search";
 import ROUTES from "@/constants/routes";
@@ -13,7 +20,11 @@ interface WelcomeStripProps {
   unreadMessages?: number;
 }
 
-export function WelcomeStrip({ userName, unreadNotifications = 0, unreadMessages = 0 }: WelcomeStripProps) {
+export function WelcomeStrip({
+  userName,
+  unreadNotifications = 0,
+  unreadMessages = 0,
+}: WelcomeStripProps) {
   const { open } = useGlobalSearch();
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -25,7 +36,12 @@ export function WelcomeStrip({ userName, unreadNotifications = 0, unreadMessages
     [open, searchQuery],
   );
 
-  const timeOfDay = new Date().getHours() < 12 ? "morning" : new Date().getHours() < 17 ? "afternoon" : "evening";
+  const timeOfDay =
+    new Date().getHours() < 12
+      ? "morning"
+      : new Date().getHours() < 17
+        ? "afternoon"
+        : "evening";
 
   return (
     <section className="border-b border-border/50 bg-background">
@@ -35,7 +51,7 @@ export function WelcomeStrip({ userName, unreadNotifications = 0, unreadMessages
             <h1 className="text-xl font-bold text-foreground sm:text-2xl">
               Good {timeOfDay}
               {userName ? (
-                <span className="bg-gradient-to-r from-primary to-[#8b5cf6] bg-clip-text text-transparent">
+                <span className="bg-linear-to-r from-primary to-[#8b5cf6] bg-clip-text text-transparent">
                   , {userName.split(" ")[0]}
                 </span>
               ) : (

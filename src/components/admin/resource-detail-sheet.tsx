@@ -109,8 +109,7 @@ export function ResourceDetailSheet({
   const fileColor = getFileColor(resource.fileType);
   const fileLabel = getFileLabel(resource.fileType);
   const createdAt = new Date(resource.createdAt);
-  const showDescriptionToggle =
-    (resource.description?.length ?? 0) > 220;
+  const showDescriptionToggle = (resource.description?.length ?? 0) > 220;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -118,7 +117,7 @@ export function ResourceDetailSheet({
         side="right"
         className="flex h-full w-full flex-col gap-0 p-0 sm:max-w-md"
       >
-        <div className="min-h-0 flex-1 overflow-y-auto">
+        <div className="min-h-0 flex-1 overflow-y-auto scrollbar-thin">
           <div className="space-y-5 p-5 sm:p-6">
             {/* Header */}
             <div className="flex items-start gap-3">
@@ -131,7 +130,7 @@ export function ResourceDetailSheet({
                 <FileIcon fileType={resource.fileType} className="size-5" />
               </div>
               <div className="min-w-0 flex-1">
-                <SheetTitle className="break-words text-base leading-snug">
+                <SheetTitle className="wrap-break-word text-base leading-snug">
                   {resource.title}
                 </SheetTitle>
                 <SheetDescription className="mt-1.5 flex flex-wrap items-center gap-1.5">
@@ -271,10 +270,7 @@ export function ResourceDetailSheet({
                 <div className="flex min-w-0 items-center gap-2.5">
                   <FileIcon
                     fileType={resource.fileType}
-                    className={cn(
-                      "size-4 shrink-0",
-                      fileColor.split(" ")[0],
-                    )}
+                    className={cn("size-4 shrink-0", fileColor.split(" ")[0])}
                   />
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium">{fileLabel}</p>
@@ -356,9 +352,7 @@ function MetadataItem({
         </span>
       </div>
       <p className="truncate text-sm font-medium leading-tight">{value}</p>
-      {sub && (
-        <p className="truncate text-xs text-muted-foreground">{sub}</p>
-      )}
+      {sub && <p className="truncate text-xs text-muted-foreground">{sub}</p>}
     </div>
   );
 }
