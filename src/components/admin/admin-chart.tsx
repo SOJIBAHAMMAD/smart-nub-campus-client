@@ -1,5 +1,6 @@
 "use client";
 
+import { useId } from "react";
 import {
   LineChart,
   Line,
@@ -12,18 +13,33 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Legend,
 } from "recharts";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from "@/components/ui/card";
+import {
+  Empty,
+  EmptyMedia,
+  EmptyHeader,
+  EmptyTitle,
+  EmptyDescription,
+} from "@/components/ui/empty";
+import { Inbox } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
 export type ChartType = "line" | "bar" | "area";
 
-interface ChartDataPoint {
+export interface ChartDataPoint {
   [key: string]: string | number;
 }
 
-interface ChartSeries {
+export interface ChartSeries {
   /** Key in the data object for this series. */
   dataKey: string;
   /** Display name for the legend/tooltip. */
@@ -45,9 +61,41 @@ interface AdminChartProps {
   description?: string;
   /** Height of the chart container in pixels. Default 300. */
   height?: number;
+  /** Optional tick formatter for the x axis (e.g. to truncate long labels). */
+  xTickFormatter?: (value: string) => string;
+  /** Additional CSS classes applied to the card container. */
+  className?: string;
 }
 
 // ── Component ────────────────────────────────────────────────────────────────
+
+const CHART_MARGIN = { top: 12, right: 8, left: 0, bottom: 0 };
+
+const AXIS_TICK = { fontSize: 12, fill: "var(--muted-foreground)" };
+
+/** Accessible, token-aware tooltip used across chart types. */
+function ChartTooltip() {
+  return (
+    <Tooltip
+      cursor={{ fill: "var(--muted)", opacity: 0.45 }}
+      contentStyle={{
+        backgroundColor: "var(--popover)",
+        border: "1px solid var(--border)",
+        borderRadius: "var(--radius-md)",
+        boxShadow: "var(--card-shadow-hover)",
+        color: "var(--popover-foreground)",
+        fontSize: "12px",
+        padding: "8px 10px",
+      }}
+      labelStyle={{
+        color: "var(--muted-foreground)",
+        fontWeight: 600,
+        marginBottom: 4,
+      }}
+      itemStyle={{ color: "var(--foreground)" }}
+    />
+  );
+}
 
 /**
  * Reusable chart component wrapping recharts.
@@ -61,39 +109,43 @@ export function AdminChart({
   series,
   description,
   height = 300,
+  xTickFormatter,
+  className,
 }: AdminChartProps) {
-  /** Render the appropriate chart type based on the `type` prop. */
-  const renderChart = () => {
-    const commonProps = {
-      data,
-      margin: { top: 5, right: 20, left: 0, bottom: 5 },
-    };
+  const titleId = useId();
 
+  /** Render the appropriate chart type based on the `type` prop. */
+  const renderChart = (ariaLabel: string) => {
     const commonElements = (
       <>
-        <CartesianGrid strokeDasharray="3 3" className="stroke-gray-200 dark:stroke-gray-700" />
+        <CartesianGrid
+          vertical={false}
+          strokeDasharray="4 4"
+          stroke="var(--border)"
+        />
         <XAxis
           dataKey="name"
-          tick={{ fontSize: 12 }}
-          className="text-muted-foreground"
+          tickLine={false}
+          axisLine={false}
+          tick={AXIS_TICK}
+          tickFormatter={xTickFormatter}
+          dy={6}
         />
-        <YAxis tick={{ fontSize: 12 }} className="text-muted-foreground" />
-        <Tooltip
-          contentStyle={{
-            backgroundColor: "hsl(var(--background))",
-            border: "1px solid hsl(var(--border))",
-            borderRadius: "8px",
-            fontSize: "12px",
-          }}
+        <YAxis
+          tickLine={false}
+          axisLine={false}
+          width={44}
+          allowDecimals={false}
+          tick={AXIS_TICK}
         />
-        {series.length > 1 && <Legend />}
+        <ChartTooltip />
       </>
     );
 
     switch (type) {
       case "bar":
         return (
-          <BarChart {...commonProps}>
+          <BarChart data={data} margin={CHART_MARGIN} aria-label={ariaLabel}>
             {commonElements}
             {series.map((s) => (
               <Bar
@@ -102,13 +154,14 @@ export function AdminChart({
                 name={s.name}
                 fill={s.color}
                 radius={[4, 4, 0, 0]}
+                maxBarSize={48}
               />
             ))}
           </BarChart>
         );
       case "area":
         return (
-          <AreaChart {...commonProps}>
+          <AreaChart data={data} margin={CHART_MARGIN} aria-label={ariaLabel}>
             {commonElements}
             {series.map((s) => (
               <Area
@@ -119,6 +172,7 @@ export function AdminChart({
                 stroke={s.color}
                 fill={s.color}
                 fillOpacity={0.15}
+                strokeWidth={2}
               />
             ))}
           </AreaChart>
@@ -126,7 +180,7 @@ export function AdminChart({
       case "line":
       default:
         return (
-          <LineChart {...commonProps}>
+          <LineChart data={data} margin={CHART_MARGIN} aria-label={ariaLabel}>
             {commonElements}
             {series.map((s) => (
               <Line
@@ -136,8 +190,8 @@ export function AdminChart({
                 name={s.name}
                 stroke={s.color}
                 strokeWidth={2}
-                dot={{ r: 3 }}
-                activeDot={{ r: 5 }}
+                dot={{ r: 3, fill: s.color, strokeWidth: 0 }}
+                activeDot={{ r: 5, stroke: "var(--background)", strokeWidth: 2 }}
               />
             ))}
           </LineChart>
@@ -146,16 +200,60 @@ export function AdminChart({
   };
 
   return (
-    <div className="rounded-xl border bg-white p-6 shadow-sm dark:bg-gray-800">
-      <div className="mb-4">
-        <h3 className="text-base font-semibold">{title}</h3>
-        {description && (
-          <p className="text-sm text-muted-foreground">{description}</p>
+    <Card className={cn("w-full", className)}>
+      <CardHeader className="flex-row flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0 space-y-1">
+          <CardTitle id={titleId} className="text-base">
+            {title}
+          </CardTitle>
+          {description && <CardDescription>{description}</CardDescription>}
+        </div>
+
+        {/* Legend chips */}
+        <ul
+          aria-label={`Legend for ${title}`}
+          className="flex max-w-full flex-wrap items-center justify-end gap-1.5"
+        >
+          {series.map((s) => (
+            <li
+              key={s.dataKey}
+              className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground"
+            >
+              <span
+                aria-hidden="true"
+                className="size-2 shrink-0 rounded-full"
+                style={{ backgroundColor: s.color }}
+              />
+              <span className="truncate">{s.name}</span>
+            </li>
+          ))}
+        </ul>
+      </CardHeader>
+
+      <CardContent className="min-w-0">
+        {data.length === 0 ? (
+          <div className="flex items-center justify-center" style={{ minHeight: height }}>
+            <Empty className="py-8">
+              <EmptyMedia variant="icon">
+                <Inbox className="text-muted-foreground" />
+              </EmptyMedia>
+              <EmptyHeader>
+                <EmptyTitle>No data yet</EmptyTitle>
+                <EmptyDescription>
+                  There&apos;s nothing to chart for this period. Check back once
+                  activity starts coming in.
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          </div>
+        ) : (
+          <div className="w-full min-w-0">
+            <ResponsiveContainer width="100%" height={height}>
+              {renderChart(`${title} chart`)}
+            </ResponsiveContainer>
+          </div>
         )}
-      </div>
-      <ResponsiveContainer width="100%" height={height}>
-        {renderChart()}
-      </ResponsiveContainer>
-    </div>
+      </CardContent>
+    </Card>
   );
 }
