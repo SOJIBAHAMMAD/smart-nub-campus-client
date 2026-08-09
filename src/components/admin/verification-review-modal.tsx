@@ -224,6 +224,7 @@ export function VerificationReviewModal({
                   variant="outline"
                   size="sm"
                   className="h-8 shrink-0"
+                  nativeButton={false}
                   render={
                     <a
                       href={verification.idCardImage}

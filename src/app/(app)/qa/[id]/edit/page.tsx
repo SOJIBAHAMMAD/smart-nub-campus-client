@@ -81,12 +81,14 @@ export default async function QuestionEditPage({
           Question not found
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          {fetchError ?? "The question you&apos;re trying to edit doesn&apos;t exist."}
+          {fetchError ??
+            "The question you&apos;re trying to edit doesn&apos;t exist."}
         </p>
         <Button
           variant="outline"
           className="mt-6"
           render={<Link href="/qa" />}
+          nativeButton={false}
         >
           Back to Q&A
         </Button>
@@ -110,6 +112,7 @@ export default async function QuestionEditPage({
           variant="outline"
           className="mt-6"
           render={<Link href={`/qa/${id}`} />}
+          nativeButton={false}
         >
           Back to Question
         </Button>
@@ -126,7 +129,9 @@ export default async function QuestionEditPage({
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbLink render={<Link href={`/qa/${question.id}`}>{question.title}</Link>} />
+            <BreadcrumbLink
+              render={<Link href={`/qa/${question.id}`}>{question.title}</Link>}
+            />
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>

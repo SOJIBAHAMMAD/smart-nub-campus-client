@@ -203,6 +203,7 @@ export default function ResourceDetailPage() {
           variant="outline"
           className="mt-6"
           render={<Link href="/resources" />}
+          nativeButton={false}
         >
           Browse Resources
         </Button>

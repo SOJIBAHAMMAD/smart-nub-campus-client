@@ -8,7 +8,10 @@ import { BulkActions } from "@/components/admin/bulk-actions";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { UserRoleBadge } from "@/components/admin/user/user-role-badge";
 import { UserStatusBadge } from "@/components/admin/user/user-status-badge";
-import { UserStatsCards, deriveUserStats } from "@/components/admin/user/user-stats-cards";
+import {
+  UserStatsCards,
+  deriveUserStats,
+} from "@/components/admin/user/user-stats-cards";
 import { UserPagination } from "@/components/admin/user/user-pagination";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -58,7 +61,10 @@ import {
   XCircle,
 } from "lucide-react";
 import { UserStatus } from "@/constants/enums";
-import type { AdminUserDetail, ListAdminUsersResponse } from "@/types/admin.types";
+import type {
+  AdminUserDetail,
+  ListAdminUsersResponse,
+} from "@/types/admin.types";
 import { toast } from "sonner";
 
 // ── Page Component ───────────────────────────────────────────────────────────
@@ -96,9 +102,7 @@ export default function UsersPage() {
         search: search || undefined,
         role: roleFilter === "all" ? undefined : roleFilter,
         status:
-          statusFilter === "all"
-            ? undefined
-            : (statusFilter as UserStatus),
+          statusFilter === "all" ? undefined : (statusFilter as UserStatus),
       });
       setData(result);
     } catch {
@@ -247,7 +251,7 @@ export default function UsersPage() {
               setPage(1);
             }}
           >
-            <SelectTrigger className="w-[150px] shrink-0">
+            <SelectTrigger className="w-37.5 shrink-0">
               <SelectValue placeholder="All roles" />
             </SelectTrigger>
             <SelectContent>
@@ -263,7 +267,7 @@ export default function UsersPage() {
               setPage(1);
             }}
           >
-            <SelectTrigger className="w-[170px] shrink-0">
+            <SelectTrigger className="w-42.5 shrink-0">
               <SelectValue placeholder="All statuses" />
             </SelectTrigger>
             <SelectContent>
@@ -316,9 +320,11 @@ export default function UsersPage() {
       {/* ── Table ───────────────────────────────────────────────────────── */}
       <div className="overflow-hidden rounded-xl border bg-card shadow-xs">
         <div className="w-full overflow-x-auto">
-          <div className="min-w-[720px]">
+          <div className="min-w-180">
             <Table>
-              <TableCaption className="sr-only">Admin user directory</TableCaption>
+              <TableCaption className="sr-only">
+                Admin user directory
+              </TableCaption>
               <TableHeader>
                 <TableRow className="bg-muted/50 hover:bg-muted/50">
                   <TableHead className="w-12">
@@ -340,7 +346,10 @@ export default function UsersPage() {
               {isLoading ? (
                 <TableBody>
                   {Array.from({ length: 6 }).map((_, i) => (
-                    <TableRow key={i} className="cursor-default hover:bg-transparent">
+                    <TableRow
+                      key={i}
+                      className="cursor-default hover:bg-transparent"
+                    >
                       <TableCell>
                         <Skeleton className="size-4 rounded-md" />
                       </TableCell>
