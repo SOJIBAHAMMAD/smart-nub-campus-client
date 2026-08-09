@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { motion } from "motion/react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import {
@@ -35,9 +36,6 @@ const VISIBILITY_FIELDS = [
   { key: "showSocialLinks" as const, label: "Social Links" },
 ];
 
-/**
- * Profile visibility settings with dropdowns for each profile section.
- */
 export function ProfileVisibility({ settings }: ProfileVisibilityProps) {
   const [localSettings, setLocalSettings] = useState(settings);
   const [saving, setSaving] = useState(false);
@@ -48,7 +46,6 @@ export function ProfileVisibility({ settings }: ProfileVisibilityProps) {
   ) => {
     setLocalSettings((prev) => ({ ...prev, [field]: value }));
     setSaving(true);
-
     try {
       const result = await updatePrivacySettingsAction({ [field]: value });
       if (result.success) {
@@ -64,36 +61,42 @@ export function ProfileVisibility({ settings }: ProfileVisibilityProps) {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg">Profile Visibility</CardTitle>
-        <p className="text-sm text-muted-foreground">
-          Control who can see each section of your profile.
-        </p>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {VISIBILITY_FIELDS.map(({ key, label }) => (
-          <div key={key} className="flex items-center justify-between gap-4">
-            <Label className="text-sm">{label}</Label>
-            <Select
-              value={localSettings[key]}
-              onValueChange={(v) => handleChange(key, v as ProfileVisibilityLevel)}
-              disabled={saving}
-            >
-              <SelectTrigger className="w-48">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {VISIBILITY_OPTIONS.map((opt) => (
-                  <SelectItem key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        ))}
-      </CardContent>
-    </Card>
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.25, ease: "easeOut" }}
+    >
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">Profile Visibility</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Control who can see each section of your profile.
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {VISIBILITY_FIELDS.map(({ key, label }) => (
+            <div key={key} className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+              <Label className="text-sm">{label}</Label>
+              <Select
+                value={localSettings[key]}
+                onValueChange={(v) => handleChange(key, v as ProfileVisibilityLevel)}
+                disabled={saving}
+              >
+                <SelectTrigger className="w-full sm:w-48">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {VISIBILITY_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+    </motion.div>
   );
 }

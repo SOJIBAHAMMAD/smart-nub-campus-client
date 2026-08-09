@@ -22,7 +22,7 @@ export function AnswerForm({ placeholder, onSubmit, onCancel }: AnswerFormProps)
   const [submitting, setSubmitting] = useState(false);
   const submittingRef = useRef(false);
 
-  async function handleSubmit() {
+  const handleSubmit = useCallback(async () => {
     const trimmed = content.replace(/<[^>]*>?/gm, "").trim();
     if (!trimmed) return;
     setSubmitting(true);
@@ -34,7 +34,7 @@ export function AnswerForm({ placeholder, onSubmit, onCancel }: AnswerFormProps)
       setSubmitting(false);
       submittingRef.current = false;
     }
-  }
+  }, [content, onSubmit]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -43,7 +43,7 @@ export function AnswerForm({ placeholder, onSubmit, onCancel }: AnswerFormProps)
         void handleSubmit();
       }
     },
-    [content],
+    [content, handleSubmit],
   );
 
   return (

@@ -5,6 +5,7 @@ import type {
   ActiveSession,
   PaginatedLoginHistory,
   ExportJob,
+  DeletionInfo,
 } from "@/types";
 
 /**
@@ -149,5 +150,16 @@ export const settingsService = {
 
   async cancelDeletion(): Promise<void> {
     await serverApi.post("/settings/account/delete/cancel", {});
+  },
+
+  async getDeletionStatus(): Promise<DeletionInfo | null> {
+    try {
+      const response = await serverApi.get<DeletionInfo>(
+        "/settings/account/deletion-status",
+      );
+      return response.data ?? null;
+    } catch {
+      return null;
+    }
   },
 };

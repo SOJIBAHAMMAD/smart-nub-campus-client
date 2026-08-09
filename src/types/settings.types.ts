@@ -70,6 +70,7 @@ export interface ActiveSession {
   createdAt: string;
   updatedAt: string;
   expiresAt: string;
+  isCurrent: boolean;
 }
 
 export interface LoginHistoryEntry {

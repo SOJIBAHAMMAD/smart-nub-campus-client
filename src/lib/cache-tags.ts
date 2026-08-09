@@ -66,19 +66,49 @@ export const TAGS = {
 
   /** User badges. */
   PROFILE_BADGES: "profile-badges",
+
+  /** Alumni transition status (home banner). */
+  ALUMNI_TRANSITION_STATUS: "alumni-transition-status",
+
+  /** Alumni directory list (cards + filters). */
+  ALUMNI_DIRECTORY: "alumni-directory",
+
+  /** Single alumni directory member detail. */
+  ALUMNI_DIRECTORY_DETAIL: "alumni-directory-detail",
+
+  /** Alumni directory facet stats (sidebar counts). */
+  ALUMNI_DIRECTORY_STATS: "alumni-directory-stats",
+
+  /** Job posts list (cards + filters). */
+  JOBS: "jobs",
+
+  /** Single job post detail. */
+  JOB_DETAIL: "job-detail",
+
+  /** Mentorship mentor directory. */
+  MENTORS: "mentors",
+
+  /** Mentorship requests (incoming + outgoing). */
+  MENTORSHIP_REQUESTS: "mentorship-requests",
+
+  /** Mentorship relationships (list + detail). */
+  MENTORSHIPS: "mentorships",
+
+  /** Campus-wide activity feed (home + /activity). */
+  ACTIVITIES: "activities",
 } as const;
 
 /** All tags that should be invalidated when any resource is created/updated/deleted. */
-export const RESOURCE_MUTATION_TAGS = [TAGS.RESOURCES, TAGS.RESOURCES_TRENDING] as const;
+export const RESOURCE_MUTATION_TAGS = [TAGS.RESOURCES, TAGS.RESOURCES_TRENDING, TAGS.ACTIVITIES] as const;
 
 /** All tags that should be invalidated when a team request is created/updated/deleted. */
-export const TEAM_MUTATION_TAGS = [TAGS.TEAMS_LIST, TAGS.TEAM_DETAIL] as const;
+export const TEAM_MUTATION_TAGS = [TAGS.TEAMS_LIST, TAGS.TEAM_DETAIL, TAGS.ACTIVITIES] as const;
 
 /** All tags that should be invalidated when a discussion is created/updated/deleted. */
-export const DISCUSSION_MUTATION_TAGS = [TAGS.DISCUSSIONS, TAGS.DISCUSSION_DETAIL, TAGS.DISCUSSIONS_TRENDING] as const;
+export const DISCUSSION_MUTATION_TAGS = [TAGS.DISCUSSIONS, TAGS.DISCUSSION_DETAIL, TAGS.DISCUSSIONS_TRENDING, TAGS.ACTIVITIES] as const;
 
 /** All tags that should be invalidated when a question/answer is created/updated/deleted. */
-export const QA_MUTATION_TAGS = [TAGS.QA, TAGS.QA_DETAIL, TAGS.QA_TRENDING] as const;
+export const QA_MUTATION_TAGS = [TAGS.QA, TAGS.QA_DETAIL, TAGS.QA_TRENDING, TAGS.ACTIVITIES] as const;
 
 /** All tags that should be invalidated when a connection is created/updated/deleted. */
 export const CONNECTION_MUTATION_TAGS = [TAGS.CONNECTIONS, TAGS.CONNECTION_REQUESTS] as const;

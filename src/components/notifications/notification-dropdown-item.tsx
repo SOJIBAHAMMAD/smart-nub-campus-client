@@ -21,6 +21,9 @@ import {
   EyeOff,
   Trash2,
   Check,
+  Handshake,
+  CalendarDays,
+  Target,
   type LucideIcon,
 } from "lucide-react";
 
@@ -43,6 +46,16 @@ const ICON_MAP: Record<Notification["type"], LucideIcon> = {
   EVENT_REMINDER: Bell,
   BADGE_UNLOCKED: Award,
   SYSTEM: Bell,
+  MENTORSHIP_REQUEST_RECEIVED: Handshake,
+  MENTORSHIP_REQUEST_UPDATED: Handshake,
+  MENTORSHIP_ACCEPTED: Handshake,
+  MENTORSHIP_SESSION_SCHEDULED: CalendarDays,
+  MENTORSHIP_SESSION_UPDATED: CalendarDays,
+  MENTORSHIP_GOAL_UPDATED: Target,
+  MENTORSHIP_MESSAGE: MessageCircle,
+  MENTORSHIP_COMPLETED: CheckCircle,
+  MENTORSHIP_ENDED: Handshake,
+  MENTORSHIP_REMINDER: Bell,
 };
 
 const COLOR_MAP: Record<Notification["type"], string> = {
@@ -81,6 +94,26 @@ const COLOR_MAP: Record<Notification["type"], string> = {
   BADGE_UNLOCKED:
     "bg-yellow-100 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-400",
   SYSTEM: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400",
+  MENTORSHIP_REQUEST_RECEIVED:
+    "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400",
+  MENTORSHIP_REQUEST_UPDATED:
+    "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400",
+  MENTORSHIP_ACCEPTED:
+    "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400",
+  MENTORSHIP_SESSION_SCHEDULED:
+    "bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400",
+  MENTORSHIP_SESSION_UPDATED:
+    "bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400",
+  MENTORSHIP_GOAL_UPDATED:
+    "bg-teal-100 text-teal-600 dark:bg-teal-900/30 dark:text-teal-400",
+  MENTORSHIP_MESSAGE:
+    "bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400",
+  MENTORSHIP_COMPLETED:
+    "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400",
+  MENTORSHIP_ENDED:
+    "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400",
+  MENTORSHIP_REMINDER:
+    "bg-yellow-100 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-400",
 };
 
 function formatRelativeTime(dateString: string): string {

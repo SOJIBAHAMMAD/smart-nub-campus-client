@@ -4,6 +4,17 @@ import { useState } from "react";
 import Image from "next/image";
 import { format } from "date-fns";
 import {
+  CheckCircle2,
+  ExternalLink,
+  FileText,
+  Loader2,
+  ShieldCheck,
+  XCircle,
+} from "lucide-react";
+
+import { VerificationStatusBadge } from "@/components/admin/verification/verification-status-badge";
+import { Avatar } from "@/components/ui/avatar";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -13,12 +24,10 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { CheckCircle, XCircle, ExternalLink } from "lucide-react";
-import type { AdminVerificationDetail } from "@/types/admin.types";
 import { VerificationStatus } from "@/constants/enums";
+import type { AdminVerificationDetail } from "@/types/admin.types";
 
-// ── Component ────────────────────────────────────────────────────────────────
+// ── Props ─────────────────────────────────────────────────────────────────────
 
 interface VerificationReviewModalProps {
   /** The verification request to review. */
@@ -33,9 +42,24 @@ interface VerificationReviewModalProps {
   onReject: (id: string, reason: string) => Promise<void>;
 }
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+/** Section heading used inside the modal body. */
+function SectionHeading({ children }: { children: React.ReactNode }) {
+  return (
+    <h3 className="mb-2 text-sm font-medium text-muted-foreground">
+      {children}
+    </h3>
+  );
+}
+
+// ── Component ─────────────────────────────────────────────────────────────────
+
 /**
  * Modal for reviewing a single verification request.
- * Shows student info, ID card preview, and approve/reject actions.
+ * Shows the applicant's identity, their submitted ID card, an admin note when
+ * present, and Approve/Reject actions (rejection requires a reason). ESC closes
+ * the dialog via the underlying Dialog primitive.
  */
 export function VerificationReviewModal({
   verification,
@@ -54,6 +78,7 @@ export function VerificationReviewModal({
 
   /** Handle approve action. */
   const handleApprove = async () => {
+    if (isLoading) return;
     setIsLoading(true);
     try {
       await onApprove(verification.id);
@@ -65,10 +90,11 @@ export function VerificationReviewModal({
 
   /** Handle reject action. */
   const handleReject = async () => {
-    if (!rejectReason.trim()) return;
+    const reason = rejectReason.trim();
+    if (!reason || isLoading) return;
     setIsLoading(true);
     try {
-      await onReject(verification.id, rejectReason.trim());
+      await onReject(verification.id, reason);
       setRejectReason("");
       setShowRejectForm(false);
       onClose();
@@ -77,124 +103,184 @@ export function VerificationReviewModal({
     }
   };
 
-  /** Get status badge variant. */
-  const getStatusBadge = (status: VerificationStatus) => {
-    switch (status) {
-      case VerificationStatus.PENDING:
-        return <Badge variant="outline" className="border-amber-300 text-amber-700">Pending</Badge>;
-      case VerificationStatus.APPROVED:
-        return <Badge variant="outline" className="border-green-300 text-green-700">Approved</Badge>;
-      case VerificationStatus.REJECTED:
-        return <Badge variant="outline" className="border-red-300 text-red-700">Rejected</Badge>;
-      default:
-        return null;
-    }
-  };
-
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto scrollbar-none">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            Verification Review
-            {getStatusBadge(verification.status)}
+          <DialogTitle className="flex items-center gap-2 pr-8">
+            <span className="truncate">Verification Review</span>
+            <VerificationStatusBadge status={verification.status} />
           </DialogTitle>
           <DialogDescription>
-            Review student verification request details and documents.
+            Review the applicant&apos;s identity details and ID card before
+            making a decision.
           </DialogDescription>
         </DialogHeader>
 
-        {/* ── Student Info ─────────────────────────────────────────────── */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <p className="text-sm font-medium text-muted-foreground">Name</p>
-            <p className="text-sm font-semibold">{verification.name}</p>
-          </div>
-          <div className="space-y-2">
-            <p className="text-sm font-medium text-muted-foreground">Email</p>
-            <p className="text-sm">{verification.email}</p>
-          </div>
-          <div className="space-y-2">
-            <p className="text-sm font-medium text-muted-foreground">Student ID</p>
-            <p className="text-sm font-mono">{verification.studentId}</p>
-          </div>
-          <div className="space-y-2">
-            <p className="text-sm font-medium text-muted-foreground">Date of Birth</p>
-            <p className="text-sm">
-              {format(new Date(verification.dateOfBirth), "MMM d, yyyy")}
-            </p>
-          </div>
-          <div className="space-y-2">
-            <p className="text-sm font-medium text-muted-foreground">Submitted</p>
-            <p className="text-sm">
-              {format(new Date(verification.createdAt), "MMM d, yyyy 'at' h:mm a")}
-            </p>
-          </div>
-          {verification.reviewedAt && (
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-muted-foreground">Reviewed</p>
-              <p className="text-sm">
-                {format(new Date(verification.reviewedAt), "MMM d, yyyy 'at' h:mm a")}
+        {/* ── Applicant identity card ─────────────────────────────────── */}
+        <section
+          aria-label="Applicant details"
+          className="rounded-xl border bg-muted/30 p-4 sm:p-5"
+        >
+          <div className="flex items-center gap-4">
+            <Avatar
+              id={verification.id}
+              name={verification.name}
+              className="size-12 text-base"
+            />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-base font-semibold">
+                {verification.name}
+              </p>
+              <p className="truncate text-sm text-muted-foreground">
+                {verification.email}
               </p>
             </div>
-          )}
-        </div>
-
-        {/* ── ID Card Preview ──────────────────────────────────────────── */}
-        {verification.idCardImage && (
-          <div className="space-y-2">
-            <p className="text-sm font-medium text-muted-foreground">ID Card</p>
-            <div className="relative overflow-hidden rounded-lg border">
-              <a
-                href={verification.idCardImage}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group relative block"
-              >
-                <Image
-                  src={verification.idCardImage}
-                  alt="Student ID Card"
-                  width={600}
-                  height={400}
-                  unoptimized
-                  className="w-full object-contain max-h-[300px]"
-                />
-                <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/30">
-                  <ExternalLink className="size-6 text-white opacity-0 transition-opacity group-hover:opacity-100" />
-                </div>
-              </a>
-            </div>
           </div>
+
+          <dl className="mt-4 grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
+            <div>
+              <dt className="text-xs font-medium text-muted-foreground">
+                Student ID
+              </dt>
+              <dd className="mt-0.5 font-mono text-sm">
+                {verification.studentId}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs font-medium text-muted-foreground">
+                Date of Birth
+              </dt>
+              <dd className="mt-0.5 text-sm">
+                {format(new Date(verification.dateOfBirth), "MMM d, yyyy")}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs font-medium text-muted-foreground">
+                Submitted
+              </dt>
+              <dd className="mt-0.5 text-sm">
+                {format(
+                  new Date(verification.createdAt),
+                  "MMM d, yyyy 'at' h:mm a",
+                )}
+              </dd>
+            </div>
+            {verification.reviewedAt && (
+              <div>
+                <dt className="text-xs font-medium text-muted-foreground">
+                  Reviewed
+                </dt>
+                <dd className="mt-0.5 text-sm">
+                  {format(
+                    new Date(verification.reviewedAt),
+                    "MMM d, yyyy 'at' h:mm a",
+                  )}
+                </dd>
+              </div>
+            )}
+          </dl>
+        </section>
+
+        {/* ── Documents ───────────────────────────────────────────────── */}
+        {verification.idCardImage && (
+          <section aria-label="Submitted documents">
+            <div className="mb-2 flex items-center justify-between">
+              <SectionHeading>Documents</SectionHeading>
+              <span className="text-xs text-muted-foreground">1 submitted</span>
+            </div>
+
+            <div className="rounded-lg border p-3">
+              <div className="relative overflow-hidden rounded-md border">
+                <a
+                  href={verification.idCardImage}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group relative block"
+                >
+                  <Image
+                    src={verification.idCardImage}
+                    alt={`ID card for ${verification.name}`}
+                    width={600}
+                    height={400}
+                    unoptimized
+                    className="max-h-64 w-full object-contain"
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/30">
+                    <ExternalLink className="size-6 text-white opacity-0 transition-opacity group-hover:opacity-100" />
+                  </div>
+                </a>
+              </div>
+
+              <div className="mt-3 flex items-center justify-between gap-2">
+                <span className="flex min-w-0 items-center gap-2 text-sm">
+                  <FileText className="size-4 shrink-0 text-muted-foreground" />
+                  <span className="truncate font-medium">Student ID Card</span>
+                  <span className="shrink-0 text-xs text-muted-foreground">
+                    Image
+                  </span>
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 shrink-0"
+                  nativeButton={false}
+                  render={
+                    <a
+                      href={verification.idCardImage}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    />
+                  }
+                >
+                  <ExternalLink className="mr-1 size-3.5" />
+                  Open full size
+                </Button>
+              </div>
+            </div>
+          </section>
         )}
 
-        {/* ── Admin Note (if exists) ───────────────────────────────────── */}
+        {/* ── Admin note ──────────────────────────────────────────────── */}
         {verification.note && (
-          <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
-            <p className="text-sm font-medium text-muted-foreground mb-1">
-              Admin Note
+          <div
+            aria-label="Admin note"
+            className="rounded-lg border bg-muted/30 p-4"
+          >
+            <p className="mb-1 text-xs font-medium text-muted-foreground">
+              Admin note
             </p>
             <p className="text-sm">{verification.note}</p>
           </div>
         )}
 
-        {/* ── Reject Form ──────────────────────────────────────────────── */}
+        {/* ── Reject form ─────────────────────────────────────────────── */}
         {showRejectForm && isPending && (
-          <div className="space-y-2">
-            <p className="text-sm font-medium text-red-600">
+          <div className="space-y-2" aria-label="Rejection reason">
+            <label
+              htmlFor="verification-reject-reason"
+              className="flex items-center gap-1 text-sm font-medium text-destructive"
+            >
+              <XCircle className="size-3.5" />
               Rejection reason (required)
-            </p>
+            </label>
             <Textarea
-              placeholder="Enter reason for rejection..."
+              id="verification-reject-reason"
+              placeholder="Explain why this request is being rejected..."
               value={rejectReason}
               onChange={(e) => setRejectReason(e.target.value)}
               rows={3}
+              disabled={isLoading}
             />
+            <p className="text-right text-xs text-muted-foreground">
+              {rejectReason.length}/500
+            </p>
           </div>
         )}
 
-        {/* ── Actions ──────────────────────────────────────────────────── */}
-        {isPending && (
-          <DialogFooter className="gap-2 sm:gap-0">
+        {/* ── Decision footer ─────────────────────────────────────────── */}
+        {isPending ? (
+          <DialogFooter className="gap-2 sm:gap-3">
             {showRejectForm ? (
               <>
                 <Button
@@ -211,8 +297,13 @@ export function VerificationReviewModal({
                   variant="destructive"
                   onClick={handleReject}
                   disabled={isLoading || !rejectReason.trim()}
+                  aria-label="Confirm rejection"
                 >
-                  <XCircle className="size-4 mr-1" />
+                  {isLoading ? (
+                    <Loader2 className="mr-1 size-4 animate-spin" />
+                  ) : (
+                    <XCircle className="mr-1 size-4" />
+                  )}
                   Confirm Reject
                 </Button>
               </>
@@ -223,7 +314,7 @@ export function VerificationReviewModal({
                   onClick={() => setShowRejectForm(true)}
                   disabled={isLoading}
                 >
-                  <XCircle className="size-4 mr-1" />
+                  <XCircle className="mr-1 size-4" />
                   Reject
                 </Button>
                 <Button
@@ -231,11 +322,31 @@ export function VerificationReviewModal({
                   disabled={isLoading}
                   className="bg-green-600 hover:bg-green-700"
                 >
-                  <CheckCircle className="size-4 mr-1" />
+                  {isLoading ? (
+                    <Loader2 className="mr-1 size-4 animate-spin" />
+                  ) : (
+                    <CheckCircle2 className="mr-1 size-4" />
+                  )}
                   Approve
                 </Button>
               </>
             )}
+          </DialogFooter>
+        ) : (
+          <DialogFooter>
+            <p className="flex w-full items-center gap-1.5 text-sm text-muted-foreground">
+              <ShieldCheck className="size-4 shrink-0" />
+              This request was already{" "}
+              {verification.status === VerificationStatus.APPROVED
+                ? "approved"
+                : "rejected"}
+              {verification.reviewedAt &&
+                ` on ${format(
+                  new Date(verification.reviewedAt),
+                  "MMM d, yyyy",
+                )}`}
+              .
+            </p>
           </DialogFooter>
         )}
       </DialogContent>

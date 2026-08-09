@@ -9,6 +9,8 @@ import { getDiscussion } from "@/actions/discussion.actions";
 import { authClient } from "@/lib/auth-client";
 import type { Discussion } from "@/types/discussion.types";
 
+export const dynamic = "force-dynamic";
+
 /** Loading skeleton for the discussion detail page. */
 function DiscussionDetailSkeleton() {
   return (

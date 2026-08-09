@@ -1,5 +1,6 @@
 "use client";
 
+import { motion } from "motion/react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -12,7 +13,6 @@ interface LoginHistoryTableProps {
   loading?: boolean;
 }
 
-/** Parse user agent to get browser/device summary. */
 function parseUserAgent(ua: string | null): string {
   if (!ua) return "Unknown";
   if (ua.includes("Firefox")) return "Firefox";
@@ -22,9 +22,15 @@ function parseUserAgent(ua: string | null): string {
   return "Unknown browser";
 }
 
-/**
- * Paginated login history table.
- */
+const rowVariants = {
+  hidden: { opacity: 0, y: 4 },
+  visible: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    transition: { delay: i * 0.03, duration: 0.15, ease: "easeOut" as const },
+  }),
+};
+
 export function LoginHistoryTable({
   history,
   onPageChange,
@@ -50,29 +56,36 @@ export function LoginHistoryTable({
 
   return (
     <div className="space-y-4">
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto -mx-2 sm:mx-0">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b text-left text-muted-foreground">
-              <th className="pb-2 font-medium">Date/Time</th>
-              <th className="pb-2 font-medium">IP Address</th>
-              <th className="pb-2 font-medium">Browser</th>
-              <th className="pb-2 font-medium">Status</th>
+              <th className="pb-2 px-2 sm:px-0 font-medium whitespace-nowrap">Date/Time</th>
+              <th className="pb-2 px-2 sm:px-0 font-medium whitespace-nowrap">IP Address</th>
+              <th className="pb-2 px-2 sm:px-0 font-medium whitespace-nowrap">Browser</th>
+              <th className="pb-2 px-2 sm:px-0 font-medium whitespace-nowrap">Status</th>
             </tr>
           </thead>
           <tbody>
-            {history.data.map((entry) => (
-              <tr key={entry.id} className="border-b last:border-0">
-                <td className="py-2.5">
+            {history.data.map((entry, index) => (
+              <motion.tr
+                key={entry.id}
+                variants={rowVariants}
+                initial="hidden"
+                animate="visible"
+                custom={index}
+                className="border-b last:border-0"
+              >
+                <td className="py-2.5 px-2 sm:px-0 whitespace-nowrap">
                   {formatDistanceToNow(new Date(entry.createdAt), {
                     addSuffix: true,
                   })}
                 </td>
-                <td className="py-2.5 font-mono text-xs">
+                <td className="py-2.5 px-2 sm:px-0 font-mono text-xs">
                   {entry.ipAddress ?? "Unknown"}
                 </td>
-                <td className="py-2.5">{parseUserAgent(entry.userAgent)}</td>
-                <td className="py-2.5">
+                <td className="py-2.5 px-2 sm:px-0">{parseUserAgent(entry.userAgent)}</td>
+                <td className="py-2.5 px-2 sm:px-0">
                   <Badge
                     variant={entry.success ? "default" : "destructive"}
                     className="text-xs"
@@ -85,15 +98,14 @@ export function LoginHistoryTable({
                     </p>
                   )}
                 </td>
-              </tr>
+              </motion.tr>
             ))}
           </tbody>
         </table>
       </div>
 
-      {/* Pagination */}
       {history.meta.totalPages > 1 && (
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-xs text-muted-foreground">
             Page {history.meta.page} of {history.meta.totalPages} ({history.meta.total} entries)
           </p>

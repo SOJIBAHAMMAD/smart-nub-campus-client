@@ -418,7 +418,7 @@ export function MyNetworkClient({
     tab === "all" && (pending.length > 0 || sent.length > 0);
 
   return (
-    <div className="grid gap-6 pb-20 md:grid-cols-[220px_1fr] md:pb-0 lg:grid-cols-[260px_1fr_280px]">
+    <div className="grid gap-6 pb-16 md:grid-cols-[220px_1fr] md:pb-0 lg:grid-cols-[260px_1fr_280px]">
       <aside className="hidden md:block">
         <div className="sticky top-2">
           <MyNetworkSidebar

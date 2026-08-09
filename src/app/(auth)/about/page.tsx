@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Hyperlink } from "@/components/ui/hyperlink";
+import { CrowdCanvas } from "@/components/home/crowd-canvas";
 import ROUTES from "@/constants/routes";
 
 const stats = [
@@ -94,6 +95,32 @@ export default function AboutPage() {
             can find resources, ask questions, form teams, and get AI-powered
             help — all in a space where every member is verified.
           </p>
+        </div>
+      </section>
+
+      {/* ── Campus Life ──────────────────────────────────────────── */}
+      <section className="relative overflow-hidden rounded-3xl border border-brand/10 bg-linear-to-b from-brand-light/50 to-background dark:border-primary/10 dark:from-primary/15 dark:to-background">
+        <div className="relative z-10 mx-auto max-w-3xl px-6 py-14 text-center sm:px-12 sm:py-16">
+          <p className="text-xs font-semibold uppercase tracking-widest text-brand dark:text-primary">
+            Campus life
+          </p>
+          <h2 className="mt-3 text-2xl sm:text-3xl font-bold text-foreground leading-snug">
+            Thousands of students,{" "}
+            <span className="text-brand dark:text-primary">
+              always on the move
+            </span>
+          </h2>
+          <p className="mx-auto mt-4 max-w-xl text-sm sm:text-base text-muted-foreground leading-relaxed">
+            Crowded corridors, packed lecture halls, late-night study groups.
+            NUB stays busy around the clock — Smart NUB Campus keeps every one
+            of those students connected.
+          </p>
+        </div>
+        <div className="relative h-[50vh] min-h-88 w-full">
+          <CrowdCanvas
+            src="/images/peeps/all-peeps.png"
+            className="h-full w-full dark:opacity-80 dark:saturate-[.75]"
+          />
         </div>
       </section>
 

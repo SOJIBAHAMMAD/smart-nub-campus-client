@@ -9,6 +9,8 @@ const ROUTES = {
   RESET_PASSWORD: "/auth/reset-password",
 
   // ── Core Platform ──────────────────────────────────────────────────────────
+  SEARCH: "/search",
+  EVENTS: "/events",
   RESOURCES: "/resources",
   TEAMS: "/teams",
   DISCUSSIONS: "/discussions",
@@ -19,6 +21,21 @@ const ROUTES = {
   NOTIFICATIONS: "/notifications",
   SETTINGS: "/settings",
   MY_PROFILE: "/profile",
+  LEADERBOARD: "/leaderboard",
+  BADGES: "/badges",
+  ACTIVITIES: "/activity",
+
+  // ── Alumni ─────────────────────────────────────────────────────────────────
+  ALUMNI: "/alumni",
+  JOBS: "/jobs",
+  NEW_JOB: "/jobs/new",
+  MENTORSHIP: "/mentorship",
+  MENTORSHIP_REQUESTS: "/mentorship/requests",
+  MENTORSHIP_RELATIONSHIPS: "/mentorship/relationships",
+  MENTORSHIP_RELATIONSHIP: (id: string) => `/mentorship/relationships/${id}`,
+  ALUMNI_MEMBER: (id: string) => `/alumni/${id}`,
+  JOB: (id: string) => `/jobs/${id}`,
+  JOB_EDIT: (id: string) => `/jobs/${id}/edit`,
 
   // ── Info Pages ─────────────────────────────────────────────────────────────
   ABOUT: "/about",
@@ -27,10 +44,13 @@ const ROUTES = {
 
   // ── Parameterized Routes ───────────────────────────────────────────────────
   RESOURCE: (id: string) => `/resources/${id}`,
+  COURSE: (id: string) => `/courses/${id}`,
   TEAM: (id: string) => `/teams/${id}`,
   DISCUSSION: (id: string) => `/discussions/${id}`,
   QUESTION: (id: string) => `/qa/${id}`,
+  EVENT: (id: string) => `/events/${id}`,
   USER_PROFILE: (id: string) => `/profile/${id}`,
+  USER_BADGES: (id: string) => `/badges/${id}`,
   CONVERSATION: (id: string) => `/messages/${id}`,
 } as const;
 

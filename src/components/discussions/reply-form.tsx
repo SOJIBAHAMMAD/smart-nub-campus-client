@@ -19,7 +19,7 @@ interface ReplyFormProps {
 export function ReplyForm({
   parentId,
   placeholder = "Add a reply...",
-  autoFocus,
+  autoFocus: _autoFocus,
   compact,
   initialContent,
   onSubmit,

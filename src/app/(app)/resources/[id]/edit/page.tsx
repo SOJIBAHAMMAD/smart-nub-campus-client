@@ -2,7 +2,11 @@ import Link from "next/link";
 import { FileQuestion } from "lucide-react";
 import { resourceService } from "@/services/resource.service";
 import { ResourceEditForm } from "@/components/resources/resource-edit-form";
-import type { Resource, ResourceCourse, ResourceCategory } from "@/types/resource.types";
+import type {
+  Resource,
+  ResourceCourse,
+  ResourceCategory,
+} from "@/types/resource.types";
 import {
   Breadcrumb,
   BreadcrumbList,
@@ -45,11 +49,19 @@ export default async function ResourceEditPage({
           <div className="mx-auto flex size-16 items-center justify-center rounded-2xl bg-muted">
             <FileQuestion className="size-8 text-muted-foreground/60" />
           </div>
-          <h1 className="mt-5 text-lg font-semibold text-foreground">Resource not found</h1>
+          <h1 className="mt-5 text-lg font-semibold text-foreground">
+            Resource not found
+          </h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            The resource you&apos;re trying to edit doesn&apos;t exist or you don&apos;t have permission.
+            The resource you&apos;re trying to edit doesn&apos;t exist or you
+            don&apos;t have permission.
           </p>
-          <Button variant="outline" className="mt-6" render={<Link href="/resources" />}>
+          <Button
+            variant="outline"
+            className="mt-6"
+            render={<Link href="/resources" />}
+            nativeButton={false}
+          >
             Back to Resources
           </Button>
         </div>
@@ -63,11 +75,19 @@ export default async function ResourceEditPage({
         <Breadcrumb>
           <BreadcrumbList>
             <BreadcrumbItem>
-              <BreadcrumbLink render={<Link href="/resources" />}>Resources</BreadcrumbLink>
+              <BreadcrumbLink render={<Link href="/resources" />}>
+                Resources
+              </BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
-              <BreadcrumbLink render={<Link href={`/resources/${resource.id}`}>{resource.title}</Link>} />
+              <BreadcrumbLink
+                render={
+                  <Link href={`/resources/${resource.id}`}>
+                    {resource.title}
+                  </Link>
+                }
+              />
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>

@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { qaService } from "@/services/qa.service";
 import { resourceService } from "@/services/resource.service";
 import { QuestionCreateForm } from "@/components/qa/question-create-form";
@@ -38,11 +39,13 @@ export default async function AskQuestionPage() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6">
-      <QuestionCreateForm
-        categories={categories}
-        tags={tags}
-        courses={courses}
-      />
+      <Suspense fallback={null}>
+        <QuestionCreateForm
+          categories={categories}
+          tags={tags}
+          courses={courses}
+        />
+      </Suspense>
     </div>
   );
 }

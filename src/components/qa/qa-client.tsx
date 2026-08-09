@@ -5,13 +5,13 @@ import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { Bookmark, MessageCircle, SearchX, Plus, LayoutGrid, List, Lightbulb, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { PageLayout } from "@/components/layout/page-layout";
 import { ModuleLayout } from "@/components/layout/module-layout";
 import {
   QASidebar,
   type QATab,
 } from "@/components/qa/qa-sidebar";
-import { QATrending, type TopContributor } from "@/components/qa/qa-trending";
+import { QATrending } from "@/components/qa/qa-trending";
+import type { TopContributor } from "@/components/contributors/top-contributors";
 import { QuestionCard } from "@/components/qa/question-card";
 import {
   QuestionFilters,
@@ -105,6 +105,7 @@ export function QAClient({
   const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10) || 1);
   const search = searchParams.get("search") ?? "";
   const categorySlug = searchParams.get("category");
+  const courseId = searchParams.get("courseId") ?? undefined;
   const sort = (searchParams.get("sort") as QASortOption) ?? "latest";
   const tab = (searchParams.get("tab") as QATab) ?? "all";
 
@@ -196,6 +197,7 @@ export function QAClient({
           limit: 12,
           search: search || undefined,
           category: categorySlug || undefined,
+          courseId,
           sort,
           answered: answered as "true" | "false" | null | undefined,
         });
@@ -214,15 +216,15 @@ export function QAClient({
     } finally {
       setLoading(false);
     }
-  }, [page, search, categorySlug, sort, tab]);
+  }, [page, search, categorySlug, courseId, sort, tab]);
 
   useEffect(() => {
     if (!hasFetched.current) {
       hasFetched.current = true;
-      return;
+      if (!courseId) return;
     }
     void loadQuestions();
-  }, [loadQuestions]);
+  }, [courseId, loadQuestions]);
 
   const handleVote = useCallback(
     async (questionId: string, type: "UP" | "DOWN") => {
@@ -306,7 +308,7 @@ export function QAClient({
     [],
   );
 
-  const activeFilterCount = [search, categorySlug].filter(Boolean).length;
+  const activeFilterCount = [search, categorySlug, courseId].filter(Boolean).length;
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {

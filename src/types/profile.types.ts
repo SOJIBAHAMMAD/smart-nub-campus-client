@@ -1,5 +1,7 @@
 // ── Profile ─────────────────────────────────────────────────────────────────
 
+import type { BadgeCategory, BadgeTier } from "@/types/gamification.types";
+
 export interface UserProfile {
   id: string;
   userId: string;
@@ -13,6 +15,13 @@ export interface UserProfile {
   phoneNumber: string | null;
   currentSemester: number | null;
   batchYear: number | null;
+  // ── Career profile (Alumni feature) ──────────────────────────────────────
+  currentEmployer: string | null;
+  jobTitle: string | null;
+  industry: string | null;
+  showInAlumniDirectory: boolean;
+  isMentor: boolean;
+  mentorshipTopics: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -31,8 +40,8 @@ export interface ProfileBadge {
     name: string;
     description: string;
     icon: string | null;
-    category: string;
-    tier: string;
+    category: BadgeCategory;
+    tier: BadgeTier;
     points: number;
   };
 }
@@ -84,4 +93,11 @@ export interface UpdateProfilePayload {
   currentSemester?: number;
   batchYear?: number;
   image?: string;
+  // ── Career profile (Alumni feature) ──────────────────────────────────────
+  currentEmployer?: string;
+  jobTitle?: string;
+  industry?: string;
+  showInAlumniDirectory?: boolean;
+  isMentor?: boolean;
+  mentorshipTopics?: string[];
 }

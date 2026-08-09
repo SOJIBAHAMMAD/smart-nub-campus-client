@@ -23,9 +23,10 @@ export function TopNavSkeleton() {
 
         {/* Nav links placeholder (desktop) */}
         <div className="hidden items-center gap-1 md:flex">
-          {Array.from({ length: 6 }).map((_, i) => (
+          {Array.from({ length: 5 }).map((_, i) => (
             <Skeleton key={i} className="h-8 w-16 rounded-md" />
           ))}
+          <Skeleton className="h-8 w-14 rounded-md" />
         </div>
 
         {/* Right side: search + actions */}

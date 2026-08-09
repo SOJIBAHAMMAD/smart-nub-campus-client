@@ -1,7 +1,32 @@
-import { formatDistanceToNow } from "date-fns";
-import { UserPlus, Upload, ShieldCheck, MessageSquare, HelpCircle } from "lucide-react";
-import { Card } from "@/components/ui/card";
+import { format, formatDistanceToNow } from "date-fns";
+import {
+  UserPlus,
+  Upload,
+  ShieldCheck,
+  MessageSquare,
+  HelpCircle,
+  ArrowRight,
+  Activity,
+} from "lucide-react";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardAction,
+  CardContent,
+} from "@/components/ui/card";
+import {
+  Empty,
+  EmptyMedia,
+  EmptyHeader,
+  EmptyTitle,
+  EmptyDescription,
+} from "@/components/ui/empty";
+import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
+import ROUTES from "@/constants/routes";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -12,7 +37,7 @@ export type ActivityAction =
   | "DISCUSSION_CREATED"
   | "QUESTION_ASKED";
 
-interface ActivityEntry {
+export interface ActivityEntry {
   id: string;
   userName: string;
   action: ActivityAction;
@@ -20,116 +45,184 @@ interface ActivityEntry {
   timestamp: string;
 }
 
+interface RecentActivityProps {
+  /** List of recent activity entries. */
+  activities: ActivityEntry[];
+  /** Destination for the "View all" link. */
+  viewAllHref?: string;
+  /** Additional CSS classes applied to the card container. */
+  className?: string;
+}
+
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-/** Map activity action to icon + color. */
-function getActivityMeta(action: ActivityAction) {
+interface ActivityMeta {
+  icon: React.ComponentType<{ className?: string }>;
+  /** Semantic chip classes — tinted, dark-mode aware. */
+  chip: string;
+  /** Humanized action label, e.g. "user signed up". */
+  label: string;
+}
+
+/** Map activity action to icon, chip color, and readable verb. */
+function getActivityMeta(action: ActivityAction): ActivityMeta {
   switch (action) {
     case "USER_SIGNED_UP":
-      return { icon: UserPlus, color: "text-blue-600 bg-blue-50" };
+      return {
+        icon: UserPlus,
+        chip: "bg-sky-500/10 text-sky-600 ring-sky-500/10 dark:text-sky-400",
+        label: "signed up",
+      };
     case "RESOURCE_UPLOADED":
-      return { icon: Upload, color: "text-green-600 bg-green-50" };
+      return {
+        icon: Upload,
+        chip: "bg-emerald-500/10 text-emerald-600 ring-emerald-500/10 dark:text-emerald-400",
+        label: "uploaded a resource",
+      };
     case "VERIFICATION_SUBMITTED":
-      return { icon: ShieldCheck, color: "text-amber-600 bg-amber-50" };
+      return {
+        icon: ShieldCheck,
+        chip: "bg-amber-500/10 text-amber-600 ring-amber-500/10 dark:text-amber-400",
+        label: "submitted a verification",
+      };
     case "DISCUSSION_CREATED":
-      return { icon: MessageSquare, color: "text-purple-600 bg-purple-50" };
+      return {
+        icon: MessageSquare,
+        chip: "bg-violet-500/10 text-violet-600 ring-violet-500/10 dark:text-violet-400",
+        label: "created a discussion",
+      };
     case "QUESTION_ASKED":
-      return { icon: HelpCircle, color: "text-indigo-600 bg-indigo-50" };
+      return {
+        icon: HelpCircle,
+        chip: "bg-indigo-500/10 text-indigo-600 ring-indigo-500/10 dark:text-indigo-400",
+        label: "asked a question",
+      };
     default:
-      return { icon: UserPlus, color: "text-gray-600 bg-gray-50" };
+      return {
+        icon: UserPlus,
+        chip: "bg-muted text-muted-foreground ring-border/60",
+        label: "took an action",
+      };
   }
+}
+
+/** Render the card header shared by the populated and empty states. */
+function ActivityCardHeader({ viewAllHref }: { viewAllHref: string }) {
+  return (
+    <CardHeader className="flex-row items-start justify-between gap-3">
+      <div className="space-y-1">
+        <CardTitle className="text-base">Recent Activity</CardTitle>
+        <CardDescription>Last 10 platform actions</CardDescription>
+      </div>
+      <CardAction>
+        <Link
+          href={viewAllHref}
+          className={cn(
+            buttonVariants({ variant: "ghost", size: "sm" }),
+            "text-muted-foreground hover:text-foreground",
+          )}
+        >
+          View all
+          <ArrowRight aria-hidden="true" className="size-3.5" />
+        </Link>
+      </CardAction>
+    </CardHeader>
+  );
 }
 
 // ── Component ────────────────────────────────────────────────────────────────
 
-interface RecentActivityProps {
-  /** List of recent activity entries. */
-  activities: ActivityEntry[];
-}
-
 /**
- * Table showing the last 10 platform actions.
+ * Timeline-style feed showing the last 10 platform actions.
  * Used in the admin dashboard overview.
  */
-export function RecentActivity({ activities }: RecentActivityProps) {
-  if (activities.length === 0) {
-    return (
-      <Card className="p-6">
-        <h3 className="text-base font-semibold mb-4">Recent Activity</h3>
-        <p className="text-sm text-muted-foreground text-center py-8">
-          No recent activity to display.
-        </p>
-      </Card>
-    );
-  }
-
+export function RecentActivity({
+  activities,
+  viewAllHref = ROUTES.ACTIVITIES,
+  className,
+}: RecentActivityProps) {
   return (
-    <Card>
-      <div className="p-6 pb-0">
-        <h3 className="text-base font-semibold">Recent Activity</h3>
-        <p className="text-sm text-muted-foreground">
-          Last 10 platform actions
-        </p>
-      </div>
+    <Card className={cn("w-full", className)}>
+      <ActivityCardHeader viewAllHref={viewAllHref} />
 
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b text-left text-sm text-muted-foreground">
-              <th className="px-6 py-3 font-medium">User</th>
-              <th className="px-6 py-3 font-medium">Action</th>
-              <th className="px-6 py-3 font-medium">Details</th>
-              <th className="px-6 py-3 font-medium">Time</th>
-            </tr>
-          </thead>
-          <tbody>
-            {activities.map((entry) => {
+      <CardContent className="pt-1">
+        {activities.length === 0 ? (
+          <Empty className="py-10">
+            <EmptyMedia variant="icon">
+              <Activity className="text-muted-foreground" />
+            </EmptyMedia>
+            <EmptyHeader>
+              <EmptyTitle>No recent activity</EmptyTitle>
+              <EmptyDescription>
+                Platform actions will show up here as students sign up, upload
+                resources, and contribute.
+              </EmptyDescription>
+            </EmptyHeader>
+          </Empty>
+        ) : (
+          <ol aria-label="Recent platform activity" className="relative">
+            {activities.map((entry, index) => {
               const meta = getActivityMeta(entry.action);
               const Icon = meta.icon;
+              const isLast = index === activities.length - 1;
+              const absoluteTime = format(
+                new Date(entry.timestamp),
+                "MMM d, yyyy, h:mm a",
+              );
 
               return (
-                <tr
+                <li
                   key={entry.id}
-                  className="border-b last:border-0 hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                  className={cn(
+                    "relative flex gap-3 rounded-lg px-2 py-3 transition-colors hover:bg-muted/50",
+                  )}
                 >
-                  <td className="px-6 py-3">
-                    <span className="text-sm font-medium">
-                      {entry.userName}
-                    </span>
-                  </td>
-                  <td className="px-6 py-3">
-                    <div className="flex items-center gap-2">
-                      <div
-                        className={cn(
-                          "flex size-7 items-center justify-center rounded-full",
-                          meta.color,
-                        )}
+                  {/* Timeline spine connecting nodes */}
+                  {!isLast && (
+                    <span
+                      aria-hidden="true"
+                      className="absolute bottom-[-8px] left-[18px] top-10 w-px bg-border"
+                    />
+                  )}
+
+                  {/* Icon / avatar chip */}
+                  <span
+                    aria-hidden="true"
+                    className={cn(
+                      "relative z-10 flex size-9 shrink-0 items-center justify-center rounded-full bg-card ring-1 ring-inset",
+                      meta.chip,
+                    )}
+                  >
+                    <Icon className="size-4.5" />
+                  </span>
+
+                  {/* Content */}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-baseline justify-between gap-2">
+                      <p className="truncate text-sm font-medium">{entry.userName}</p>
+                      <time
+                        dateTime={entry.timestamp}
+                        title={absoluteTime}
+                        className="shrink-0 text-xs text-muted-foreground"
                       >
-                        <Icon className="size-3.5" />
-                      </div>
-                      <span className="text-sm capitalize">
-                        {entry.action.replace(/_/g, " ").toLowerCase()}
-                      </span>
+                        {formatDistanceToNow(new Date(entry.timestamp), {
+                          addSuffix: true,
+                        })}
+                      </time>
                     </div>
-                  </td>
-                  <td className="px-6 py-3">
-                    <span className="text-sm text-muted-foreground truncate max-w-[200px] block">
+                    <p className="mt-0.5 truncate text-sm capitalize text-foreground">
+                      {meta.label}
+                    </p>
+                    <p className="mt-0.5 truncate text-xs text-muted-foreground">
                       {entry.details}
-                    </span>
-                  </td>
-                  <td className="px-6 py-3">
-                    <span className="text-sm text-muted-foreground">
-                      {formatDistanceToNow(new Date(entry.timestamp), {
-                        addSuffix: true,
-                      })}
-                    </span>
-                  </td>
-                </tr>
+                    </p>
+                  </div>
+                </li>
               );
             })}
-          </tbody>
-        </table>
-      </div>
+          </ol>
+        )}
+      </CardContent>
     </Card>
   );
 }

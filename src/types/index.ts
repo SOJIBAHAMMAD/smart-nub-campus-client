@@ -6,6 +6,20 @@ export type { PaginationMeta } from "./resource.types";
 export type { OnboardingStateResponse } from "./onboarding.types";
 export type { CreateAccountResponse } from "./account.types";
 
+// ── Alumni ───────────────────────────────────────────────────────────────────
+export type {
+  GraduationInfo,
+  TransitionStatusResponse,
+  TransitionResponse,
+  EmploymentRecord,
+  DirectoryMember,
+  DirectoryMemberDetail,
+  DirectoryFacet,
+  DirectoryStats,
+  DirectoryListParams,
+  DirectoryListResponse,
+} from "./alumni.types";
+
 export type {
   VerificationRequestData,
   CreateVerificationRequestPayload,
@@ -16,6 +30,58 @@ export type {
   VerificationRequest,
   VerificationDetail,
 } from "./verification.types";
+
+// ── Jobs ─────────────────────────────────────────────────────────────────────
+export type {
+  EmploymentType,
+  JobApplicationFieldKey,
+  JobApplicationFormField,
+  JobApplicationFormQuestion,
+  JobApplicationFormConfig,
+  JobApplicationResponses,
+  JobPoster,
+  Job,
+  JobDetail,
+  JobApplicant,
+  JobApplication,
+  ListJobsParams,
+  JobListResponse,
+  JobApplicationsResponse,
+  CreateJobPayload,
+  UpdateJobPayload,
+  ApplyJobPayload,
+  ImportJobPayload,
+  ParsedJobDraft,
+} from "./jobs.types";
+
+// ── Mentorship ───────────────────────────────────────────────────────────────
+export type {
+  Mentor,
+  MentorshipRequestUser,
+  MentorshipRequestParty,
+  MentorshipRequest,
+  MentorshipParty,
+  MentorshipGoal,
+  MentorshipSession,
+  MentorshipMessage,
+  MentorshipMessageSender,
+  Mentorship,
+  MentorshipMessageList,
+  ListMentorsParams,
+  MentorListResponse,
+  ListMentorshipRequestsParams,
+  MentorshipRequestListResponse,
+  ListMentorshipsParams,
+  MentorshipListResponse,
+  CreateMentorshipRequestPayload,
+  CreateMentorshipGoalPayload,
+  UpdateMentorshipGoalPayload,
+  CreateMentorshipSessionPayload,
+  UpdateMentorshipSessionPayload,
+  SendMentorshipMessagePayload,
+  CompleteMentorshipPayload,
+  RateMentorPayload,
+} from "./mentorship.types";
 
 // ── Resources ────────────────────────────────────────────────────────────────
 export type {

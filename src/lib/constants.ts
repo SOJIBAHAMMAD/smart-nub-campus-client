@@ -28,8 +28,8 @@ export type Department = (typeof DEPARTMENTS)[number];
 export const DEPARTMENT_LABELS: Record<Department, string> = {
   CSE: "Computer Science & Engineering",
   ECSE: "Electronics & Computer Systems Engineering",
-  EEE: "Electrical & Electronics Engineering",
-  EEEE: "Electrical & Electronic Engineering",
+  EEE: "Electrical & Electronic Engineering",
+  EEEE: "Electrical & Electronic Engineering (Evening)",
   BBA: "Bachelor of Business Administration",
   MBA: "Master of Business Administration",
   ENGLISH: "English",
@@ -43,6 +43,23 @@ export const DEPARTMENT_LABELS: Record<Department, string> = {
   CIVIL: "Civil Engineering",
   BTX: "Biotechnology",
   EBTX: "Electronics & Biotechnology",
+};
+
+/** Human-readable labels for job source enum values. */
+export const JOB_SOURCE_LABELS: Record<string, string> = {
+  PLATFORM: "Smart NUB Campus",
+  LINKEDIN: "LinkedIn",
+  FACEBOOK: "Facebook",
+  BDJOBS: "BdJobs",
+  INDEED: "Indeed",
+  GLASSDOOR: "Glassdoor",
+  GOOGLE_JOBS: "Google Jobs",
+  BIKROY: "Bikroy",
+  CHAKRI: "Chakri",
+  JOBSBD: "JobsBD",
+  COMPANY_WEBSITE: "Company website",
+  NEWSPAPER: "Newspaper",
+  OTHER: "Other",
 };
 
 /** Total semesters in an undergraduate program (used for the semester dropdown). */

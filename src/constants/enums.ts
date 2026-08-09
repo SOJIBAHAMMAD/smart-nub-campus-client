@@ -26,9 +26,72 @@ export type VerificationStatus =
 export const UserRole = {
   STUDENT: "STUDENT",
   ADMIN: "ADMIN",
+  ALUMNI: "ALUMNI",
 } as const;
 
 export type UserRole = (typeof UserRole)[keyof typeof UserRole];
+
+export const AcademicStatus = {
+  ENROLLED: "ENROLLED",
+  GRADUATED: "GRADUATED",
+} as const;
+
+export type AcademicStatus =
+  (typeof AcademicStatus)[keyof typeof AcademicStatus];
+
+export const VerificationRequestType = {
+  STUDENT: "STUDENT",
+  ALUMNI: "ALUMNI",
+} as const;
+
+export type VerificationRequestType =
+  (typeof VerificationRequestType)[keyof typeof VerificationRequestType];
+
+// ── Alumni feature enums ─────────────────────────────────────────────────────
+
+export const JobType = {
+  FULL_TIME: "FULL_TIME",
+  PART_TIME: "PART_TIME",
+  CONTRACT: "CONTRACT",
+  INTERNSHIP: "INTERNSHIP",
+  REMOTE: "REMOTE",
+} as const;
+
+export type JobType = (typeof JobType)[keyof typeof JobType];
+
+export const JobPostStatus = {
+  OPEN: "OPEN",
+  FILLED: "FILLED",
+  CLOSED: "CLOSED",
+} as const;
+
+export type JobPostStatus = (typeof JobPostStatus)[keyof typeof JobPostStatus];
+
+export const JobSource = {
+  PLATFORM: "PLATFORM",
+  LINKEDIN: "LINKEDIN",
+  FACEBOOK: "FACEBOOK",
+  BDJOBS: "BDJOBS",
+  INDEED: "INDEED",
+  GLASSDOOR: "GLASSDOOR",
+  GOOGLE_JOBS: "GOOGLE_JOBS",
+  BIKROY: "BIKROY",
+  CHAKRI: "CHAKRI",
+  JOBSBD: "JOBSBD",
+  COMPANY_WEBSITE: "COMPANY_WEBSITE",
+  NEWSPAPER: "NEWSPAPER",
+  OTHER: "OTHER",
+} as const;
+
+export type JobSource = (typeof JobSource)[keyof typeof JobSource];
+
+export const EventAudience = {
+  EVERYONE: "EVERYONE",
+  STUDENTS_ONLY: "STUDENTS_ONLY",
+  ALUMNI_ONLY: "ALUMNI_ONLY",
+} as const;
+
+export type EventAudience = (typeof EventAudience)[keyof typeof EventAudience];
 
 export const UserStatus = {
   ACTIVE: "ACTIVE",
@@ -187,10 +250,73 @@ export const NotificationType = {
   EVENT_REMINDER: "EVENT_REMINDER",
   BADGE_UNLOCKED: "BADGE_UNLOCKED",
   SYSTEM: "SYSTEM",
+  GRADUATION_MARKED: "GRADUATION_MARKED",
+  ALUMNI_TRANSITION_COMPLETE: "ALUMNI_TRANSITION_COMPLETE",
+  JOB_APPLICATION_RECEIVED: "JOB_APPLICATION_RECEIVED",
+  JOB_APPLICATION_UPDATED: "JOB_APPLICATION_UPDATED",
+  MENTORSHIP_REQUEST_RECEIVED: "MENTORSHIP_REQUEST_RECEIVED",
+  MENTORSHIP_REQUEST_UPDATED: "MENTORSHIP_REQUEST_UPDATED",
+  MENTORSHIP_ACCEPTED: "MENTORSHIP_ACCEPTED",
+  MENTORSHIP_SESSION_SCHEDULED: "MENTORSHIP_SESSION_SCHEDULED",
+  MENTORSHIP_SESSION_UPDATED: "MENTORSHIP_SESSION_UPDATED",
+  MENTORSHIP_GOAL_UPDATED: "MENTORSHIP_GOAL_UPDATED",
+  MENTORSHIP_MESSAGE: "MENTORSHIP_MESSAGE",
+  MENTORSHIP_COMPLETED: "MENTORSHIP_COMPLETED",
+  MENTORSHIP_ENDED: "MENTORSHIP_ENDED",
+  MENTORSHIP_REMINDER: "MENTORSHIP_REMINDER",
 } as const;
 
 export type NotificationType =
   (typeof NotificationType)[keyof typeof NotificationType];
+
+// ── Mentorship enums ─────────────────────────────────────────────────────────
+
+export const MentorshipCadence = {
+  WEEKLY: "WEEKLY",
+  BIWEEKLY: "BIWEEKLY",
+  MONTHLY: "MONTHLY",
+  FLEXIBLE: "FLEXIBLE",
+} as const;
+
+export type MentorshipCadence =
+  (typeof MentorshipCadence)[keyof typeof MentorshipCadence];
+
+export const MentorshipStatus = {
+  ACTIVE: "ACTIVE",
+  COMPLETED: "COMPLETED",
+  ENDED: "ENDED",
+} as const;
+
+export type MentorshipStatus =
+  (typeof MentorshipStatus)[keyof typeof MentorshipStatus];
+
+export const MentorshipGoalStatus = {
+  ACTIVE: "ACTIVE",
+  COMPLETED: "COMPLETED",
+  CANCELLED: "CANCELLED",
+} as const;
+
+export type MentorshipGoalStatus =
+  (typeof MentorshipGoalStatus)[keyof typeof MentorshipGoalStatus];
+
+export const MentorshipSessionStatus = {
+  SCHEDULED: "SCHEDULED",
+  COMPLETED: "COMPLETED",
+  CANCELLED: "CANCELLED",
+} as const;
+
+export type MentorshipSessionStatus =
+  (typeof MentorshipSessionStatus)[keyof typeof MentorshipSessionStatus];
+
+export const MeetingPreference = {
+  ONLINE: "ONLINE",
+  IN_PERSON: "IN_PERSON",
+  HYBRID: "HYBRID",
+  FLEXIBLE: "FLEXIBLE",
+} as const;
+
+export type MeetingPreference =
+  (typeof MeetingPreference)[keyof typeof MeetingPreference];
 
 // ── Discussion enums ─────────────────────────────────────────────────────────
 

@@ -1,13 +1,33 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { format } from "date-fns";
 import { adminService } from "@/services/admin.service";
 import { UserDetailModal } from "@/components/admin/user-detail-modal";
 import { BulkActions } from "@/components/admin/bulk-actions";
+import { ConfirmDialog } from "@/components/admin/confirm-dialog";
+import { UserRoleBadge } from "@/components/admin/user/user-role-badge";
+import { UserStatusBadge } from "@/components/admin/user/user-status-badge";
+import {
+  UserStatsCards,
+  deriveUserStats,
+} from "@/components/admin/user/user-stats-cards";
+import { UserPagination } from "@/components/admin/user/user-pagination";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Avatar } from "@/components/ui/avatar";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import {
   Select,
   SelectContent,
@@ -15,23 +35,43 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Avatar } from "@/components/ui/avatar";
-import { Search, ChevronLeft, ChevronRight, Eye, Ban, Play } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
+import {
+  Ban,
+  Eye,
+  MoreHorizontal,
+  Play,
+  Search,
+  Trash2,
+  Users,
+  XCircle,
+} from "lucide-react";
 import { UserStatus } from "@/constants/enums";
 import type {
   AdminUserDetail,
   ListAdminUsersResponse,
 } from "@/types/admin.types";
 import { toast } from "sonner";
-import { Checkbox } from "@/components/ui/checkbox";
-import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 
 // ── Page Component ───────────────────────────────────────────────────────────
 
 /**
  * User management page for admins.
- * Shows searchable, sortable, filterable user table with detail modal.
+ * Shows a searchable, filterable user table with bulk actions and a detail modal.
  */
 export default function UsersPage() {
   const [data, setData] = useState<ListAdminUsersResponse | null>(null);
@@ -45,7 +85,10 @@ export default function UsersPage() {
   // Modal state
   const [viewingUser, setViewingUser] = useState<AdminUserDetail | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [bulkAction, setBulkAction] = useState<"suspend" | "ban" | "activate" | null>(null);
+  const [bulkAction, setBulkAction] = useState<
+    "suspend" | "ban" | "activate" | null
+  >(null);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   const limit = 10;
 
@@ -59,9 +102,7 @@ export default function UsersPage() {
         search: search || undefined,
         role: roleFilter === "all" ? undefined : roleFilter,
         status:
-          statusFilter === "all"
-            ? undefined
-            : (statusFilter as UserStatus),
+          statusFilter === "all" ? undefined : (statusFilter as UserStatus),
       });
       setData(result);
     } catch {
@@ -89,14 +130,29 @@ export default function UsersPage() {
     }
   };
 
-  /** Open user detail modal. */
+  /** Open user detail modal. Opens first so the modal can show a loading state. */
   const openDetail = async (id: string) => {
+    setViewingUser(null);
+    setIsModalOpen(true);
     try {
       const detail = await adminService.getUserById(id);
       setViewingUser(detail);
-      setIsModalOpen(true);
     } catch {
+      setIsModalOpen(false);
       toast.error("Failed to load user details");
+    }
+  };
+
+  /** Delete a single user (soft delete via API). */
+  const handleDelete = async (id: string) => {
+    try {
+      await adminService.deleteUser(id);
+      toast.success("User deleted");
+      setDeleteTarget(null);
+      setSelectedIds((prev) => prev.filter((i) => i !== id));
+      fetchUsers();
+    } catch {
+      toast.error("Failed to delete user");
     }
   };
 
@@ -115,63 +171,65 @@ export default function UsersPage() {
     setSelectedIds(allSelected ? [] : allIds);
   };
 
-  /** Get status badge. */
-  const getStatusBadge = (status: UserStatus) => {
-    switch (status) {
-      case UserStatus.ACTIVE:
-        return (
-          <Badge variant="outline" className="border-green-300 text-green-700">
-            Active
-          </Badge>
-        );
-      case UserStatus.SUSPENDED:
-        return (
-          <Badge variant="outline" className="border-amber-300 text-amber-700">
-            Suspended
-          </Badge>
-        );
-      case UserStatus.BANNED:
-        return (
-          <Badge variant="outline" className="border-red-300 text-red-700">
-            Banned
-          </Badge>
-        );
-      default:
-        return null;
-    }
+  const hasActiveFilters =
+    search !== "" || roleFilter !== "all" || statusFilter !== "all";
+
+  /** Reset all filters back to defaults. */
+  const clearFilters = () => {
+    setSearch("");
+    setRoleFilter("all");
+    setStatusFilter("all");
+    setPage(1);
+    setSelectedIds([]);
   };
 
-  /** Get role badge. */
-  const getRoleBadge = (role: string) => {
-    if (role === "ADMIN") {
-      return (
-        <Badge variant="secondary" className="bg-indigo-100 text-indigo-700">
-          Admin
-        </Badge>
-      );
-    }
-    return (
-      <Badge variant="secondary" className="bg-gray-100 text-gray-700">
-        Student
-      </Badge>
-    );
-  };
+  /** Stats derived from the response meta + the current page. */
+  const stats = useMemo(() => {
+    const pageStats = deriveUserStats(data?.data);
+    return {
+      total: data?.meta.total ?? 0,
+      ...pageStats,
+    };
+  }, [data]);
 
   const totalPages = data?.meta.totalPages ?? 1;
+  const allPageSelected =
+    (data?.data.length ?? 0) > 0 &&
+    (data?.data.every((u) => selectedIds.includes(u.id)) ?? false);
 
   return (
-    <div className="p-6 space-y-6">
-      {/* ── Page Header ────────────────────────────────────────────────── */}
-      <div>
-        <h1 className="text-2xl font-bold">Users</h1>
-        <p className="text-sm text-muted-foreground">
-          Manage platform users and their access
-        </p>
+    <div className="p-4 space-y-4 sm:p-6 sm:space-y-6">
+      {/* ── Page Header ─────────────────────────────────────────────────── */}
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-xl font-bold sm:text-2xl">Users</h1>
+          <p className="text-xs text-muted-foreground sm:text-sm">
+            Manage platform users, roles, and account access
+          </p>
+        </div>
+        {isLoading ? (
+          <Skeleton className="h-7 w-32 rounded-full" />
+        ) : data ? (
+          <Badge variant="secondary" className="gap-1.5 py-1.5">
+            <Users className="size-3.5" />
+            {data.meta.total.toLocaleString()} total
+          </Badge>
+        ) : null}
       </div>
 
-      {/* ── Filters ────────────────────────────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1 max-w-sm">
+      {/* ── Stats Strip ─────────────────────────────────────────────────── */}
+      {data && (
+        <UserStatsCards
+          total={stats.total}
+          active={stats.active}
+          banned={stats.banned}
+          pending={stats.pending}
+        />
+      )}
+
+      {/* ── Filter Bar ──────────────────────────────────────────────────── */}
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+        <div className="relative w-full lg:max-w-sm">
           <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             type="search"
@@ -182,44 +240,58 @@ export default function UsersPage() {
               setPage(1);
             }}
             className="pl-8"
+            aria-label="Search users by name or email"
           />
         </div>
-        <Select
-          value={roleFilter}
-          onValueChange={(val) => {
-            setRoleFilter(val ?? "all");
-            setPage(1);
-          }}
-        >
-          <SelectTrigger className="w-[150px]">
-            <SelectValue placeholder="All roles" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Roles</SelectItem>
-            <SelectItem value="STUDENT">Student</SelectItem>
-            <SelectItem value="ADMIN">Admin</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select
-          value={statusFilter}
-          onValueChange={(val) => {
-            setStatusFilter(val ?? "all");
-            setPage(1);
-          }}
-        >
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="All statuses" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Statuses</SelectItem>
-            <SelectItem value="ACTIVE">Active</SelectItem>
-            <SelectItem value="SUSPENDED">Suspended</SelectItem>
-            <SelectItem value="BANNED">Banned</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex flex-wrap items-center gap-3">
+          <Select
+            value={roleFilter}
+            onValueChange={(val) => {
+              setRoleFilter(val ?? "all");
+              setPage(1);
+            }}
+          >
+            <SelectTrigger className="w-37.5 shrink-0">
+              <SelectValue placeholder="All roles" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Roles</SelectItem>
+              <SelectItem value="STUDENT">Student</SelectItem>
+              <SelectItem value="ADMIN">Admin</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select
+            value={statusFilter}
+            onValueChange={(val) => {
+              setStatusFilter(val ?? "all");
+              setPage(1);
+            }}
+          >
+            <SelectTrigger className="w-42.5 shrink-0">
+              <SelectValue placeholder="All statuses" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Statuses</SelectItem>
+              <SelectItem value="ACTIVE">Active</SelectItem>
+              <SelectItem value="SUSPENDED">Suspended</SelectItem>
+              <SelectItem value="BANNED">Banned</SelectItem>
+            </SelectContent>
+          </Select>
+          {hasActiveFilters && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={clearFilters}
+              className="h-9 text-muted-foreground"
+            >
+              <XCircle className="size-3.5 mr-1" />
+              Clear
+            </Button>
+          )}
+        </div>
       </div>
 
-      {/* ── Bulk Actions ──────────────────────────────────────────────── */}
+      {/* ── Bulk Actions ────────────────────────────────────────────────── */}
       <BulkActions
         selectedCount={selectedIds.length}
         onClearSelection={() => setSelectedIds([])}
@@ -245,130 +317,252 @@ export default function UsersPage() {
         ]}
       />
 
-      {/* ── Table ─────────────────────────────────────────────────────── */}
-      <div className="rounded-xl border bg-white shadow-sm overflow-hidden dark:bg-gray-800">
-        {isLoading ? (
-          <div className="p-6 space-y-3">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Skeleton key={i} className="h-12 w-full" />
-            ))}
-          </div>
-        ) : !data || data.data.length === 0 ? (
-          <div className="p-12 text-center">
-            <p className="text-muted-foreground">No users found.</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b bg-gray-50 dark:bg-gray-700/50 text-left text-sm text-muted-foreground">
-                  <th className="px-4 py-3">
+      {/* ── Table ───────────────────────────────────────────────────────── */}
+      <div className="overflow-hidden rounded-xl border bg-card shadow-xs">
+        <div className="w-full overflow-x-auto">
+          <div className="min-w-180">
+            <Table>
+              <TableCaption className="sr-only">
+                Admin user directory
+              </TableCaption>
+              <TableHeader>
+                <TableRow className="bg-muted/50 hover:bg-muted/50">
+                  <TableHead className="w-12">
                     <Checkbox
-                      checked={
-                        data.data.length > 0 &&
-                        data.data.every((u) => selectedIds.includes(u.id))
-                      }
+                      aria-label="Select all users on this page"
+                      checked={allPageSelected}
                       onCheckedChange={toggleSelectAll}
                     />
-                  </th>
-                  <th className="px-4 py-3 font-medium">User</th>
-                  <th className="px-4 py-3 font-medium">Department</th>
-                  <th className="px-4 py-3 font-medium">Role</th>
-                  <th className="px-4 py-3 font-medium">Status</th>
-                  <th className="px-4 py-3 font-medium">Joined</th>
-                  <th className="px-4 py-3 font-medium">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.data.map((user) => (
-                  <tr
-                    key={user.id}
-                    className="border-b last:border-0 hover:bg-gray-50 dark:hover:bg-gray-700/50"
-                  >
-                    <td className="px-4 py-3">
-                      <Checkbox
-                        checked={selectedIds.includes(user.id)}
-                        onCheckedChange={() => toggleSelection(user.id)}
-                      />
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-3">
-                        <Avatar
-                          id={user.id}
-                          name={user.name}
-                          className="size-8"
-                        />
-                        <div>
-                          <p className="text-sm font-medium">{user.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {user.email}
-                          </p>
+                  </TableHead>
+                  <TableHead>User</TableHead>
+                  <TableHead>Department</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Joined</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+
+              {isLoading ? (
+                <TableBody>
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <TableRow
+                      key={i}
+                      className="cursor-default hover:bg-transparent"
+                    >
+                      <TableCell>
+                        <Skeleton className="size-4 rounded-md" />
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <Skeleton className="size-9 rounded-full" />
+                          <div className="space-y-2">
+                            <Skeleton className="h-3.5 w-32" />
+                            <Skeleton className="h-3 w-44" />
+                          </div>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="text-sm">
-                        {user.student?.department ?? user.admin?.department ?? "N/A"}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">{getRoleBadge(user.role)}</td>
-                    <td className="px-4 py-3">{getStatusBadge(user.status)}</td>
-                    <td className="px-4 py-3">
-                      <span className="text-sm text-muted-foreground">
-                        {format(new Date(user.createdAt), "MMM d, yyyy")}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <Button
-                        variant="ghost"
-                        size="sm"
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-3.5 w-20" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-5 w-16 rounded-full" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-5 w-20 rounded-full" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-3.5 w-20" />
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex justify-end gap-1">
+                          <Skeleton className="size-8 rounded-md" />
+                          <Skeleton className="size-8 rounded-md" />
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              ) : !data || data.data.length === 0 ? (
+                <TableBody>
+                  <TableRow className="cursor-default hover:bg-transparent">
+                    <TableCell colSpan={7} className="p-0">
+                      <Empty className="py-12">
+                        <EmptyMedia variant="icon">
+                          <Users className="size-6" />
+                        </EmptyMedia>
+                        <EmptyHeader>
+                          <EmptyTitle>
+                            {hasActiveFilters
+                              ? "No users match your filters"
+                              : "No users found"}
+                          </EmptyTitle>
+                          <EmptyDescription>
+                            {hasActiveFilters
+                              ? "Try adjusting your search or filters to find what you are looking for."
+                              : "Users will appear here once they register."}
+                          </EmptyDescription>
+                        </EmptyHeader>
+                        <EmptyContent>
+                          {hasActiveFilters && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={clearFilters}
+                            >
+                              <XCircle className="size-3.5 mr-1" />
+                              Clear filters
+                            </Button>
+                          )}
+                        </EmptyContent>
+                      </Empty>
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              ) : (
+                <TableBody>
+                  {data.data.map((user) => {
+                    const department =
+                      user.student?.department ??
+                      user.admin?.department ??
+                      "N/A";
+                    return (
+                      <TableRow
+                        key={user.id}
+                        className="cursor-pointer"
                         onClick={() => openDetail(user.id)}
-                        className="h-8"
                       >
-                        <Eye className="size-4 mr-1" />
-                        View
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                        <TableCell onClick={(e) => e.stopPropagation()}>
+                          <Checkbox
+                            aria-label={`Select ${user.name}`}
+                            checked={selectedIds.includes(user.id)}
+                            onCheckedChange={() => toggleSelection(user.id)}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            <Avatar
+                              id={user.id}
+                              name={user.name}
+                              className="size-9 text-xs"
+                            />
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-medium">
+                                {user.name}
+                              </p>
+                              <p className="truncate text-xs text-muted-foreground">
+                                {user.email}
+                              </p>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <span className="text-sm text-muted-foreground">
+                            {department}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <UserRoleBadge role={user.role} />
+                        </TableCell>
+                        <TableCell>
+                          <UserStatusBadge
+                            status={user.status}
+                            isDeleted={user.isDeleted}
+                            hasCompletedOnboarding={user.hasCompletedOnboarding}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <span className="text-sm text-muted-foreground whitespace-nowrap">
+                            {format(new Date(user.createdAt), "MMM d, yyyy")}
+                          </span>
+                        </TableCell>
+                        <TableCell onClick={(e) => e.stopPropagation()}>
+                          <div className="flex items-center justify-end gap-0.5">
+                            <Button
+                              variant="ghost"
+                              size="icon-sm"
+                              className="size-8"
+                              onClick={() => openDetail(user.id)}
+                              aria-label={`View ${user.name}`}
+                            >
+                              <Eye className="size-4" />
+                            </Button>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger
+                                render={
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="size-8"
+                                  />
+                                }
+                                aria-label={`Actions for ${user.name}`}
+                              >
+                                <MoreHorizontal className="size-4" />
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem
+                                  onClick={() => openDetail(user.id)}
+                                >
+                                  <Eye className="size-3.5 mr-2" />
+                                  View Details
+                                </DropdownMenuItem>
+                                {!user.isDeleted &&
+                                  (user.status === UserStatus.ACTIVE ? (
+                                    <DropdownMenuItem
+                                      onClick={() =>
+                                        handleStatusChange(user.id, "BANNED")
+                                      }
+                                    >
+                                      <Ban className="size-3.5 mr-2" />
+                                      Ban User
+                                    </DropdownMenuItem>
+                                  ) : (
+                                    <DropdownMenuItem
+                                      onClick={() =>
+                                        handleStatusChange(user.id, "ACTIVE")
+                                      }
+                                    >
+                                      <Play className="size-3.5 mr-2" />
+                                      Activate User
+                                    </DropdownMenuItem>
+                                  ))}
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  variant="destructive"
+                                  onClick={() => setDeleteTarget(user.id)}
+                                >
+                                  <Trash2 className="size-3.5 mr-2" />
+                                  Delete User
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              )}
+            </Table>
           </div>
-        )}
+        </div>
 
         {/* ── Pagination ─────────────────────────────────────────────────── */}
-        {data && totalPages > 1 && (
-          <div className="flex items-center justify-between border-t px-4 py-3">
-            <p className="text-sm text-muted-foreground">
-              Showing {(page - 1) * limit + 1}–
-              {Math.min(page * limit, data.meta.total)} of {data.meta.total}
-            </p>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page === 1}
-              >
-                <ChevronLeft className="size-4" />
-              </Button>
-              <span className="text-sm">
-                Page {page} of {totalPages}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={page === totalPages}
-              >
-                <ChevronRight className="size-4" />
-              </Button>
-            </div>
+        {data && data.meta.total > 0 && (
+          <div className="border-t px-4 py-3">
+            <UserPagination
+              page={page}
+              totalPages={totalPages}
+              total={data.meta.total}
+              limit={limit}
+              onPageChange={setPage}
+            />
           </div>
         )}
       </div>
 
-      {/* ── User Detail Modal ──────────────────────────────────────────── */}
+      {/* ── User Detail Modal ────────────────────────────────────────────── */}
       <UserDetailModal
         user={viewingUser}
         open={isModalOpen}
@@ -379,16 +573,49 @@ export default function UsersPage() {
         onStatusChange={handleStatusChange}
       />
 
+      {/* ── Single Delete Confirm ────────────────────────────────────────── */}
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
+        title="Delete User"
+        description="Are you sure you want to delete this user? This action cannot be undone."
+        confirmLabel="Delete"
+        onConfirm={() => {
+          if (deleteTarget) handleDelete(deleteTarget);
+        }}
+      />
+
+      {/* ── Bulk Action Confirm ──────────────────────────────────────────── */}
       <ConfirmDialog
         open={bulkAction !== null}
-        onOpenChange={(open) => { if (!open) setBulkAction(null); }}
-        title={bulkAction === "suspend" ? "Suspend Users" : bulkAction === "ban" ? "Ban Users" : "Activate Users"}
+        onOpenChange={(open) => {
+          if (!open) setBulkAction(null);
+        }}
+        title={
+          bulkAction === "suspend"
+            ? "Suspend Users"
+            : bulkAction === "ban"
+              ? "Ban Users"
+              : "Activate Users"
+        }
         description={`Are you sure you want to ${bulkAction} ${selectedIds.length} selected user${selectedIds.length === 1 ? "" : "s"}?`}
-        confirmLabel={bulkAction === "activate" ? "Activate" : bulkAction === "ban" ? "Ban" : "Suspend"}
+        confirmLabel={
+          bulkAction === "activate"
+            ? "Activate"
+            : bulkAction === "ban"
+              ? "Ban"
+              : "Suspend"
+        }
         confirmVariant={bulkAction === "ban" ? "destructive" : "default"}
         onConfirm={async () => {
           if (!bulkAction) return;
-          const statusMap = { suspend: "SUSPENDED" as const, ban: "BANNED" as const, activate: "ACTIVE" as const };
+          const statusMap = {
+            suspend: "SUSPENDED" as const,
+            ban: "BANNED" as const,
+            activate: "ACTIVE" as const,
+          };
           for (const id of selectedIds) {
             try {
               await adminService.updateUserStatus(id, statusMap[bulkAction]);
@@ -396,7 +623,9 @@ export default function UsersPage() {
               // Continue with other users
             }
           }
-          toast.success(`${selectedIds.length} users ${bulkAction === "activate" ? "activated" : bulkAction + "d"}`);
+          toast.success(
+            `${selectedIds.length} users ${bulkAction === "activate" ? "activated" : bulkAction + "d"}`,
+          );
           setSelectedIds([]);
           setBulkAction(null);
           fetchUsers();

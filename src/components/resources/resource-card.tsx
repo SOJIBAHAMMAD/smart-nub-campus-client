@@ -35,16 +35,18 @@ export function ResourceCard({ resource, variant = "grid", onVote, onBookmark }:
         <Link href={`/resources/${resource.id}`} className="contents">
           <CardContent className="flex gap-3 py-3 sm:gap-4 sm:py-4">
             {/* Vote controls (vertical, always visible on list cards) */}
-            <div className="hidden shrink-0 sm:block">
-              <VoteControls
-                upvotes={resource.upvoteCount}
-                downvotes={resource.downvoteCount ?? 0}
-                activeVote={resource.userVote ?? null}
-                onVote={(type) => onVote?.(resource.id, type)}
-                orientation="vertical"
-                size="sm"
-              />
-            </div>
+            {onVote && (
+              <div className="hidden shrink-0 sm:block">
+                <VoteControls
+                  upvotes={resource.upvoteCount}
+                  downvotes={resource.downvoteCount ?? 0}
+                  activeVote={resource.userVote ?? null}
+                  onVote={(type) => onVote?.(resource.id, type)}
+                  orientation="vertical"
+                  size="sm"
+                />
+              </div>
+            )}
 
             {/* File type icon */}
             <div className={cn(
@@ -64,21 +66,23 @@ export function ResourceCard({ resource, variant = "grid", onVote, onBookmark }:
                 {resource.isVerified && (
                   <CheckCircle2 className="size-4 shrink-0 text-primary" />
                 )}
-                <button
-                  onClick={(e) => {
-                    stop(e);
-                    onBookmark?.(resource.id, bookmarked);
-                  }}
-                  className={cn(
-                    "shrink-0 rounded-md p-1 transition-colors",
-                    bookmarked
-                      ? "text-primary"
-                      : "text-muted-foreground/60 hover:text-foreground",
-                  )}
-                  aria-label="Bookmark"
-                >
-                  <Bookmark className={cn("size-3.5", bookmarked && "fill-current")} />
-                </button>
+                {onBookmark && (
+                  <button
+                    onClick={(e) => {
+                      stop(e);
+                      onBookmark?.(resource.id, bookmarked);
+                    }}
+                    className={cn(
+                      "shrink-0 rounded-md p-1 transition-colors",
+                      bookmarked
+                        ? "text-primary"
+                        : "text-muted-foreground/60 hover:text-foreground",
+                    )}
+                    aria-label="Bookmark"
+                  >
+                    <Bookmark className={cn("size-3.5", bookmarked && "fill-current")} />
+                  </button>
+                )}
               </div>
 
               {/* Description */}
@@ -138,16 +142,18 @@ export function ResourceCard({ resource, variant = "grid", onVote, onBookmark }:
                     </span>
                   )}
                   {/* Mobile vote */}
-                  <div className="sm:hidden">
-                    <VoteControls
-                      upvotes={resource.upvoteCount}
-                      downvotes={resource.downvoteCount ?? 0}
-                      activeVote={resource.userVote ?? null}
-                      onVote={(type) => onVote?.(resource.id, type)}
-                      orientation="horizontal"
-                      size="sm"
-                    />
-                  </div>
+                  {onVote && (
+                    <div className="sm:hidden">
+                      <VoteControls
+                        upvotes={resource.upvoteCount}
+                        downvotes={resource.downvoteCount ?? 0}
+                        activeVote={resource.userVote ?? null}
+                        onVote={(type) => onVote?.(resource.id, type)}
+                        orientation="horizontal"
+                        size="sm"
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -198,29 +204,33 @@ export function ResourceCard({ resource, variant = "grid", onVote, onBookmark }:
               <AuthorInfo user={resource.uploader} timestamp={resource.createdAt} size="sm" linked={false} />
             )}
             <div className="flex items-center gap-2">
-              <VoteControls
-                upvotes={resource.upvoteCount}
-                downvotes={resource.downvoteCount ?? 0}
-                activeVote={resource.userVote ?? null}
-                onVote={(type) => onVote?.(resource.id, type)}
-                orientation="horizontal"
-                size="sm"
-              />
-              <button
-                onClick={(e) => {
-                  stop(e);
-                  onBookmark?.(resource.id, bookmarked);
-                }}
-                className={cn(
-                  "rounded-md p-1 transition-colors",
-                  bookmarked
-                    ? "text-primary"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-                aria-label="Bookmark"
-              >
-                <Bookmark className={cn("size-4", bookmarked && "fill-current")} />
-              </button>
+              {onVote && (
+                <VoteControls
+                  upvotes={resource.upvoteCount}
+                  downvotes={resource.downvoteCount ?? 0}
+                  activeVote={resource.userVote ?? null}
+                  onVote={(type) => onVote?.(resource.id, type)}
+                  orientation="horizontal"
+                  size="sm"
+                />
+              )}
+              {onBookmark && (
+                <button
+                  onClick={(e) => {
+                    stop(e);
+                    onBookmark?.(resource.id, bookmarked);
+                  }}
+                  className={cn(
+                    "rounded-md p-1 transition-colors",
+                    bookmarked
+                      ? "text-primary"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                  aria-label="Bookmark"
+                >
+                  <Bookmark className={cn("size-4", bookmarked && "fill-current")} />
+                </button>
+              )}
             </div>
           </div>
         </CardContent>

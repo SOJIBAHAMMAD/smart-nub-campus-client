@@ -1,11 +1,14 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-import { format } from "date-fns";
-import { adminService } from "@/services/admin.service";
-import { VerificationReviewModal } from "@/components/admin/verification-review-modal";
+import { useCallback, useEffect, useState } from "react";
+import { Ban, Search, ShieldCheck, X } from "lucide-react";
+import { toast } from "sonner";
+
 import { BulkActions } from "@/components/admin/bulk-actions";
-import { Badge } from "@/components/ui/badge";
+import { ConfirmDialog } from "@/components/admin/confirm-dialog";
+import { VerificationPagination } from "@/components/admin/verification/verification-pagination";
+import { VerificationTable } from "@/components/admin/verification/verification-table";
+import { VerificationReviewModal } from "@/components/admin/verification-review-modal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -15,22 +18,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Search, ChevronLeft, ChevronRight, Eye, Ban, ShieldCheck } from "lucide-react";
 import { VerificationStatus } from "@/constants/enums";
+import { cn } from "@/lib/utils";
+import { adminService } from "@/services/admin.service";
 import type {
   AdminVerificationDetail,
   ListAdminVerificationsResponse,
 } from "@/types/admin.types";
-import { toast } from "sonner";
-import { Checkbox } from "@/components/ui/checkbox";
-import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 
 // ── Page Component ───────────────────────────────────────────────────────────
 
 /**
  * Verification management page for admins.
- * Shows pending verification requests with review modal.
+ * Shows a review queue of verification requests with search, status filtering,
+ * bulk actions and a review modal for deciding each request.
  */
 export default function VerificationsPage() {
   const [data, setData] = useState<ListAdminVerificationsResponse | null>(null);
@@ -123,67 +124,81 @@ export default function VerificationsPage() {
     setSelectedIds(allSelected ? [] : allIds);
   };
 
-  /** Get status badge for verification status. */
-  const getStatusBadge = (status: VerificationStatus) => {
-    switch (status) {
-      case VerificationStatus.PENDING:
-        return (
-          <Badge variant="outline" className="border-amber-300 text-amber-700">
-            Pending
-          </Badge>
-        );
-      case VerificationStatus.APPROVED:
-        return (
-          <Badge variant="outline" className="border-green-300 text-green-700">
-            Approved
-          </Badge>
-        );
-      case VerificationStatus.REJECTED:
-        return (
-          <Badge variant="outline" className="border-red-300 text-red-700">
-            Rejected
-          </Badge>
-        );
-      default:
-        return null;
-    }
+  // ── Filter helpers ────────────────────────────────────────────────────────
+
+  const hasActiveFilters = statusFilter !== "all" || search.trim() !== "";
+  const activeFilterCount =
+    (statusFilter !== "all" ? 1 : 0) + (search.trim() !== "" ? 1 : 0);
+
+  /** Reset search, status filter and page to their defaults. */
+  const clearFilters = () => {
+    setSearch("");
+    setStatusFilter("all");
+    setPage(1);
+    setSelectedIds([]);
+  };
+
+  /**
+   * Move to a page. Selection is scoped to the currently visible rows, so it is
+   * cleared on navigation to avoid accidentally acting on off-screen rows.
+   */
+  const goToPage = (nextPage: number) => {
+    setPage(nextPage);
+    setSelectedIds([]);
+  };
+
+  /** Update search, resetting to page 1 and clearing the selection. */
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    setPage(1);
+    setSelectedIds([]);
+  };
+
+  /** Update the status filter, resetting to page 1 and clearing the selection. */
+  const handleStatusChange = (value: string) => {
+    setStatusFilter(value ?? "all");
+    setPage(1);
+    setSelectedIds([]);
   };
 
   const totalPages = data?.meta.totalPages ?? 1;
 
   return (
-    <div className="p-6 space-y-6">
-      {/* ── Page Header ────────────────────────────────────────────────── */}
-      <div>
-        <h1 className="text-2xl font-bold">Verification Requests</h1>
-        <p className="text-sm text-muted-foreground">
-          Review and manage student verification requests
-        </p>
+    <div className="space-y-4 p-4 sm:space-y-6 sm:p-6">
+      {/* ── Page Header ─────────────────────────────────────────────────── */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-xl font-bold sm:text-2xl">
+            Verification Requests
+          </h1>
+          <p className="text-xs text-muted-foreground sm:text-sm">
+            Review and manage student verification requests
+          </p>
+        </div>
+        {data && (
+          <p className="inline-flex w-fit items-center gap-1.5 rounded-full border bg-muted/50 px-3 py-1 text-xs text-muted-foreground sm:text-sm">
+            <span className="font-semibold text-foreground tabular-nums">
+              {data.meta.total}
+            </span>
+            total request{data.meta.total === 1 ? "" : "s"}
+          </p>
+        )}
       </div>
 
       {/* ── Filters ────────────────────────────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1 max-w-sm">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="relative w-full sm:max-w-sm sm:flex-1">
           <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             type="search"
             placeholder="Search by name or email..."
             value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(1);
-            }}
+            onChange={(e) => handleSearchChange(e.target.value)}
             className="pl-8"
           />
         </div>
-        <Select
-          value={statusFilter}
-          onValueChange={(val) => {
-            setStatusFilter(val ?? "all");
-            setPage(1);
-          }}
-        >
-          <SelectTrigger className="w-[180px]">
+        <Select value={statusFilter} onValueChange={(val) => handleStatusChange(val ?? "all")}>
+          <SelectTrigger className="w-full sm:w-44">
             <SelectValue placeholder="All statuses" />
           </SelectTrigger>
           <SelectContent>
@@ -193,6 +208,24 @@ export default function VerificationsPage() {
             <SelectItem value="REJECTED">Rejected</SelectItem>
           </SelectContent>
         </Select>
+        {hasActiveFilters && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={clearFilters}
+            className="w-fit shrink-0 text-muted-foreground"
+          >
+            <X className="mr-1 size-3.5" />
+            Clear filters
+            <span
+              className={cn(
+                "ml-1 rounded-full bg-muted px-1.5 text-xs tabular-nums",
+              )}
+            >
+              {activeFilterCount}
+            </span>
+          </Button>
+        )}
       </div>
 
       {/* ── Bulk Actions ──────────────────────────────────────────────── */}
@@ -215,122 +248,26 @@ export default function VerificationsPage() {
         ]}
       />
 
-      {/* ── Table ─────────────────────────────────────────────────────── */}
-      <div className="rounded-xl border bg-white shadow-sm overflow-hidden dark:bg-gray-800">
-        {isLoading ? (
-          <div className="p-6 space-y-3">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Skeleton key={i} className="h-12 w-full" />
-            ))}
-          </div>
-        ) : !data || data.data.length === 0 ? (
-          <div className="p-12 text-center">
-            <p className="text-muted-foreground">No verification requests found.</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b bg-gray-50 dark:bg-gray-700/50 text-left text-sm text-muted-foreground">
-                  <th className="px-4 py-3">
-                    <Checkbox
-                      checked={
-                        data.data.length > 0 &&
-                        data.data.every((v) => selectedIds.includes(v.id))
-                      }
-                      onCheckedChange={toggleSelectAll}
-                    />
-                  </th>
-                  <th className="px-4 py-3 font-medium">Name</th>
-                  <th className="px-4 py-3 font-medium">Student ID</th>
-                  <th className="px-4 py-3 font-medium">Email</th>
-                  <th className="px-4 py-3 font-medium">Submitted</th>
-                  <th className="px-4 py-3 font-medium">Status</th>
-                  <th className="px-4 py-3 font-medium">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.data.map((verification) => (
-                  <tr
-                    key={verification.id}
-                    className="border-b last:border-0 hover:bg-gray-50 dark:hover:bg-gray-700/50"
-                  >
-                    <td className="px-4 py-3">
-                      <Checkbox
-                        checked={selectedIds.includes(verification.id)}
-                        onCheckedChange={() => toggleSelection(verification.id)}
-                      />
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="text-sm font-medium">
-                        {verification.name}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="text-sm font-mono">
-                        {verification.studentId}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="text-sm text-muted-foreground">
-                        {verification.email}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="text-sm text-muted-foreground">
-                        {format(new Date(verification.createdAt), "MMM d, yyyy")}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      {getStatusBadge(verification.status)}
-                    </td>
-                    <td className="px-4 py-3">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => openReview(verification.id)}
-                        className="h-8"
-                      >
-                        <Eye className="size-4 mr-1" />
-                        Review
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {/* ── Pagination ─────────────────────────────────────────────────── */}
-        {data && totalPages > 1 && (
-          <div className="flex items-center justify-between border-t px-4 py-3">
-            <p className="text-sm text-muted-foreground">
-              Showing {(page - 1) * limit + 1}–
-              {Math.min(page * limit, data.meta.total)} of {data.meta.total}
-            </p>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page === 1}
-              >
-                <ChevronLeft className="size-4" />
-              </Button>
-              <span className="text-sm">
-                Page {page} of {totalPages}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={page === totalPages}
-              >
-                <ChevronRight className="size-4" />
-              </Button>
-            </div>
-          </div>
+      {/* ── Table + Pagination ────────────────────────────────────────── */}
+      <div className="overflow-hidden rounded-xl border bg-card shadow-sm">
+        <VerificationTable
+          data={data?.data ?? []}
+          isLoading={isLoading}
+          selectedIds={selectedIds}
+          hasActiveFilters={hasActiveFilters}
+          onToggleSelectAll={toggleSelectAll}
+          onToggleSelection={toggleSelection}
+          onReview={(verification) => openReview(verification.id)}
+          onClearFilters={clearFilters}
+        />
+        {data && (
+          <VerificationPagination
+            page={page}
+            totalPages={totalPages}
+            total={data.meta.total}
+            limit={limit}
+            onPageChange={goToPage}
+          />
         )}
       </div>
 
@@ -348,8 +285,14 @@ export default function VerificationsPage() {
 
       <ConfirmDialog
         open={bulkAction !== null}
-        onOpenChange={(open) => { if (!open) setBulkAction(null); }}
-        title={bulkAction === "approve" ? "Approve Verifications" : "Reject Verifications"}
+        onOpenChange={(open) => {
+          if (!open) setBulkAction(null);
+        }}
+        title={
+          bulkAction === "approve"
+            ? "Approve Verifications"
+            : "Reject Verifications"
+        }
         description={`Are you sure you want to ${bulkAction} ${selectedIds.length} selected verification${selectedIds.length === 1 ? "" : "s"}?`}
         confirmLabel={bulkAction === "approve" ? "Approve" : "Reject"}
         confirmVariant={bulkAction === "reject" ? "destructive" : "default"}
@@ -366,7 +309,9 @@ export default function VerificationsPage() {
               // Continue with other verifications
             }
           }
-          toast.success(`${selectedIds.length} verifications ${bulkAction === "approve" ? "approved" : "rejected"}`);
+          toast.success(
+            `${selectedIds.length} verifications ${bulkAction === "approve" ? "approved" : "rejected"}`,
+          );
           setSelectedIds([]);
           setBulkAction(null);
           fetchVerifications();

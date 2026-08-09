@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Plus,
   Loader2,
@@ -60,6 +60,7 @@ export function QuestionCreateForm({
   courses,
 }: QuestionCreateFormProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const DRAFT_KEY = "qa:draft";
 
@@ -85,10 +86,16 @@ export function QuestionCreateForm({
         if (draft.title || draft.content) {
           toast.info("Draft restored from your last session.");
         }
+        return;
+      }
+      const preselectedCourse = searchParams.get("courseId");
+      if (preselectedCourse) {
+        setCourseId(preselectedCourse);
       }
     } catch {
       /* ignore */
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { motion } from "motion/react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,9 +46,15 @@ interface AccountManagementProps {
   deletionInfo?: DeletionInfo;
 }
 
-/**
- * Account management: export data, archive, deactivate, delete account.
- */
+const cardVariants = {
+  hidden: { opacity: 0, y: 12 },
+  visible: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    transition: { delay: i * 0.08, duration: 0.25, ease: "easeOut" as const },
+  }),
+};
+
 export function AccountManagement({ deletionInfo }: AccountManagementProps) {
   // Export
   const [exportType, setExportType] = useState<ExportType>("JSON");
@@ -69,7 +76,7 @@ export function AccountManagement({ deletionInfo }: AccountManagementProps) {
   const [deleteReason, setDeleteReason] = useState("");
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showDeleteConfirmInput, setShowDeleteConfirmInput] = useState(false);
-  const [_deleting, setDeleting] = useState(false);
+  const [, setDeleting] = useState(false);
   const [deletionScheduled, setDeletionScheduled] = useState(
     deletionInfo?.scheduledDeletionAt ?? null,
   );
@@ -209,7 +216,12 @@ export function AccountManagement({ deletionInfo }: AccountManagementProps) {
 
   return (
     <div className="space-y-6">
-      {/* Export Data */}
+      <motion.div
+        variants={cardVariants}
+        initial="hidden"
+        animate="visible"
+        custom={0}
+      >
       <Card>
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
@@ -258,8 +270,14 @@ export function AccountManagement({ deletionInfo }: AccountManagementProps) {
           )}
         </CardContent>
       </Card>
+      </motion.div>
 
-      {/* Download Archive */}
+      <motion.div
+        variants={cardVariants}
+        initial="hidden"
+        animate="visible"
+        custom={1}
+      >
       <Card>
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
@@ -271,7 +289,7 @@ export function AccountManagement({ deletionInfo }: AccountManagementProps) {
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-end gap-3 max-w-md">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:gap-3">
             <div className="flex-1 space-y-1.5">
               <Label htmlFor="archive-password">Password</Label>
               <Input
@@ -285,14 +303,21 @@ export function AccountManagement({ deletionInfo }: AccountManagementProps) {
             <Button
               onClick={handleRequestArchive}
               disabled={archiving || !archivePassword}
+              className="sm:self-end"
             >
               {archiving ? "Requesting..." : "Request Archive"}
             </Button>
           </div>
         </CardContent>
       </Card>
+      </motion.div>
 
-      {/* Deactivate Account */}
+      <motion.div
+        variants={cardVariants}
+        initial="hidden"
+        animate="visible"
+        custom={2}
+      >
       <Card>
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
@@ -313,8 +338,14 @@ export function AccountManagement({ deletionInfo }: AccountManagementProps) {
           </Button>
         </CardContent>
       </Card>
+      </motion.div>
 
-      {/* Delete Account */}
+      <motion.div
+        variants={cardVariants}
+        initial="hidden"
+        animate="visible"
+        custom={3}
+      >
       <Card className="border-destructive/50">
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2 text-destructive">
@@ -328,9 +359,9 @@ export function AccountManagement({ deletionInfo }: AccountManagementProps) {
         </CardHeader>
         <CardContent className="space-y-4">
           {deletionScheduled ? (
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-destructive/10">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-3 p-3 rounded-lg bg-destructive/10">
               <Clock className="h-5 w-5 text-destructive shrink-0" />
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium">Deletion scheduled</p>
                 <p className="text-xs text-muted-foreground">
                   Your account will be permanently deleted on{" "}
@@ -355,6 +386,7 @@ export function AccountManagement({ deletionInfo }: AccountManagementProps) {
           )}
         </CardContent>
       </Card>
+      </motion.div>
 
       {/* Deactivate Confirmation Dialog */}
       <Dialog open={showDeactivateDialog} onOpenChange={setShowDeactivateDialog}>

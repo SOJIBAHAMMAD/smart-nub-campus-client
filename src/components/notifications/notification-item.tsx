@@ -26,6 +26,9 @@ import {
   Eye,
   EyeOff,
   Trash2,
+  Handshake,
+  CalendarDays,
+  Target,
   type LucideIcon,
 } from "lucide-react";
 
@@ -48,6 +51,16 @@ const ICON_MAP: Record<Notification["type"], LucideIcon> = {
   EVENT_REMINDER: Bell,
   BADGE_UNLOCKED: Award,
   SYSTEM: Bell,
+  MENTORSHIP_REQUEST_RECEIVED: Handshake,
+  MENTORSHIP_REQUEST_UPDATED: Handshake,
+  MENTORSHIP_ACCEPTED: Handshake,
+  MENTORSHIP_SESSION_SCHEDULED: CalendarDays,
+  MENTORSHIP_SESSION_UPDATED: CalendarDays,
+  MENTORSHIP_GOAL_UPDATED: Target,
+  MENTORSHIP_MESSAGE: MessageCircle,
+  MENTORSHIP_COMPLETED: CheckCircle,
+  MENTORSHIP_ENDED: Handshake,
+  MENTORSHIP_REMINDER: Bell,
 };
 
 const COLOR_MAP: Record<Notification["type"], string> = {
@@ -86,6 +99,26 @@ const COLOR_MAP: Record<Notification["type"], string> = {
   BADGE_UNLOCKED:
     "bg-yellow-100 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-400",
   SYSTEM: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400",
+  MENTORSHIP_REQUEST_RECEIVED:
+    "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400",
+  MENTORSHIP_REQUEST_UPDATED:
+    "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400",
+  MENTORSHIP_ACCEPTED:
+    "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400",
+  MENTORSHIP_SESSION_SCHEDULED:
+    "bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400",
+  MENTORSHIP_SESSION_UPDATED:
+    "bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400",
+  MENTORSHIP_GOAL_UPDATED:
+    "bg-teal-100 text-teal-600 dark:bg-teal-900/30 dark:text-teal-400",
+  MENTORSHIP_MESSAGE:
+    "bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400",
+  MENTORSHIP_COMPLETED:
+    "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400",
+  MENTORSHIP_ENDED:
+    "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400",
+  MENTORSHIP_REMINDER:
+    "bg-yellow-100 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-400",
 };
 
 const CATEGORY_LABELS: Record<NotificationCategory, string> = {
@@ -96,6 +129,7 @@ const CATEGORY_LABELS: Record<NotificationCategory, string> = {
   qa: "Q&A",
   discussions: "Discussion",
   events: "Event",
+  mentorship: "Mentorship",
   system: "System",
 };
 
@@ -112,6 +146,8 @@ const CATEGORY_BADGE_COLORS: Record<NotificationCategory, string> = {
     "bg-cyan-100 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-300",
   events:
     "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300",
+  mentorship:
+    "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
   system: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
 };
 
@@ -150,6 +186,16 @@ function getCategoryFromType(type: Notification["type"]): NotificationCategory {
     EVENT_REMINDER: "events",
     BADGE_UNLOCKED: "system",
     SYSTEM: "system",
+    MENTORSHIP_REQUEST_RECEIVED: "mentorship",
+    MENTORSHIP_REQUEST_UPDATED: "mentorship",
+    MENTORSHIP_ACCEPTED: "mentorship",
+    MENTORSHIP_SESSION_SCHEDULED: "mentorship",
+    MENTORSHIP_SESSION_UPDATED: "mentorship",
+    MENTORSHIP_GOAL_UPDATED: "mentorship",
+    MENTORSHIP_MESSAGE: "mentorship",
+    MENTORSHIP_COMPLETED: "mentorship",
+    MENTORSHIP_ENDED: "mentorship",
+    MENTORSHIP_REMINDER: "mentorship",
   };
   return map[type] ?? "system";
 }

@@ -28,7 +28,7 @@ describe("useDebounce", () => {
     expect(result.current).toBe("world");
   });
 
-  it("uses default delay of 300ms", () => {
+  it("uses default delay of 1000ms", () => {
     const { result, rerender } = renderHook(
       ({ value }) => useDebounce(value),
       { initialProps: { value: "a" } },
@@ -36,7 +36,7 @@ describe("useDebounce", () => {
 
     rerender({ value: "b" });
 
-    act(() => vi.advanceTimersByTime(299));
+    act(() => vi.advanceTimersByTime(999));
     expect(result.current).toBe("a");
 
     act(() => vi.advanceTimersByTime(1));
