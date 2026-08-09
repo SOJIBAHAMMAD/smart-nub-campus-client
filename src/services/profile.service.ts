@@ -1,6 +1,17 @@
 import serverApi from "@/lib/server-api";
 import { TAGS } from "@/lib/cache-tags";
 import type { UserProfile, ProfileUser, UpdateProfilePayload, ProfileStats, ProfileBadge, ProfileSkill } from "@/types/profile.types";
+import type { EmploymentRecord } from "@/types";
+
+export interface EmploymentPayload {
+  employer: string;
+  title: string;
+  industry?: string;
+  startDate: string;
+  endDate?: string | null;
+  isCurrent?: boolean;
+  description?: string;
+}
 
 export const profileService = {
   async getMyProfile(): Promise<UserProfile | null> {
@@ -20,7 +31,12 @@ export const profileService = {
 
   async updateProfile(data: UpdateProfilePayload): Promise<UserProfile> {
     const response = await serverApi.patch<UserProfile>("/identity/profile", data, {
-      invalidatesTags: [TAGS.PROFILE],
+      invalidatesTags: [
+        TAGS.PROFILE,
+        TAGS.ALUMNI_DIRECTORY,
+        TAGS.ALUMNI_DIRECTORY_DETAIL,
+        TAGS.ALUMNI_DIRECTORY_STATS,
+      ],
     });
     return response.data!;
   },
@@ -52,6 +68,35 @@ export const profileService = {
   async removeSkill(userSkillId: string): Promise<void> {
     await serverApi.del(`/connections/skills/${userSkillId}`, {
       invalidatesTags: [TAGS.PROFILE],
+    });
+  },
+
+  // ── Employment records (Alumni career profile) ──────────────────────────
+  async createEmployment(data: EmploymentPayload): Promise<EmploymentRecord> {
+    const response = await serverApi.post<EmploymentRecord>(
+      "/identity/employment",
+      data,
+      {
+        invalidatesTags: [TAGS.PROFILE, TAGS.ALUMNI_DIRECTORY_DETAIL, TAGS.ALUMNI_DIRECTORY],
+      },
+    );
+    return response.data!;
+  },
+
+  async updateEmployment(id: string, data: Partial<EmploymentPayload>): Promise<EmploymentRecord> {
+    const response = await serverApi.patch<EmploymentRecord>(
+      `/identity/employment/${id}`,
+      data,
+      {
+        invalidatesTags: [TAGS.PROFILE, TAGS.ALUMNI_DIRECTORY_DETAIL, TAGS.ALUMNI_DIRECTORY],
+      },
+    );
+    return response.data!;
+  },
+
+  async deleteEmployment(id: string): Promise<void> {
+    await serverApi.del(`/identity/employment/${id}`, {
+      invalidatesTags: [TAGS.PROFILE, TAGS.ALUMNI_DIRECTORY_DETAIL, TAGS.ALUMNI_DIRECTORY],
     });
   },
 };

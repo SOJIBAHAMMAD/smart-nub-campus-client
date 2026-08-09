@@ -1,11 +1,8 @@
 import { apiClient } from "@/lib/api-client";
 import type {
   AdminDashboardStats,
-  AdminDiscussion,
   ListAdminDiscussionsParams,
   ListAdminDiscussionsResponse,
-  AdminDiscussionSort,
-  AdminDiscussionStatus,
   AdminDashboardCharts,
   ListAdminUsersParams,
   ListAdminUsersResponse,
@@ -29,6 +26,10 @@ import type {
   CreateEventInput,
   ListAdminReportsResponse,
   AdminReportStatus,
+  ListAdminJobsParams,
+  ListAdminJobsResponse,
+  ListAdminAlumniParams,
+  ListAdminAlumniResponse,
 } from "@/types/admin.types";
 
 /**
@@ -514,5 +515,73 @@ export const adminService = {
 
   async deleteEvent(id: string): Promise<void> {
     await apiClient.del(`/events/${id}`);
+  },
+
+  // ── Job Post Management ──────────────────────────────────────────────────
+
+  async listJobs(params: ListAdminJobsParams): Promise<ListAdminJobsResponse> {
+    const searchParams = new URLSearchParams();
+    searchParams.set("page", String(params.page));
+    searchParams.set("limit", String(params.limit));
+    if (params.search) searchParams.set("search", params.search);
+    if (params.status) searchParams.set("status", params.status);
+    if (params.isVerified !== undefined)
+      searchParams.set("isVerified", String(params.isVerified));
+
+    const response = await apiClient.get<{
+      success: boolean;
+      message: string;
+      data: ListAdminJobsResponse;
+    }>(`/admin/jobs?${searchParams.toString()}`);
+    return response.data!.data;
+  },
+
+  async verifyJob(
+    id: string,
+    isVerified: boolean,
+  ): Promise<{ id: string; isVerified: boolean }> {
+    const response = await apiClient.patch<{
+      success: boolean;
+      message: string;
+      data: { id: string; isVerified: boolean };
+    }>(`/admin/jobs/${id}/verify`, { isVerified });
+    return response.data!.data;
+  },
+
+  async deleteJob(id: string): Promise<void> {
+    await apiClient.del(`/admin/jobs/${id}`);
+  },
+
+  // ── Alumni Management ────────────────────────────────────────────────────
+
+  async listAlumni(
+    params: ListAdminAlumniParams,
+  ): Promise<ListAdminAlumniResponse> {
+    const searchParams = new URLSearchParams();
+    searchParams.set("page", String(params.page));
+    searchParams.set("limit", String(params.limit));
+    if (params.q) searchParams.set("q", params.q);
+    if (params.department) searchParams.set("department", params.department);
+    if (params.graduationYear)
+      searchParams.set("graduationYear", String(params.graduationYear));
+    if (params.industry) searchParams.set("industry", params.industry);
+    if (params.currentEmployer)
+      searchParams.set("currentEmployer", params.currentEmployer);
+
+    const response = await apiClient.get<{
+      success: boolean;
+      message: string;
+      data: ListAdminAlumniResponse;
+    }>(`/admin/alumni?${searchParams.toString()}`);
+    return response.data!.data;
+  },
+
+  async revertAlumni(id: string): Promise<{ message: string }> {
+    const response = await apiClient.post<{
+      success: boolean;
+      message: string;
+      data: { message: string } | null;
+    }>(`/admin/users/${id}/revert-alumni`, {});
+    return response.data!.data ?? { message: response.data!.message };
   },
 };

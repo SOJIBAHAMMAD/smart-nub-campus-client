@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { FileText, ChevronDown, ChevronRight, Check } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 export interface SummaryBlockProps {
   summary: string;

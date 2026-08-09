@@ -6,6 +6,7 @@ import type {
   TeamApplication,
   TeamMember,
   TeamRequestStatus,
+  ApplicationFormConfig,
   ListTeamRequestsParams,
   TeamRequestListResponse,
   TeamCategoryCount,
@@ -24,6 +25,7 @@ export const teamService = {
     difficulty?: string;
     meetingPreference?: string;
     contactInfo?: string;
+    applicationForm?: ApplicationFormConfig;
     skillTagIds: string[];
   }): Promise<TeamRequest> {
     const response = await serverApi.post<TeamRequest>("/teams", data, {
@@ -69,6 +71,7 @@ export const teamService = {
       difficulty?: string;
       meetingPreference?: string;
       contactInfo?: string;
+      applicationForm?: ApplicationFormConfig;
       skillTagIds?: string[];
     },
   ): Promise<TeamRequest> {
@@ -86,7 +89,10 @@ export const teamService = {
 
   async applyToTeam(
     teamRequestId: string,
-    data: { message?: string },
+    data: {
+      message?: string;
+      responses?: Record<string, string>;
+    },
   ): Promise<TeamApplication> {
     const response = await serverApi.post<TeamApplication>(
       `/teams/${teamRequestId}/apply`,

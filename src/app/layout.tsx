@@ -37,11 +37,13 @@ export default function RootLayout({
     <html
       lang="en"
       className={cn(
-        "h-full",
         "antialiased",
         geistSans.variable,
         geistMono.variable,
         "font-sans",
+        "scrollbar-thin",
+        "scrollbar-track-gray-100",
+        "scrollbar-thumb-blue-500",
         inter.variable,
       )}
       suppressHydrationWarning={true}

@@ -432,7 +432,7 @@ export function AIClient({
   const router = useRouter();
   const { data: session } = authClient.useSession();
 
-  const [sessions, setSessions] = useState<AIChatSession[]>(initialSessions);
+  const [, setSessions] = useState<AIChatSession[]>(initialSessions);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(
     initialActiveSessionId,
   );

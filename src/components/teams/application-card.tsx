@@ -4,12 +4,15 @@ import { useState } from "react";
 import { Check, X, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { APPLICATION_STATUS_BADGE } from "@/constants/team";
+import { APPLICATION_STATUS_BADGE, APPLICATION_FIELD_META } from "@/constants/team";
 import { Card, CardContent } from "@/components/ui/card";
 import { AuthorInfo } from "@/components/ui/author-info";
 import { Button } from "@/components/ui/button";
 import { TagPill } from "@/components/ui/tag-pill";
-import type { TeamApplication } from "@/types/team.types";
+import type {
+  TeamApplication,
+  ApplicationFormConfig,
+} from "@/types/team.types";
 
 interface ApplicationCardProps {
   application: TeamApplication;
@@ -17,6 +20,8 @@ interface ApplicationCardProps {
   onAccept?: (applicationId: string) => void;
   onReject?: (applicationId: string) => void;
   reviewing?: boolean;
+  /** The team's application form config, used to label the applicant's answers. */
+  formConfig?: ApplicationFormConfig | null;
 }
 
 export function ApplicationCard({
@@ -25,6 +30,7 @@ export function ApplicationCard({
   onAccept,
   onReject,
   reviewing,
+  formConfig,
 }: ApplicationCardProps) {
   const [expanded, setExpanded] = useState(false);
   const [confirmAction, setConfirmAction] = useState<"accept" | "reject" | null>(null);
@@ -32,6 +38,35 @@ export function ApplicationCard({
   const showActions = canReview && application.status === "PENDING";
   const message = application.message ?? "";
   const isLong = message.length > 150;
+
+  const responses = application.responses ?? {};
+  const responseItems: Array<{
+    id: string;
+    label: string;
+    value: string;
+    isUrl?: boolean;
+  }> = [];
+
+  for (const field of formConfig?.fields ?? []) {
+    const value = (responses[field.key] ?? "").trim();
+    if (!value) continue;
+    responseItems.push({
+      id: field.key,
+      label: APPLICATION_FIELD_META[field.key].label,
+      value,
+      isUrl: APPLICATION_FIELD_META[field.key].inputType === "url",
+    });
+  }
+  for (const question of formConfig?.questions ?? []) {
+    const value = (responses[question.id] ?? "").trim();
+    if (!value) continue;
+    responseItems.push({
+      id: question.id,
+      label: question.label,
+      value,
+      isUrl: false,
+    });
+  }
 
   return (
     <Card
@@ -110,6 +145,36 @@ export function ApplicationCard({
               </button>
             )}
           </div>
+        )}
+
+        {/* Responses snapshot */}
+        {responseItems.length > 0 && (
+          <dl className="grid gap-1.5 rounded-lg bg-muted/40 p-2.5">
+            {responseItems.map((item) => (
+              <div
+                key={item.id}
+                className="flex flex-col gap-0.5 text-xs"
+              >
+                <dt className="text-[10px] font-medium text-muted-foreground">
+                  {item.label}
+                </dt>
+                <dd className="whitespace-pre-wrap break-words text-foreground/90">
+                  {item.isUrl && /^https?:\/\//i.test(item.value) ? (
+                    <a
+                      href={item.value}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary underline underline-offset-2 hover:text-primary/80"
+                    >
+                      {item.value}
+                    </a>
+                  ) : (
+                    item.value
+                  )}
+                </dd>
+              </div>
+            ))}
+          </dl>
         )}
 
         {/* Actions */}

@@ -16,6 +16,8 @@ import {
   MessageSquare,
   HelpCircle,
   ShieldCheck,
+  Briefcase,
+  GraduationCap,
 } from "lucide-react";
 import type { AdminDashboardStats, AdminDashboardCharts, AuditLogEntry } from "@/types/admin.types";
 import { toast } from "sonner";
@@ -188,14 +190,14 @@ export default function AdminDashboardPage() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatsCard
-          label="Verified Resources"
-          value={stats?.verifiedResources?.toLocaleString() ?? "0"}
-          icon={Activity}
+          label="Total Job Posts"
+          value={stats?.totalJobs?.toLocaleString() ?? "0"}
+          icon={Briefcase}
         />
         <StatsCard
-          label="Unverified Resources"
-          value={stats?.unverifiedResources?.toLocaleString() ?? "0"}
-          icon={Download}
+          label="Total Alumni"
+          value={stats?.totalAlumni?.toLocaleString() ?? "0"}
+          icon={GraduationCap}
         />
         <StatsCard
           label="Total Events"
@@ -207,6 +209,19 @@ export default function AdminDashboardPage() {
           value={stats?.pendingVerifications?.toLocaleString() ?? "0"}
           icon={ShieldCheck}
           isWarning={(stats?.pendingVerifications ?? 0) > 0}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatsCard
+          label="Verified Resources"
+          value={stats?.verifiedResources?.toLocaleString() ?? "0"}
+          icon={Activity}
+        />
+        <StatsCard
+          label="Unverified Resources"
+          value={stats?.unverifiedResources?.toLocaleString() ?? "0"}
+          icon={Download}
         />
       </div>
 

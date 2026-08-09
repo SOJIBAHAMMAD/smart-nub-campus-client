@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useCallback } from "react";
 import { motion } from "motion/react";
-import { Search, BookOpen, Users, ArrowRight, Sparkles } from "lucide-react";
+import { Search, BookOpen, Users, Sparkles } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AvatarGroup } from "@/components/ui/avatar-group";

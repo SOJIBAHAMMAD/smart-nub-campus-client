@@ -1,7 +1,6 @@
 import { apiClient } from "@/lib/api-client";
 import { env } from "@/env";
 import { buildQueryString } from "@/lib/utils";
-import { uploadService } from "@/services/upload.service";
 import type {
   AIChatSession,
   SendAIMessagePayload,

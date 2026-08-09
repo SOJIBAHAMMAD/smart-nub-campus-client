@@ -50,6 +50,7 @@ const STATUS_TABS: {
   { value: "ONGOING", label: "Ongoing", status: "ONGOING" },
   { value: "COMPLETED", label: "Completed", status: "COMPLETED" },
   { value: "CANCELLED", label: "Cancelled", status: "CANCELLED" },
+  { value: "reunions", label: "Reunions", status: null },
 ];
 
 interface EventsListClientProps {
@@ -59,6 +60,7 @@ interface EventsListClientProps {
     search: string;
     status: string | null;
     page: number;
+    type: string | null;
   };
 }
 
@@ -73,6 +75,7 @@ export function EventsListClient({
 
   const searchParam = searchParams.get("search") ?? "";
   const statusParam = searchParams.get("status");
+  const typeParam = searchParams.get("type");
 
   const [search, setSearch] = useState(initialFilters.search);
   const [events, setEvents] = useState<Event[]>(initialEvents);
@@ -138,7 +141,7 @@ export function EventsListClient({
 
   const clearFilters = () => {
     setSearch("");
-    updateParams({ search: null, status: null });
+    updateParams({ search: null, status: null, type: null });
   };
 
   const handleRsvp = async (eventId: string) => {
@@ -186,7 +189,7 @@ export function EventsListClient({
 
   const meta = initialMeta;
   const total = meta?.total ?? initialEvents.length;
-  const hasFilters = Boolean(searchParam) || Boolean(statusParam);
+  const hasFilters = Boolean(searchParam) || Boolean(statusParam) || Boolean(typeParam);
 
   // Featured events surface in a spotlight above the grid; the grid shows
   // everything else so featured events are not duplicated.
@@ -287,10 +290,17 @@ export function EventsListClient({
         {/* ── Status tabs + search ────────────────────────────────── */}
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <Tabs
-            value={statusParam ?? "all"}
-            onValueChange={(value) =>
-              updateParams({ status: value === "all" ? null : value })
-            }
+            value={typeParam === "reunion" ? "reunions" : (statusParam ?? "all")}
+            onValueChange={(value) => {
+              if (value === "reunions") {
+                updateParams({ type: "reunion", status: null });
+              } else {
+                updateParams({
+                  type: null,
+                  status: value === "all" ? null : value,
+                });
+              }
+            }}
           >
             <TabsList
               aria-label="Filter events by status"

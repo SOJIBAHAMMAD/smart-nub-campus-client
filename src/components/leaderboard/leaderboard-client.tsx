@@ -153,6 +153,7 @@ export function LeaderboardClient({
                         className={`flex size-14 items-center justify-center rounded-full bg-muted ring-2 ${style.avatarRing} ${isFirst ? "size-16" : ""}`}
                       >
                         {entry.user.image ? (
+                          // eslint-disable-next-line @next/next/no-img-element
                           <img
                             src={entry.user.image}
                             alt={entry.user.name}
@@ -214,6 +215,7 @@ export function LeaderboardClient({
 
                       <div className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary ring-1 ring-border/40">
                         {entry.user.image ? (
+                          // eslint-disable-next-line @next/next/no-img-element
                           <img
                             src={entry.user.image}
                             alt={entry.user.name}

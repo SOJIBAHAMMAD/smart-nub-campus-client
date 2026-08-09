@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { EventStatusBadge } from "./event-status-badge";
+import { EventAudienceBadge, EventReunionBadge } from "./event-audience-badge";
 
 export function formatEventDate(dateStr: string) {
   const date = new Date(dateStr);
@@ -156,6 +157,11 @@ export function EventCard({ event, onRsvp, rsvpLoading }: EventCardProps) {
             className="shrink-0"
           />
         </div>
+        {event.reunionBatchYear ? (
+          <EventReunionBadge batchYear={event.reunionBatchYear} className="w-fit" />
+        ) : event.audience !== "EVERYONE" ? (
+          <EventAudienceBadge audience={event.audience} className="w-fit" />
+        ) : null}
         <EventMetaRows event={event} />
       </CardContent>
 

@@ -6,7 +6,6 @@ import {
   MessageSquare,
   BookOpen,
   Bot,
-  UserPlus,
   GraduationCap,
 } from "lucide-react";
 import ROUTES from "@/constants/routes";
@@ -66,19 +65,22 @@ const actions = [
     iconColor: "text-purple-500",
     borderHover: "hover:border-purple-500/30",
   },
+  {
+    title: "Browse Alumni",
+    description: "Find NUB alumni & their careers",
+    icon: GraduationCap,
+    href: ROUTES.ALUMNI,
+    gradient: "from-cyan-500/15 to-cyan-500/5",
+    iconColor: "text-cyan-500",
+    borderHover: "hover:border-cyan-500/30",
+  },
 ];
 
 export function QuickActions() {
   return (
     <section>
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-4">
         <h2 className="text-lg font-semibold text-foreground">Quick Actions</h2>
-        <Link
-          href={ROUTES.RESOURCES}
-          className="text-sm font-medium text-primary transition-colors hover:text-primary/80"
-        >
-          View all &rarr;
-        </Link>
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">

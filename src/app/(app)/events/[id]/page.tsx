@@ -21,6 +21,10 @@ import { Avatar } from "@/components/ui/avatar";
 import { EventStatusBadge } from "@/components/events/event-status-badge";
 import { EventImage } from "@/components/events/event-image";
 import {
+  EventAudienceBadge,
+  EventReunionBadge,
+} from "@/components/events/event-audience-badge";
+import {
   formatEventDate,
   getRelativeDay,
 } from "@/components/events/event-card";
@@ -192,6 +196,15 @@ export default function EventDetailPage() {
             withDot={false}
             className="border-transparent bg-black/45 text-white shadow-sm backdrop-blur-sm"
           />
+          {event.audience !== "EVERYONE" && (
+            <EventAudienceBadge
+              audience={event.audience}
+              className="border-transparent bg-black/45 text-white shadow-sm backdrop-blur-sm"
+            />
+          )}
+          {event.reunionBatchYear && (
+            <EventReunionBadge batchYear={event.reunionBatchYear} />
+          )}
         </div>
       </div>
 
@@ -224,7 +237,7 @@ export default function EventDetailPage() {
           <InfoRow icon={Users}>
             <p className="font-medium text-foreground">
               {event._count.rsvps.toLocaleString()}{" "}
-              {event._count.rsvps === 1 ? "student going" : "students going"}
+              {event._count.rsvps === 1 ? "person going" : "people going"}
             </p>
           </InfoRow>
           {event.organizer && (
@@ -276,7 +289,7 @@ export default function EventDetailPage() {
               {event.isRsvpd
                 ? "You're on the list."
                 : `${event._count.rsvps.toLocaleString()} ${
-                    event._count.rsvps === 1 ? "student is" : "students are"
+                    event._count.rsvps === 1 ? "person is" : "people are"
                   } already going.`}
             </p>
           </div>

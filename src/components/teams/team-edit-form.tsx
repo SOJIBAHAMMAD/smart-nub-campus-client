@@ -8,11 +8,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { TagInput, type TagInputTag } from "@/components/ui/tag-input";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
+import { ApplicationFormBuilder } from "@/components/teams/application-form-builder";
 import { updateTeamRequest } from "@/actions/team.actions";
 import { updateTeamRequestSchema } from "@/schemas/team.schema";
 import type { Tag } from "@/types/resource.types";
-import type { TeamRequest } from "@/types/team.types";
-import { TEAM_CATEGORIES, DIFFICULTY_OPTIONS, MEETING_PREFERENCE_OPTIONS } from "@/constants/team";
+import type { ApplicationFormConfig, TeamRequest } from "@/types/team.types";
+import { TEAM_CATEGORIES, DIFFICULTY_OPTIONS, MEETING_PREFERENCE_OPTIONS, DEFAULT_APPLICATION_FORM } from "@/constants/team";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useUnsavedGuard } from "@/components/ui/unsaved-guard";
@@ -41,6 +42,10 @@ export function TeamEditForm({ team, tags: _tags, onSuccess }: TeamEditFormProps
   const [meetingPreference, setMeetingPreference] = useState<string>(team.meetingPreference ?? "FLEXIBLE");
   const [contactInfo, setContactInfo] = useState(team.contactInfo ?? "");
 
+  const [applicationForm, setApplicationForm] = useState<ApplicationFormConfig>(
+    team.applicationForm ?? DEFAULT_APPLICATION_FORM,
+  );
+
   const [selectedSkillIds, setSelectedSkillIds] = useState<TagInputTag[]>(
     team.teamRequestSkills?.map((s) => ({
       id: s.tagId,
@@ -55,6 +60,7 @@ export function TeamEditForm({ team, tags: _tags, onSuccess }: TeamEditFormProps
   const hasChanges = JSON.stringify({
     title, description, projectName, membersNeeded, deadline,
     category, difficulty, meetingPreference, contactInfo,
+    applicationForm,
     skillIds: selectedSkillIds.map((t) => t.id),
   }) !== JSON.stringify({
     title: team.title,
@@ -66,6 +72,7 @@ export function TeamEditForm({ team, tags: _tags, onSuccess }: TeamEditFormProps
     difficulty: team.difficulty ?? "",
     meetingPreference: team.meetingPreference ?? "FLEXIBLE",
     contactInfo: team.contactInfo ?? "",
+    applicationForm: team.applicationForm ?? DEFAULT_APPLICATION_FORM,
     skillIds: team.teamRequestSkills?.map((s) => s.tagId) ?? [],
   });
 
@@ -112,7 +119,7 @@ export function TeamEditForm({ team, tags: _tags, onSuccess }: TeamEditFormProps
       difficulty: difficulty || undefined,
       meetingPreference: meetingPreference || undefined,
       contactInfo: contactInfo.trim() || undefined,
-
+      applicationForm,
       skillTagIds: selectedSkillIds.map((t) => t.id),
     };
   }
@@ -345,6 +352,13 @@ export function TeamEditForm({ team, tags: _tags, onSuccess }: TeamEditFormProps
           disabled={submitting}
         />
       </div>
+
+      {/* Application Form */}
+      <ApplicationFormBuilder
+        value={applicationForm}
+        onChange={setApplicationForm}
+        disabled={submitting}
+      />
 
       {/* Skills */}
       <TagInput

@@ -56,7 +56,6 @@ import {
   Ban,
 } from "lucide-react";
 import type {
-  AdminDiscussion,
   ListAdminDiscussionsResponse,
   AdminDiscussionSort,
   AdminDiscussionStatus,

@@ -9,7 +9,6 @@ import {
   Sparkles,
 } from "lucide-react";
 import { TagPill } from "@/components/ui/tag-pill";
-import ROUTES from "@/constants/routes";
 
 interface RecommendedItem {
   id: string;

@@ -27,6 +27,7 @@ export default async function EventsPage({
     typeof params.page === "string" ? parseInt(params.page, 10) || 1 : 1;
   const search = typeof params.search === "string" ? params.search : undefined;
   const status = typeof params.status === "string" ? params.status : undefined;
+  const type = typeof params.type === "string" ? params.type : undefined;
 
   let events: Event[] = [];
   let meta: PaginationMeta | null = null;
@@ -42,6 +43,7 @@ export default async function EventsPage({
         | "COMPLETED"
         | "CANCELLED"
         | undefined,
+      type: type === "reunion" ? "reunion" : undefined,
     });
     events = result.data ?? [];
     meta = result.meta ?? null;
@@ -54,7 +56,7 @@ export default async function EventsPage({
       <EventsListClient
         initialEvents={events}
         initialMeta={meta}
-        initialFilters={{ search: search ?? "", status: status ?? null, page }}
+        initialFilters={{ search: search ?? "", status: status ?? null, page, type: type === "reunion" ? "reunion" : null }}
       />
     </Suspense>
   );

@@ -14,6 +14,8 @@ import {
   ArrowLeft,
   X,
   MessageSquare,
+  Briefcase,
+  UserCheck,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -30,10 +32,12 @@ const sidebarNavItems: SidebarNavItem[] = [
   { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
   { label: "Verification Requests", href: "/admin/verifications", icon: ShieldCheck },
   { label: "Users", href: "/admin/users", icon: Users },
+  { label: "Alumni", href: "/admin/alumni", icon: UserCheck },
   { label: "Resources", href: "/admin/resources", icon: BookOpen },
   { label: "Discussions", href: "/admin/discussions", icon: MessageSquare },
   { label: "Courses & Categories", href: "/admin/courses", icon: GraduationCap },
   { label: "Events", href: "/admin/events", icon: Calendar },
+  { label: "Job Posts", href: "/admin/jobs", icon: Briefcase },
   { label: "Settings", href: "/admin/settings", icon: Settings },
 ];
 

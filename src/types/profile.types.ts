@@ -15,6 +15,13 @@ export interface UserProfile {
   phoneNumber: string | null;
   currentSemester: number | null;
   batchYear: number | null;
+  // ── Career profile (Alumni feature) ──────────────────────────────────────
+  currentEmployer: string | null;
+  jobTitle: string | null;
+  industry: string | null;
+  showInAlumniDirectory: boolean;
+  isMentor: boolean;
+  mentorshipTopics: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -86,4 +93,11 @@ export interface UpdateProfilePayload {
   currentSemester?: number;
   batchYear?: number;
   image?: string;
+  // ── Career profile (Alumni feature) ──────────────────────────────────────
+  currentEmployer?: string;
+  jobTitle?: string;
+  industry?: string;
+  showInAlumniDirectory?: boolean;
+  isMentor?: boolean;
+  mentorshipTopics?: string[];
 }

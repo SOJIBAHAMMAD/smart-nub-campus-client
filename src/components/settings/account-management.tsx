@@ -76,7 +76,7 @@ export function AccountManagement({ deletionInfo }: AccountManagementProps) {
   const [deleteReason, setDeleteReason] = useState("");
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showDeleteConfirmInput, setShowDeleteConfirmInput] = useState(false);
-  const [deleting, setDeleting] = useState(false);
+  const [, setDeleting] = useState(false);
   const [deletionScheduled, setDeletionScheduled] = useState(
     deletionInfo?.scheduledDeletionAt ?? null,
   );

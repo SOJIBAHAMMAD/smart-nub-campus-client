@@ -28,11 +28,16 @@ import {
   MessageCircle,
   Sparkles,
   Trophy,
+  GraduationCap,
+  Briefcase,
+  Handshake,
+  Activity,
   ChevronDown,
   X,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import ROUTES from "@/constants/routes";
+import { UserRole } from "@/constants/enums";
 import { AcademicCapIcon } from "../ui/icons/academic-cap";
 import Image from "next/image";
 import { authClient } from "@/lib/auth-client";
@@ -54,10 +59,14 @@ const desktopPrimaryItems: NavItem[] = [
 ];
 
 const desktopMoreItems: NavItem[] = [
+  { label: "Activity", href: ROUTES.ACTIVITIES, icon: Activity },
   { label: "Discussions", href: ROUTES.DISCUSSIONS, icon: MessageSquare },
   { label: "Q&A", href: ROUTES.QA, icon: HelpCircle },
   { label: "Leaderboard", href: ROUTES.LEADERBOARD, icon: Trophy },
   { label: "AI Assistant", href: ROUTES.AI, icon: Sparkles },
+  { label: "Alumni Directory", href: ROUTES.ALUMNI, icon: GraduationCap },
+  { label: "Job Board", href: ROUTES.JOBS, icon: Briefcase },
+  { label: "Mentorship", href: ROUTES.MENTORSHIP, icon: Handshake },
 ];
 
 const bottomNavItems: NavItem[] = [
@@ -69,10 +78,14 @@ const bottomNavItems: NavItem[] = [
 
 const bottomSheetItems: NavItem[] = [
   { label: "My Network", href: ROUTES.MY_NETWORK, icon: UsersRound },
+  { label: "Activity", href: ROUTES.ACTIVITIES, icon: Activity },
   { label: "Discussions", href: ROUTES.DISCUSSIONS, icon: MessageSquare },
   { label: "Q&A", href: ROUTES.QA, icon: HelpCircle },
   { label: "Leaderboard", href: ROUTES.LEADERBOARD, icon: Trophy },
   { label: "AI Assistant", href: ROUTES.AI, icon: Sparkles },
+  { label: "Alumni Directory", href: ROUTES.ALUMNI, icon: GraduationCap },
+  { label: "Job Board", href: ROUTES.JOBS, icon: Briefcase },
+  { label: "Mentorship", href: ROUTES.MENTORSHIP, icon: Handshake },
 ];
 
 function isActive(href: string, pathname: string) {
@@ -83,9 +96,23 @@ interface TopNavProps {
   userName?: string;
   userImage?: string;
   userId?: string;
+  userRole?: string;
 }
 
-export function TopNav({ userName, userImage, userId }: TopNavProps) {
+function roleLabel(role?: string): string | null {
+  switch (role) {
+    case UserRole.STUDENT:
+      return "Student";
+    case UserRole.ALUMNI:
+      return "Alumni";
+    case UserRole.ADMIN:
+      return "Admin";
+    default:
+      return null;
+  }
+}
+
+export function TopNav({ userName, userImage, userId, userRole }: TopNavProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
@@ -94,6 +121,7 @@ export function TopNav({ userName, userImage, userId }: TopNavProps) {
   const [sheetOpen, setSheetOpen] = useState(false);
   const sheetTriggerRef = useRef<HTMLButtonElement>(null);
   const mobileSearchRef = useRef<HTMLInputElement>(null);
+  const userRoleLabel = roleLabel(userRole);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10);
@@ -314,6 +342,11 @@ export function TopNav({ userName, userImage, userId }: TopNavProps) {
                           <span className="text-sm font-medium">
                             {userName ?? "User"}
                           </span>
+                          {userRoleLabel && (
+                            <span className="mt-0.5 inline-flex w-fit items-center rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
+                              {userRoleLabel}
+                            </span>
+                          )}
                           {userId && (
                             <Link
                               href={ROUTES.MY_PROFILE}
@@ -379,6 +412,11 @@ export function TopNav({ userName, userImage, userId }: TopNavProps) {
                           <span className="text-sm font-medium">
                             {userName ?? "User"}
                           </span>
+                          {userRoleLabel && (
+                            <span className="mt-0.5 inline-flex w-fit items-center rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
+                              {userRoleLabel}
+                            </span>
+                          )}
                           {userId && (
                             <Link
                               href={ROUTES.MY_PROFILE}

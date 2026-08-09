@@ -7,7 +7,7 @@ import { UserProfileSkeleton } from "@/components/skeletons/user-profile-skeleto
 import type { ProfileUser } from "@/types/profile.types";
 
 interface IdentityMeResponse {
-  user: { id: string };
+  user: { id: string; role?: string };
 }
 
 export const metadata = {
@@ -16,12 +16,14 @@ export const metadata = {
 
 export default async function MyProfilePage() {
   let currentUserId: string | undefined;
+  let currentUserRole: string | undefined;
 
   try {
     const meResult = await serverApi.get<IdentityMeResponse>("/identity/me", {
       cache: "no-store",
     });
     currentUserId = meResult.data?.user?.id;
+    currentUserRole = meResult.data?.user?.role;
   } catch {
     redirect("/auth/login");
   }
@@ -41,6 +43,7 @@ export default async function MyProfilePage() {
       <ProfileClient
         profileData={result.data as ProfileUser}
         currentUserId={currentUserId}
+        userRole={currentUserRole}
       />
     </Suspense>
   );

@@ -17,6 +17,8 @@ import {
   UserPlus,
   UserRoundCheck,
   Rocket,
+  Users,
+  Briefcase,
   Award,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -41,6 +43,8 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   "user-plus": UserPlus,
   "user-round-check": UserRoundCheck,
   rocket: Rocket,
+  users: Users,
+  briefcase: Briefcase,
 };
 
 interface TierStyle {

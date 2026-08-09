@@ -5,6 +5,16 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+export function toHref(value: string): string | null {
+  if (!/^https?:\/\//i.test(value.trim())) return null;
+  try {
+    new URL(value.trim());
+    return value.trim();
+  } catch {
+    return null;
+  }
+}
+
 export function buildQueryString(params: object): string {
   const searchParams = new URLSearchParams();
   for (const [key, value] of Object.entries(params)) {

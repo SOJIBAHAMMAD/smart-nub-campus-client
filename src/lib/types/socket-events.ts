@@ -114,6 +114,16 @@ export interface ConnectionEvent {
   createdAt: string;
 }
 
+/** Mentorship message delivered in realtime to both participants. */
+export interface MentorshipMessageEvent {
+  id: string;
+  mentorshipId: string;
+  senderId: string;
+  sender: { id: string; name: string; image: string | null };
+  body: string;
+  createdAt: string;
+}
+
 // ---------------------------------------------------------------------------
 // Event map
 // ---------------------------------------------------------------------------
@@ -263,6 +273,9 @@ export interface SocketEvents {
   /** Connection removed. */
   "connection:removed": { connectionId: string; removedBy: string };
 
+  /** New mentorship message in an active relationship. */
+  "mentorship:message": MentorshipMessageEvent;
+
   /** New event created. */
   "event:new": {
     id: string;
@@ -341,6 +354,7 @@ export type ServerEvents = keyof Pick<
   | "connection:request"
   | "connection:accepted"
   | "connection:removed"
+  | "mentorship:message"
   | "event:new"
   | "event:rsvpUpdate"
   | "admin:review-update"

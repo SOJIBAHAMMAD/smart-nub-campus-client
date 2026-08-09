@@ -1,4 +1,8 @@
-import { OnboardingStepValue, VerificationStatus } from "@/constants/enums";
+import {
+  OnboardingStepValue,
+  VerificationRequestType,
+  VerificationStatus,
+} from "@/constants/enums";
 
 export interface VerificationRequest {
   id: string;
@@ -19,6 +23,9 @@ export interface VerificationRequestData {
   studentId: string;
   status: VerificationStatus;
   note: string | null;
+  requestType: VerificationRequestType;
+  graduationYear: number | null;
+  degreeTitle: string | null;
   idCardImage?: string;
   idCardImagePublicId?: string | null;
 }
@@ -35,6 +42,9 @@ export interface CreateVerificationRequestResponse {
     studentId: string;
     status: VerificationStatus;
     note: string | null;
+    requestType: VerificationRequestType;
+    graduationYear: number | null;
+    degreeTitle: string | null;
     idCardImage?: string;
     idCardImagePublicId?: string | null;
   } | null;
@@ -50,6 +60,9 @@ export interface CreateVerificationRequestPayload {
   studentId: string;
   idCardImage: string;
   idCardImagePublicId?: string | null;
+  requestType: VerificationRequestType;
+  graduationYear?: number;
+  degreeTitle?: string;
 }
 
 export interface VerificationDetail {

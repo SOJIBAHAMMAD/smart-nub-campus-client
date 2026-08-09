@@ -12,7 +12,7 @@ interface ProfilePageProps {
 }
 
 interface IdentityMeResponse {
-  user: { id: string };
+  user: { id: string; role?: string };
 }
 
 export async function generateMetadata({
@@ -44,12 +44,14 @@ export default async function ProfilePage({ params }: ProfilePageProps) {
   }
 
   const currentUserId = meResult?.data?.user?.id;
+  const currentUserRole = meResult?.data?.user?.role;
 
   return (
     <Suspense fallback={<UserProfileSkeleton />}>
       <ProfileClient
         profileData={result.data as ProfileUser}
         currentUserId={currentUserId}
+        userRole={currentUserRole}
       />
     </Suspense>
   );

@@ -9,7 +9,26 @@ import type { UserReferenceWithEmail } from "./common.types";
 // ── Shared references ────────────────────────────────────────────────────────
 
 export type TeamCreator = UserReferenceWithEmail;
-export type TeamApplicant = UserReferenceWithEmail;
+
+export interface TeamApplicant extends UserReferenceWithEmail {
+  profile?: {
+    bio?: string | null;
+    githubUrl?: string | null;
+    linkedinUrl?: string | null;
+    portfolioUrl?: string | null;
+    websiteUrl?: string | null;
+    phoneNumber?: string | null;
+    location?: string | null;
+    currentSemester?: number | null;
+    batchYear?: number | null;
+  } | null;
+  student?: {
+    studentId?: string;
+    department?: string;
+    admissionYear?: number;
+    admissionSemester?: string;
+  } | null;
+}
 
 // ── Enums ────────────────────────────────────────────────────────────────────
 
@@ -22,6 +41,43 @@ export type TeamMemberRole = "LEADER" | "MEMBER";
 export type Difficulty = "BEGINNER" | "INTERMEDIATE" | "ADVANCED" | "EXPERT";
 
 export type MeetingPreference = "ONLINE" | "IN_PERSON" | "HYBRID" | "FLEXIBLE";
+
+// ── Application form ─────────────────────────────────────────────────────────
+
+/** Built-in profile metadata fields a team leader can collect on an application. */
+export type ApplicationFormFieldKey =
+  | "name"
+  | "email"
+  | "github"
+  | "linkedin"
+  | "portfolio"
+  | "website"
+  | "phone"
+  | "location"
+  | "studentId"
+  | "department"
+  | "semester";
+
+export interface ApplicationFormField {
+  key: ApplicationFormFieldKey;
+  required: boolean;
+}
+
+export interface ApplicationFormQuestion {
+  id: string;
+  label: string;
+  type: "SHORT_TEXT" | "PARAGRAPH";
+  required: boolean;
+}
+
+/** Leader-defined configuration for the application form. */
+export interface ApplicationFormConfig {
+  fields: ApplicationFormField[];
+  questions: ApplicationFormQuestion[];
+}
+
+/** Snapshot of an applicant's answers keyed by field key / question id. */
+export type ApplicationResponses = Record<string, string>;
 
 // ── Core models ──────────────────────────────────────────────────────────────
 
@@ -40,6 +96,7 @@ export interface TeamRequest {
   difficulty?: Difficulty | null;
   meetingPreference: MeetingPreference;
   contactInfo?: string | null;
+  applicationForm?: ApplicationFormConfig | null;
   viewCount: number;
   bookmarkCount: number;
   isBookmarked?: boolean;
@@ -69,6 +126,7 @@ export interface TeamApplication {
   applicant?: TeamApplicant;
   teamRequest?: TeamRequest;
   message?: string | null;
+  responses?: ApplicationResponses | null;
   status: ApplicationStatus;
   reviewedAt?: string | null;
   createdAt: string;

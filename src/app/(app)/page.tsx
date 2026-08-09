@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { WelcomeStrip } from "@/components/home/welcome-strip";
+import { TransitionBanner } from "@/components/alumni/transition-banner";
 import { QuickActions } from "@/components/home/quick-actions";
 import { RecentActivity } from "@/components/home/recent-activity";
 import { ForYou } from "@/components/home/for-you";
@@ -16,7 +17,7 @@ import { gamificationService } from "@/services/gamification.service";
 import { eventService } from "@/services/event.service";
 import { discussionService } from "@/services/discussion.service";
 import { qaService } from "@/services/qa.service";
-import { notificationService } from "@/services/notification.service";
+import { activityService } from "@/services/activity.service";
 import ROUTES from "@/constants/routes";
 
 export const metadata: Metadata = {
@@ -34,57 +35,37 @@ export const metadata: Metadata = {
 // ── Data sections (server components) ─────────────────────────────────
 
 async function ActivitySection() {
-  try {
-    const result = await notificationService.listNotifications({ limit: 5 });
-    const notifications = result.data ?? [];
+  const result = await activityService
+    .listActivities({ limit: 5 })
+    .catch(() => null);
 
-    const activities = notifications.map((n) => {
-      let type: "resource" | "question" | "team" | "discussion" | "connection" = "discussion";
-      const t = n.type;
-      if (t.startsWith("RESOURCE")) type = "resource";
-      else if (t.startsWith("QUESTION")) type = "question";
-      else if (t.startsWith("TEAM")) type = "team";
-      else if (t.startsWith("DISCUSSION")) type = "discussion";
-      else if (t.startsWith("CONNECTION")) type = "connection";
-
-      return {
-        id: n.id,
-        type,
-        action: n.title.toLowerCase(),
-        target: n.message,
-        targetId: n.link?.split("/").pop() ?? n.id,
-        user: { name: n.sender?.name ?? "Someone" },
-        timestamp: n.createdAt,
-      };
-    });
-
-    return <RecentActivity activities={activities} />;
-  } catch {
+  if (!result) {
     return <RecentActivity activities={[]} error />;
   }
+
+  return <RecentActivity activities={result.items} />;
 }
 
 async function TrendingSection() {
-  try {
-    const result = await resourceService.listResources({
-      sort: "popular",
-      limit: 4,
-    });
-    return <TrendingResources resources={result.data ?? []} />;
-  } catch {
+  const resources = await resourceService
+    .listResources({ sort: "popular", limit: 4 })
+    .then((result) => result.data ?? [])
+    .catch(() => null);
+
+  if (!resources) {
     return <TrendingResources resources={[]} error />;
   }
+
+  return <TrendingResources resources={resources} />;
 }
 
 async function ForYouSection() {
-  try {
-    const [discussions, questions, resources] = await Promise.all([
-      discussionService.getTrending(2).catch(() => []),
-      qaService.getTrending(2).catch(() => []),
-      resourceService.listResources({ sort: "newest", limit: 2 }).catch(() => ({ data: [] })),
-    ]);
-
-    const items = [
+  const items = await Promise.all([
+    discussionService.getTrending(2).catch(() => []),
+    qaService.getTrending(2).catch(() => []),
+    resourceService.listResources({ sort: "newest", limit: 2 }).catch(() => ({ data: [] })),
+  ]).then(
+    ([discussions, questions, resources]) => [
       ...discussions.map((d) => ({
         id: d.id,
         type: "discussion" as const,
@@ -109,47 +90,54 @@ async function ForYouSection() {
         href: ROUTES.RESOURCE(r.id),
         tags: r.resourceTags?.slice(0, 2).map((t) => t.tag?.name).filter(Boolean) as string[] | undefined,
       })),
-    ];
+    ],
+    () => null,
+  );
 
-    return <ForYou items={items} />;
-  } catch {
+  if (!items) {
     return <ForYou items={[]} error />;
   }
+
+  return <ForYou items={items} />;
 }
 
 async function EventsSection() {
-  try {
-    const result = await eventService.listEvents({
-      status: "UPCOMING",
-      limit: 4,
-    });
-    return <UpcomingEvents events={result.data ?? []} />;
-  } catch {
+  const events = await eventService
+    .listEvents({ status: "UPCOMING", limit: 4 })
+    .then((result) => result.data ?? [])
+    .catch(() => null);
+
+  if (!events) {
     return <UpcomingEvents events={[]} error />;
   }
+
+  return <UpcomingEvents events={events} />;
 }
 
 async function ContributorsSection() {
-  try {
-    const result = await gamificationService.getLeaderboard({
-      page: 1,
-      limit: 4,
-    });
-    return (
-      <TopContributors
-        contributors={(result.data ?? []).map((c) => ({
-          rank: c.rank,
-          name: c.user?.name ?? "Unknown",
-          image: c.user?.image,
-          score: c.totalPoints,
-        }))}
-        scoreLabel="points"
-        viewAllHref={ROUTES.LEADERBOARD}
-      />
-    );
-  } catch {
+  const contributors = await gamificationService
+    .getLeaderboard({ page: 1, limit: 4 })
+    .then((result) =>
+      (result.data ?? []).map((c) => ({
+        rank: c.rank,
+        name: c.user?.name ?? "Unknown",
+        image: c.user?.image,
+        score: c.totalPoints,
+      })),
+    )
+    .catch(() => null);
+
+  if (!contributors) {
     return <TopContributors contributors={[]} error />;
   }
+
+  return (
+    <TopContributors
+      contributors={contributors}
+      scoreLabel="points"
+      viewAllHref={ROUTES.LEADERBOARD}
+    />
+  );
 }
 
 // ── Skeleton loaders ─────────────────────────────────────────────────
@@ -214,6 +202,10 @@ export default function HomePage() {
       <div className="mx-auto grid max-w-screen-2xl gap-8 px-6 py-8 xl:px-8 lg:grid-cols-[1fr_340px]">
         {/* ── Left Column: Do ─────────────────────────────── */}
         <div className="space-y-10">
+          <Suspense fallback={null}>
+            <TransitionBanner />
+          </Suspense>
+
           <QuickActions />
 
           <Suspense fallback={<ActivitySkeleton />}>
