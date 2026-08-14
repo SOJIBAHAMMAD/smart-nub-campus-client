@@ -119,12 +119,17 @@ function LoginFormContent() {
       // Mirror the session token onto the frontend domain so proxy.ts can
       // gate routes and redirect ADMIN users to /admin. The real Better Auth
       // cookie lives on the backend domain (cross-site) and never reaches it.
+      // Best-effort: a mirror failure must not block the redirect.
       const sessionToken = response.data.token;
       if (sessionToken) {
-        await syncSessionCookie(
-          sessionToken,
-          data.remember ? 7 * 24 * 60 * 60 : undefined,
-        );
+        try {
+          await syncSessionCookie(
+            sessionToken,
+            data.remember ? 7 * 24 * 60 * 60 : undefined,
+          );
+        } catch {
+          // Continue to redirect; the restore effect re-syncs later.
+        }
       }
 
       // Respect the ?redirect= param set by proxy, or go to home.
