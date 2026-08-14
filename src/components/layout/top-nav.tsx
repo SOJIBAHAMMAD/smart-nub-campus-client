@@ -40,6 +40,7 @@ import { UserRole } from "@/constants/enums";
 import { AcademicCapIcon } from "../ui/icons/academic-cap";
 import Image from "next/image";
 import { authClient } from "@/lib/auth-client";
+import { clearSessionCookie } from "@/lib/session-mirror";
 import { useGlobalSearch } from "@/hooks/use-global-search";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { ThemeToggleButton } from "@/components/theme/theme-toggle";
@@ -153,6 +154,7 @@ export function TopNav({ userName, userImage, userId, userRole }: TopNavProps) {
 
   const handleSignOut = useCallback(async () => {
     await authClient.signOut();
+    await clearSessionCookie();
     router.push(ROUTES.LOGIN);
   }, [router]);
 

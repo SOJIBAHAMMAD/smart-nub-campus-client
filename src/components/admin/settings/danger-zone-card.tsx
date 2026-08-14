@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/card";
 import ROUTES from "@/constants/routes";
 import { authClient } from "@/lib/auth-client";
+import { clearSessionCookie } from "@/lib/session-mirror";
 import { toast } from "sonner";
 
 export function DangerZoneCard() {
@@ -23,6 +24,7 @@ export function DangerZoneCard() {
   const handleSignOut = async () => {
     try {
       await authClient.signOut();
+      await clearSessionCookie();
       toast.success("You have been signed out.");
       router.push(ROUTES.LOGIN);
     } catch {

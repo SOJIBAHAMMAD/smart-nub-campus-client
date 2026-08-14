@@ -15,6 +15,7 @@ import { PasswordField } from "@/components/forms/fields/password-field";
 import AuthInfo from "../_components/AuthInfo";
 import isStudentId from "@/lib/isStudentId";
 import { authClient } from "@/lib/auth-client";
+import { syncSessionCookie } from "@/lib/session-mirror";
 import { getEmailByStudentId } from "@/actions/auth.action";
 import { loginSchema, type LoginFormValues } from "@/schemas/auth/login.schema";
 import ROUTES from "@/constants/routes";
@@ -40,6 +41,23 @@ function LoginFormContent() {
       router.replace(ROUTES.LOGIN);
     }
   }, [isVerified, router]);
+
+  // Session restore: if the real (cross-site) session is still valid but the
+  // frontend mirror cookie expired, re-sync it and continue.
+  useEffect(() => {
+    (async () => {
+      try {
+        const { data } = await authClient.getSession();
+        if (data?.session?.token) {
+          await syncSessionCookie(data.session.token);
+          router.replace(ROUTES.HOME);
+        }
+      } catch {
+        // No active session — stay on the login page.
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const { control, handleSubmit } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -97,6 +115,17 @@ function LoginFormContent() {
       }
 
       setState({ success: true, error: null });
+
+      // Mirror the session token onto the frontend domain so proxy.ts can
+      // gate routes and redirect ADMIN users to /admin. The real Better Auth
+      // cookie lives on the backend domain (cross-site) and never reaches it.
+      const sessionToken = response.data.token;
+      if (sessionToken) {
+        await syncSessionCookie(
+          sessionToken,
+          data.remember ? 7 * 24 * 60 * 60 : undefined,
+        );
+      }
 
       // Respect the ?redirect= param set by proxy, or go to home.
       // If no redirect param, the proxy will redirect ADMIN users to /admin.

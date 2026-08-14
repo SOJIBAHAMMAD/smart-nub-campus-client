@@ -37,6 +37,7 @@ import { GlobalSearchProvider } from "@/providers/global-search-provider";
 import { GlobalSearchDialog } from "@/components/search/global-search-dialog";
 import { useGlobalSearch } from "@/hooks/use-global-search";
 import { authClient } from "@/lib/auth-client";
+import { clearSessionCookie } from "@/lib/session-mirror";
 import ROUTES from "@/constants/routes";
 
 const SIDEBAR_COLLAPSE_KEY = "snc-admin-sidebar-collapsed";
@@ -276,6 +277,7 @@ function AdminTopBar({
 
   const handleSignOut = async () => {
     await authClient.signOut();
+    await clearSessionCookie();
     router.push(ROUTES.LOGIN);
   };
 

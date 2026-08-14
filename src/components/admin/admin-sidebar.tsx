@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { authClient } from "@/lib/auth-client";
+import { clearSessionCookie } from "@/lib/session-mirror";
 import ROUTES from "@/constants/routes";
 
 // ── Navigation model ─────────────────────────────────────────────────────────
@@ -264,6 +265,7 @@ export function AdminSidebar({
   const handleSignOut = async () => {
     try {
       await authClient.signOut();
+      await clearSessionCookie();
     } finally {
       router.push(ROUTES.LOGIN);
     }
