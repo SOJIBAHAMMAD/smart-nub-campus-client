@@ -17,6 +17,8 @@ import { ConversationList } from "./conversation-list";
 import { ChatArea } from "./chat-area";
 import { UserProfilePanel } from "./user-profile-panel";
 import { NewMessageModal } from "./new-message-modal";
+import { ForwardMessageModal } from "./forward-message-modal";
+import { AddMembersModal } from "./add-members-modal";
 import { CreateGroupModal } from "./create-group-modal";
 
 interface MessagesPageClientProps {
@@ -43,6 +45,9 @@ export function MessagesPageClient({
   const [profileOpen, setProfileOpen] = useState(false);
   const [newOpen, setNewOpen] = useState(false);
   const [createGroupOpen, setCreateGroupOpen] = useState(false);
+  const [forwardOpen, setForwardOpen] = useState(false);
+  const [forwardMessage, setForwardMessage] = useState<Message | null>(null);
+  const [addMembersOpen, setAddMembersOpen] = useState(false);
   const [_loadingConvos, setLoadingConvos] = useState(false);
 
   const [onlineUsers, setOnlineUsers] = useState<Set<string>>(
@@ -51,6 +56,17 @@ export function MessagesPageClient({
   const [typingByConversation, setTypingByConversation] = useState<
     Record<string, { active: boolean; names?: string[]; ts?: number }>
   >({});
+
+  // Lookup for human-readable participant names used by typing indicators.
+  const participantNameMap = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const c of conversations) {
+      for (const p of c.conversationParticipants ?? []) {
+        if (!map.has(p.userId)) map.set(p.userId, p.user?.name ?? "User");
+      }
+    }
+    return map;
+  }, [conversations]);
 
   // Reply state
   const [replyTo, setReplyTo] = useState<Message | null>(null);
@@ -220,7 +236,9 @@ export function MessagesPageClient({
         ...prev,
         [data.conversationId]: {
           active: data.isTyping,
-          names: data.isTyping ? [data.userId] : undefined,
+          names: data.isTyping
+            ? [participantNameMap.get(data.userId) ?? "Someone"]
+            : undefined,
           ts: data.isTyping ? Date.now() : cur.ts,
         },
       };
@@ -329,6 +347,18 @@ export function MessagesPageClient({
     };
   }, [socket, activeConversationId]);
 
+  // After a socket reconnect, re-sync the open thread and conversation list so
+  // nothing sent while offline is lost or misordered.
+  const prevConnectionStatusRef = useRef(status);
+  useEffect(() => {
+    const prev = prevConnectionStatusRef.current;
+    prevConnectionStatusRef.current = status;
+    if (status === "connected" && prev === "disconnected") {
+      if (activeConversationId) void loadMessages(activeConversationId);
+      void refreshConversations();
+    }
+  }, [status, activeConversationId, loadMessages, refreshConversations]);
+
   const sendText = useCallback(
     async (text: string) => {
       if (!activeConversationId) return;
@@ -352,19 +382,34 @@ export function MessagesPageClient({
       setMessages((prev) => dedupe(prev.concat(optimistic)));
       setReplyTo(null);
 
-      socket?.emit("messaging:send", {
-        conversationId: activeConversationId,
-        content: text,
-        type: "text",
-        replyToId: replyTo?.id,
-      });
+      if (socket) {
+        socket.emit("messaging:send", {
+          conversationId: activeConversationId,
+          content: text,
+          type: "text",
+          replyToId: replyTo?.id,
+        });
+      } else {
+        // Socket unavailable (offline) — fail fast instead of leaving the
+        // optimistic message stuck in "sending" forever.
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === tempId ? { ...m, status: "failed" as const } : m,
+          ),
+        );
+        toast.error("You're offline. Message not sent — reconnecting…");
+      }
     },
     [activeConversationId, currentUserId, socket, replyTo],
   );
 
   const sendFile = useCallback(
     async (file: File) => {
-      if (!activeConversationId || !socket) return;
+      if (!activeConversationId) return;
+      if (!socket) {
+        toast.error("You're offline. File not sent — reconnecting…");
+        return;
+      }
       const isImage = file.type.startsWith("image/");
       const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
       const optimistic: Message = {
@@ -419,18 +464,16 @@ export function MessagesPageClient({
   }, []);
 
   const handleForward = useCallback((message: Message) => {
-    // Forward: pick target conversation then send
-    toast.info(`Forward "${message.content.slice(0, 30)}${message.content.length > 30 ? "..." : ""}" — select a conversation`);
-    // For now, open new message modal with forwarded state
-    setNewOpen(true);
+    // Forward: pick a target conversation from the existing thread list.
+    setForwardMessage(message);
+    setForwardOpen(true);
   }, []);
 
   const handleEdit = useCallback(async (message: Message) => {
     if (!activeConversationId) return;
-    const newContent = window.prompt("Edit message:", message.content);
-    if (!newContent || newContent === message.content) return;
+    // The inline editor in MessageBubble supplies the already-updated content.
     try {
-      const updated = await messageService.editMessage(activeConversationId, message.id, newContent);
+      const updated = await messageService.editMessage(activeConversationId, message.id, message.content);
       setMessages((prev) =>
         prev.map((m) =>
           m.id === message.id ? { ...m, content: updated.content, isEdited: true, editedAt: updated.editedAt } : m,
@@ -438,6 +481,7 @@ export function MessagesPageClient({
       );
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to edit message.");
+      throw err;
     }
   }, [activeConversationId]);
 
@@ -456,6 +500,26 @@ export function MessagesPageClient({
       toast.error(err instanceof Error ? err.message : "Failed to delete message.");
     }
   }, [activeConversationId]);
+
+  const handleClearMessages = useCallback(async () => {
+    if (!activeConversationId) return;
+    if (!confirm("Clear all messages in this conversation? This cannot be undone.")) return;
+    try {
+      await messageService.clearMessages(activeConversationId);
+      setMessages((prev) =>
+        prev.map((m) => ({
+          ...m,
+          isDeleted: true,
+          content: "This message was deleted.",
+          status: "sent" as const,
+        })),
+      );
+      toast.success("Conversation cleared.");
+      void refreshConversations();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to clear conversation.");
+    }
+  }, [activeConversationId, refreshConversations]);
 
   const handleReaction = useCallback(async (messageId: string, emoji: string) => {
     if (!activeConversationId) return;
@@ -533,7 +597,11 @@ export function MessagesPageClient({
   }, [activeConversationId, currentUserId]);
 
   const handleRetry = useCallback(async (message: Message) => {
-    if (!activeConversationId || !socket) return;
+    if (!activeConversationId) return;
+    if (!socket) {
+      toast.error("You're offline. Reconnect first, then retry.");
+      return;
+    }
     // Mark as sending
     setMessages((prev) =>
       prev.map((m) =>
@@ -659,6 +727,7 @@ export function MessagesPageClient({
       onClose={() => setProfileOpen(false)}
       onTogglePin={handleTogglePin}
       onToggleMute={handleToggleMute}
+      onAddMember={() => setAddMembersOpen(true)}
     />
   );
 
@@ -724,6 +793,7 @@ export function MessagesPageClient({
             onRetry={handleRetry}
             onToggleMute={handleToggleMute}
             isMuted={activeConvoMuted}
+            onClearMessages={handleClearMessages}
             replyTo={replyTo}
             onCancelReply={() => setReplyTo(null)}
             onSearch={handleSearch}
@@ -773,6 +843,33 @@ export function MessagesPageClient({
           selectConversation(conv.id);
         }}
       />
+
+      <ForwardMessageModal
+        open={forwardOpen}
+        onOpenChange={(open) => {
+          setForwardOpen(open);
+          if (!open) setForwardMessage(null);
+        }}
+        conversations={conversations}
+        currentUserId={currentUserId}
+        sourceConversationId={activeConversationId}
+        message={forwardMessage}
+        onForwarded={() => {
+          void refreshConversations();
+        }}
+      />
+
+      {activeConversation && (
+        <AddMembersModal
+          open={addMembersOpen}
+          onOpenChange={setAddMembersOpen}
+          conversation={activeConversation}
+          currentUserId={currentUserId}
+          onAdded={() => {
+            void refreshConversations();
+          }}
+        />
+      )}
     </>
   );
 }

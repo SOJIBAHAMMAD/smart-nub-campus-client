@@ -139,6 +139,23 @@ export const messageClientService = {
     );
   },
 
+  async clearMessages(conversationId: string): Promise<{ count: number }> {
+    const res = await apiClient.del<{ count: number }>(
+      `/messages/conversations/${conversationId}/messages`,
+    );
+    return unwrap<{ count: number }>(res.data);
+  },
+
+  async addMembers(
+    conversationId: string,
+    participantIds: string[],
+  ): Promise<void> {
+    await apiClient.post(
+      `/messages/groups/${conversationId}/members`,
+      { participantIds },
+    );
+  },
+
   async addReaction(
     conversationId: string,
     messageId: string,

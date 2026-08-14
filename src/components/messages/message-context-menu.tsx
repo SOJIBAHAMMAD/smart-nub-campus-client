@@ -20,6 +20,8 @@ import {
 interface MessageContextMenuProps {
   message: Message;
   isOwn: boolean;
+  /** Whether the current user is a group admin and can moderate others' messages. */
+  isAdmin?: boolean;
   children: React.ReactNode;
   onReply: (message: Message) => void;
   onForward: (message: Message) => void;
@@ -31,6 +33,7 @@ interface MessageContextMenuProps {
 export function MessageContextMenu({
   message,
   isOwn,
+  isAdmin = false,
   children,
   onReply,
   onForward,
@@ -46,7 +49,7 @@ export function MessageContextMenu({
   };
 
   const canEdit = isOwn && message.type === "TEXT" && !message.isDeleted;
-  const canDelete = isOwn || !isOwn;
+  const canDelete = isOwn || isAdmin;
 
   return (
     <DropdownMenu>

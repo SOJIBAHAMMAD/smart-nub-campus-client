@@ -69,6 +69,8 @@ interface MessageBubbleProps {
   showSender: boolean;
   participants?: { id: string; name: string; image?: string | null }[];
   currentUserId: string;
+  /** Whether the current user can moderate the conversation (group admin). */
+  isAdmin?: boolean;
   /** Whether to show read receipts. Respects the recipient's readReceipts preference. */
   showReadReceipts?: boolean;
   searchHighlight?: {
@@ -91,6 +93,7 @@ export function MessageBubble({
   showSender,
   participants = [],
   currentUserId,
+  isAdmin = false,
   showReadReceipts = true,
   searchHighlight,
   onReply,
@@ -102,12 +105,42 @@ export function MessageBubble({
   onRetry,
 }: MessageBubbleProps) {
   const [showReactionPicker, setShowReactionPicker] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState("");
+  const [savingEdit, setSavingEdit] = useState(false);
   const sender = participants.find((p) => p.id === message.senderId);
   const isImage = message.type === "IMAGE";
   const isFile = message.type === "FILE";
   const isDeleted = message.isDeleted;
   const isFailed = message.status === "failed";
   const isSending = message.status === "sending";
+  const canEdit = isOwn && !isDeleted && !isFailed && message.type === "TEXT";
+  const canDelete = isOwn || isAdmin;
+
+  const beginEdit = () => {
+    setDraft(message.content);
+    setEditing(true);
+  };
+
+  const cancelEdit = () => {
+    setEditing(false);
+    setDraft("");
+  };
+
+  const saveEdit = async () => {
+    const next = draft.trim();
+    if (!next || next === message.content || !onEdit) {
+      setEditing(false);
+      return;
+    }
+    setSavingEdit(true);
+    try {
+      await onEdit({ ...message, content: next });
+      setEditing(false);
+    } finally {
+      setSavingEdit(false);
+    }
+  };
 
   const bubbleContent = (
     <Bubble
@@ -191,6 +224,43 @@ export function MessageBubble({
             </span>
             <Download className="size-4 shrink-0 text-muted-foreground" />
           </a>
+        ) : editing && canEdit ? (
+          <div className="flex flex-col gap-2">
+            <textarea
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  void saveEdit();
+                }
+                if (e.key === "Escape") cancelEdit();
+              }}
+              rows={3}
+              autoFocus
+              aria-label="Edit message"
+              className="min-h-16 w-full resize-none rounded-lg border bg-background px-3 py-2 text-sm outline-none ring-1 ring-primary/30 focus:ring-2 focus:ring-primary"
+            />
+            <div className="flex justify-end gap-1.5">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={cancelEdit}
+                className="h-7 px-2 text-xs"
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="default"
+                size="sm"
+                disabled={savingEdit || !draft.trim()}
+                onClick={() => void saveEdit()}
+                className="h-7 px-2 text-xs"
+              >
+                {savingEdit ? "Saving..." : "Save"}
+              </Button>
+            </div>
+          </div>
         ) : (
           <p className="whitespace-pre-wrap wrap-break-word leading-relaxed">
             {searchHighlight && message.content
@@ -302,14 +372,15 @@ export function MessageBubble({
           </MessageHeader>
         )}
 
-        {onReply || onForward || onDelete ? (
+        {onReply || onForward || canDelete ? (
           <MessageContextMenu
             message={message}
             isOwn={isOwn}
+            isAdmin={isAdmin}
             onReply={onReply ?? (() => {})}
             onForward={onForward ?? (() => {})}
-            onEdit={onEdit}
-            onDelete={onDelete}
+            onEdit={canEdit ? beginEdit : undefined}
+            onDelete={canDelete ? onDelete : undefined}
           >
             <div
               className="group/context relative w-fit"
