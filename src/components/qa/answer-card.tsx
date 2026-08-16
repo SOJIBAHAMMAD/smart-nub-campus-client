@@ -9,6 +9,7 @@ import { VoteControls } from "@/components/ui/vote-controls";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { RichTextEditor, RichTextEditorContent, RichTextEditorToolbar } from "@/components/ui/rich-text-editor";
+import { SafeHTML } from "@/components/ui/safe-html";
 import { cn } from "@/lib/utils";
 
 interface AnswerCardProps {
@@ -120,9 +121,9 @@ export function AnswerCard({
               </div>
             </div>
           ) : (
-            <div
+            <SafeHTML
               className="prose prose-sm max-w-none dark:prose-invert"
-              dangerouslySetInnerHTML={{ __html: answer.content }}
+              html={answer.content}
             />
           )}
 

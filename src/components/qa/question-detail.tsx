@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { AnswerCard } from "@/components/qa/answer-card";
 import { AnswerForm } from "@/components/qa/answer-form";
+import { SafeHTML } from "@/components/ui/safe-html";
 import {
   voteQuestion,
   bookmarkQuestion,
@@ -343,9 +344,9 @@ export function QuestionDetail({
       {/* ── Content ────────────────────────────────────────────── */}
       <Card>
           <CardContent className="p-5">
-          <div
+          <SafeHTML
             className="prose prose-sm max-w-none dark:prose-invert"
-            dangerouslySetInnerHTML={{ __html: question.content }}
+            html={question.content}
           />
 
           {/* Tags */}

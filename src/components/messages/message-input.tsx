@@ -36,6 +36,7 @@ export function MessageInput({
   const fileRef = useRef<HTMLInputElement>(null);
   const taRef = useRef<HTMLTextAreaElement>(null);
   const typingFiredRef = useRef(false);
+  const composingRef = useRef(false);
 
   const resize = useCallback(() => {
     const ta = taRef.current;
@@ -71,6 +72,8 @@ export function MessageInput({
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
+      // Guard against firing while an IME composition is in progress.
+      if (e.nativeEvent.isComposing || composingRef.current) return;
       e.preventDefault();
       submit();
     }
@@ -154,6 +157,12 @@ export function MessageInput({
             value={value}
             onChange={handleChange}
             onKeyDown={handleKeyDown}
+            onCompositionStart={() => {
+              composingRef.current = true;
+            }}
+            onCompositionEnd={() => {
+              composingRef.current = false;
+            }}
             onBlur={() => {
               if (typingFiredRef.current) {
                 typingFiredRef.current = false;

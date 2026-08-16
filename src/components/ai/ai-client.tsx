@@ -50,6 +50,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { sanitizeHtml } from "@/components/ui/safe-html";
 
 const SUGGESTIONS_POOL = [
   "Explain this in more detail",
@@ -950,6 +951,7 @@ function MessageCitationsRenderer({
   reasoningText: string;
 }) {
   const { cleanedText, sources } = useMemo(() => parseCitations(content), [content]);
+  const sanitized = useMemo(() => sanitizeHtml(cleanedText), [cleanedText]);
 
   return (
     <div>
@@ -991,7 +993,7 @@ function MessageCitationsRenderer({
             },
           }}
         >
-          {cleanedText}
+          {sanitized}
         </ReactMarkdown>
       </div>
       <CitationSources sources={sources} />

@@ -69,6 +69,46 @@ function SearchScroller({
   return null;
 }
 
+/**
+ * Scrolls the thread to the latest message when a conversation is opened or
+ * switched. The scroller component stays mounted across route changes, so the
+ * library's `defaultScrollPosition` only fires once; this explicitly re-runs
+ * it after the fresh batch of messages finishes loading.
+ */
+function ConversationEndScroller({
+  conversationId,
+  loadingMessages,
+  hasMessages,
+}: {
+  conversationId: string;
+  loadingMessages: boolean;
+  hasMessages: boolean;
+}) {
+  const { scrollToEnd } = useMessageScroller();
+  const pendingRef = useRef<string | null>(null);
+  const scrollToEndRef = useRef(scrollToEnd);
+
+  useEffect(() => {
+    scrollToEndRef.current = scrollToEnd;
+  }, [scrollToEnd]);
+
+  useEffect(() => {
+    pendingRef.current = conversationId;
+  }, [conversationId]);
+
+  useEffect(() => {
+    if (loadingMessages || !hasMessages) return;
+    if (pendingRef.current !== conversationId) return;
+    pendingRef.current = null;
+    const raf = requestAnimationFrame(() =>
+      requestAnimationFrame(() => scrollToEndRef.current()),
+    );
+    return () => cancelAnimationFrame(raf);
+  }, [conversationId, loadingMessages, hasMessages]);
+
+  return null;
+}
+
 interface ChatAreaProps {
   conversation: Conversation | null;
   currentUserId: string;
@@ -92,6 +132,7 @@ interface ChatAreaProps {
   onRetry?: (message: Message) => void;
   onToggleMute?: () => void;
   isMuted?: boolean;
+  onClearMessages?: () => void;
   replyTo?: Message | null;
   onCancelReply?: () => void;
   onSearch?: (query: string) => void;
@@ -127,6 +168,7 @@ export function ChatArea({
   onRetry,
   onToggleMute,
   isMuted,
+  onClearMessages,
   replyTo,
   onCancelReply,
   onSearch,
@@ -217,6 +259,14 @@ export function ChatArea({
         image: p.user?.image,
       })) ?? [],
     [conversation],
+  );
+
+  const isGroupAdmin = useMemo(
+    () =>
+      conversation?.conversationParticipants?.some(
+        (p) => p.userId === currentUserId && p.isAdmin,
+      ) ?? false,
+    [conversation, currentUserId],
   );
 
   if (!conversation) {
@@ -348,10 +398,16 @@ export function ChatArea({
               </DropdownMenuItem>
             )}
             <DropdownMenuSeparator />
-            <DropdownMenuItem variant="destructive" onClick={() => {}}>
-              <Trash2 className="size-4" />
-              Clear messages
-            </DropdownMenuItem>
+            {onClearMessages && (
+              <DropdownMenuItem
+                variant="destructive"
+                onClick={onClearMessages}
+                disabled={messages.length === 0}
+              >
+                <Trash2 className="size-4" />
+                Clear messages
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </header>
@@ -384,6 +440,11 @@ export function ChatArea({
           searchQuery={searchQuery}
           searchResultIds={searchResultIds}
           searchHighlightIndex={searchHighlightIndex}
+        />
+        <ConversationEndScroller
+          conversationId={conversation.id}
+          loadingMessages={loadingMessages}
+          hasMessages={messages.length > 0}
         />
         <MessageScroller className="flex-1">
           <MessageScrollerViewport
@@ -471,6 +532,7 @@ export function ChatArea({
                                 showSender={showSender}
                                 currentUserId={currentUserId}
                                 participants={participants}
+                                isAdmin={isGroupAdmin}
                                 searchHighlight={
                                   searchQuery && searchResultIds.includes(m.id)
                                     ? {

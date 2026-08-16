@@ -26,6 +26,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { SafeHTML } from "@/components/ui/safe-html";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -705,12 +706,12 @@ export function MentorshipDetailClient({
             </p>
             {session.agenda && (
               <div className="mt-1 space-y-1">
-                <div
+                <SafeHTML
                   className={cn(
                     "prose prose-sm max-w-none dark:prose-invert",
                     !agendaExpanded && agendaLong && "line-clamp-2",
                   )}
-                  dangerouslySetInnerHTML={{ __html: session.agenda }}
+                  html={session.agenda}
                 />
                 {agendaLong && (
                   <button

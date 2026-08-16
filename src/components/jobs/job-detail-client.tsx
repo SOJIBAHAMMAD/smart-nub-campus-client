@@ -41,6 +41,7 @@ import {
 import { TagPill } from "@/components/ui/tag-pill";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { SafeHTML } from "@/components/ui/safe-html";
 import ROUTES from "@/constants/routes";
 import { JobPostStatus, ApplicationStatus, UserRole, JobSource } from "@/constants/enums";
 import { APPLICATION_FIELD_META, DEFAULT_JOB_APPLICATION_FORM } from "@/constants/jobs";
@@ -618,9 +619,9 @@ export function JobDetailClient({
               </CardHeader>
               <CardContent className="pb-5 sm:pb-6">
                 {isRichHtml(job.description) ? (
-                  <div
+                  <SafeHTML
                     className="prose prose-sm max-w-none dark:prose-invert [&_a]:break-all"
-                    dangerouslySetInnerHTML={{ __html: job.description }}
+                    html={job.description}
                   />
                 ) : (
                   <p className="whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">

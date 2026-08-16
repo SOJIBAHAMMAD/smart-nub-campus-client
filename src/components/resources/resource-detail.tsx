@@ -15,6 +15,7 @@ import {
 import { TagPill } from "@/components/ui/tag-pill";
 import { VoteControls } from "@/components/ui/vote-controls";
 import { Avatar } from "@/components/ui/avatar";
+import { SafeHTML } from "@/components/ui/safe-html";
 import { CommentSection } from "@/components/resources/comment-section";
 import {
   FileIcon,
@@ -350,9 +351,9 @@ export function ResourceDetail({
           <h3 className="mb-3 text-sm font-semibold text-foreground">
             Description
           </h3>
-          <div
+          <SafeHTML
             className="prose prose-sm max-w-none dark:prose-invert [&>pre]:border [&>pre]:border-border [&>mark]:rounded-sm [&>mark]:bg-warm/40 [&>mark]:px-0.5 [&>mark]:text-warm-foreground max-sm:[&>pre]:text-xs"
-            dangerouslySetInnerHTML={{ __html: resource.description }}
+            html={resource.description}
           />
         </div>
       )}

@@ -28,6 +28,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { TagPill } from "@/components/ui/tag-pill";
 import { AuthorInfo } from "@/components/ui/author-info";
 import { AvatarGroup } from "@/components/ui/avatar-group";
+import { SafeHTML } from "@/components/ui/safe-html";
 import {
   Dialog,
   DialogContent,
@@ -552,9 +553,9 @@ export function TeamDetail({
       <Card>
         <CardContent className="p-5">
           <h3 className="text-sm font-semibold text-foreground">Description</h3>
-          <div
+          <SafeHTML
             className="prose prose-sm max-w-none dark:prose-invert [&>pre]:border [&>pre]:border-border [&>mark]:rounded-sm [&>mark]:bg-warm/40 [&>mark]:px-0.5 [&>mark]:text-warm-foreground max-sm:[&>pre]:text-xs"
-            dangerouslySetInnerHTML={{ __html: team.description }}
+            html={team.description}
           />
         </CardContent>
       </Card>

@@ -20,6 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import { TagPill } from "@/components/ui/tag-pill";
 import { VoteControls } from "@/components/ui/vote-controls";
 import { AuthorInfo } from "@/components/ui/author-info";
+import { SafeHTML } from "@/components/ui/safe-html";
 import {
   Select,
   SelectContent,
@@ -550,9 +551,9 @@ export function DiscussionDetail({
         <>
           <Card>
             <CardContent className="p-5 sm:p-6">
-              <div
+              <SafeHTML
                 className="prose prose-sm max-w-none dark:prose-invert"
-                dangerouslySetInnerHTML={{ __html: discussion.content }}
+                html={discussion.content}
               />
             </CardContent>
           </Card>
