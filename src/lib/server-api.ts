@@ -57,6 +57,20 @@ function triggerInvalidation(tags: string[]) {
   }
 }
 
+// Mirrored Better Auth session cookie set on the frontend domain by
+// /api/auth/session. Its name carries a `__Secure-` prefix in production, so
+// match on the suffix to stay independent of the exact prefix.
+const SESSION_MIRROR_COOKIE_SUFFIX = "better-auth.session_token";
+
+function getMirrorSessionToken(
+  cookies: { name: string; value: string }[],
+): string | null {
+  const entry = cookies.find((c) =>
+    c.name.endsWith(SESSION_MIRROR_COOKIE_SUFFIX),
+  );
+  return entry && entry.value ? entry.value : null;
+}
+
 async function apiFetch<T = unknown>(
   endpoint: string,
   config: RequestInit = {},
@@ -67,7 +81,15 @@ async function apiFetch<T = unknown>(
 
   // Gather existing cookies to send TO Express
   const allCookies = cookieStore.getAll();
-  const cookieString = allCookies.map((c) => `${c.name}=${c.value}`).join("; ");
+  const mirrorToken = getMirrorSessionToken(allCookies);
+  // The mirrored session cookie holds only the raw session ID, which fails
+  // Better Auth's signed-cookie check when forwarded as-is. Strip it from the
+  // Cookie header and send it as a Bearer token instead; the backend's
+  // `bearer()` plugin signs it and sets the session cookie internally.
+  const cookieString = allCookies
+    .filter((c) => !c.name.endsWith(SESSION_MIRROR_COOKIE_SUFFIX))
+    .map((c) => `${c.name}=${c.value}`)
+    .join("; ");
 
   // Don't set Content-Type for FormData - browser will set it with boundary
   const isFormData = config.body instanceof FormData;
@@ -75,6 +97,7 @@ async function apiFetch<T = unknown>(
   config.headers = {
     ...(isFormData ? {} : { "Content-Type": "application/json" }),
     Cookie: cookieString,
+    ...(mirrorToken ? { Authorization: `Bearer ${mirrorToken}` } : {}),
     ...config.headers,
   };
 

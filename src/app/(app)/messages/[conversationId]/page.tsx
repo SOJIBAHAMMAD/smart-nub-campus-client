@@ -27,6 +27,8 @@ export default async function ConversationPage({ params }: PageProps) {
 
   let currentUserId = "";
   let initialConversations: Conversation[] = [];
+  // null = validation request itself failed (show client fallback, don't 404).
+  let conversationExists: boolean | null = null;
 
   try {
     const me = await serverApi.get<{ user: { id: string } }>("/identity/me", {
@@ -36,13 +38,26 @@ export default async function ConversationPage({ params }: PageProps) {
 
     const res = await messageService.listConversations({ limit: 50 });
     initialConversations = res.conversations ?? [];
+
+    // Validate the conversation exists and the user is a participant. Looking
+    // it up directly avoids a false 404 for conversations that fall outside
+    // the first page of the conversation list.
+    const single = await messageService
+      .getConversationById(conversationId)
+      .catch((err: unknown) => {
+        const status = (err as { status?: number })?.status;
+        if (status === 404 || status === 403) return null;
+        throw err;
+      });
+    conversationExists = single !== null;
+    if (single && !initialConversations.some((c) => c.id === conversationId)) {
+      initialConversations = [single, ...initialConversations];
+    }
   } catch {
     // Client handles empty/error state gracefully.
   }
 
-  // Validate that the conversation exists and the user is a participant
-  const isValid = initialConversations.some((c) => c.id === conversationId);
-  if (!isValid && initialConversations.length > 0) {
+  if (conversationExists === false) {
     notFound();
   }
 

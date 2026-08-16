@@ -19,6 +19,7 @@ interface UserProfilePanelProps {
   onClose: () => void;
   onTogglePin?: (pinned: boolean) => void;
   onToggleMute?: (muted: boolean) => void;
+  onAddMember?: () => void;
   className?: string;
 }
 
@@ -30,6 +31,7 @@ export function UserProfilePanel({
   onClose,
   onTogglePin,
   onToggleMute,
+  onAddMember,
   className,
 }: UserProfilePanelProps) {
   if (!conversation) return null;
@@ -38,6 +40,7 @@ export function UserProfilePanel({
   const me = conversation.conversationParticipants?.find((p) => p.userId === currentUserId);
   const isPinned = me?.isPinned ?? false;
   const isMuted = me?.isMuted ?? false;
+  const canManageMembers = me?.isAdmin ?? false;
 
   if (isGroup) {
     const members = conversation.conversationParticipants ?? [];
@@ -102,8 +105,14 @@ export function UserProfilePanel({
               <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Members ({members.length})
               </h4>
-              {conversation.creatorId === currentUserId && (
-                <Button variant="ghost" size="icon" className="size-6" aria-label="Add member">
+              {canManageMembers && onAddMember && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="size-6"
+                  aria-label="Add member"
+                  onClick={onAddMember}
+                >
                   <Users className="size-3.5" />
                 </Button>
               )}

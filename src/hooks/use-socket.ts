@@ -4,6 +4,8 @@ import { useEffect, useRef, useCallback, useState } from "react";
 import { io, type Socket } from "socket.io-client";
 import type { SocketEvents, ServerEvents } from "@/lib/types/socket-events";
 import { env } from "@/env";
+import { authClient } from "@/lib/auth-client";
+import { getMirroredSessionToken } from "@/lib/session-mirror";
 
 interface UseSocketOptions {
   /** Socket.IO server URL. Defaults to NEXT_PUBLIC_API_URL. */
@@ -61,12 +63,32 @@ export function useSocket(options: UseSocketOptions = {}): UseSocketReturn {
   const connectedRef = useRef(false);
   const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const connect = useCallback(() => {
+  const connect = useCallback(async () => {
     if (connectedRef.current) return;
     connectedRef.current = true;
 
+    // The Socket.IO server requires a session token in the handshake. If the
+    // caller didn't provide one, resolve it from the current Better Auth
+    // session (cross-site cookie) falling back to the mirrored frontend
+    // cookie, so the auth header is never silently absent.
+    let authToken = token;
+    if (!authToken) {
+      try {
+        const { data } = await authClient.getSession();
+        authToken = data?.session?.token ?? undefined;
+      } catch {
+        authToken = undefined;
+      }
+      if (!authToken) {
+        authToken = (await getMirroredSessionToken()) ?? undefined;
+      }
+    }
+
+    // Component may have unmounted while we awaited the token.
+    if (!connectedRef.current) return;
+
     const socketInstance = io(url, {
-      auth: token ? { token } : undefined,
+      auth: authToken ? { token: authToken } : undefined,
       transports: ["websocket", "polling"],
       reconnection: true,
       reconnectionAttempts: Infinity,

@@ -46,6 +46,27 @@ interface IdentityPayload {
 }
 
 /**
+ * Reads the mirrored Better Auth session token from the request cookies.
+ *
+ * The token is stored on the frontend domain by /api/auth/session after
+ * sign-in. Its name carries a `__Secure-` prefix in production, so match on
+ * the suffix to stay independent of the exact prefix.
+ */
+function getMirrorToken(cookieHeader: string): string | null {
+  const entry = cookieHeader
+    .split(";")
+    .map((part) => part.trim())
+    .find((part) => {
+      const eq = part.indexOf("=");
+      return (
+        eq !== -1 && part.slice(0, eq).endsWith("better-auth.session_token")
+      );
+    });
+  if (!entry) return null;
+  return entry.slice(entry.indexOf("=") + 1);
+}
+
+/**
  * Checks the user's session and role via the backend identity endpoint.
  * Returns the user's role or null if unauthenticated / unreachable.
  */
@@ -53,10 +74,21 @@ async function getUserRole(
   request: NextRequest,
 ): Promise<string | null> {
   try {
+    const cookieHeader = request.headers.get("cookie") || "";
+
+    // The cookie value is the raw session token, so forward it as a Bearer
+    // token — the backend's `bearer()` plugin signs and validates it. The
+    // cookie alone would fail Better Auth's signature check on read.
+    const mirrorToken = getMirrorToken(cookieHeader);
+    const headers: Record<string, string> = { Cookie: cookieHeader };
+    if (mirrorToken) {
+      headers["Authorization"] = `Bearer ${mirrorToken}`;
+    }
+
     const response = await fetch(
       `${process.env.NEXT_PUBLIC_API_URL}/identity/me`,
       {
-        headers: { Cookie: request.headers.get("cookie") || "" },
+        headers,
         cache: "no-store",
       },
     );
