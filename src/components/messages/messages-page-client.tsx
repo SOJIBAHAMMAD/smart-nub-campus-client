@@ -697,6 +697,19 @@ export function MessagesPageClient({
     [conversations, activeConversationId],
   );
 
+  // other-participant userId -> conversationId for existing DIRECT threads,
+  // so the new-message modal can avoid starting duplicate conversations.
+  const existingConversationByUser = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const c of conversations) {
+      if (c.type !== "DIRECT") continue;
+      for (const p of c.conversationParticipants ?? []) {
+        if (p.userId !== currentUserId) map.set(p.userId, c.id);
+      }
+    }
+    return map;
+  }, [conversations, currentUserId]);
+
   const sharedFiles = useMemo(
     () =>
       messages.filter(
@@ -822,6 +835,8 @@ export function MessagesPageClient({
         open={newOpen}
         onOpenChange={setNewOpen}
         currentUserId={currentUserId}
+        existingConversationByUser={existingConversationByUser}
+        onOpenConversation={selectConversation}
         onStart={(c) => {
           setConversations((prev) =>
             prev.some((x) => x.id === c.id) ? prev : [c, ...prev],
