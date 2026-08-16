@@ -153,6 +153,10 @@ export const techMap: Record<string, string> = {
   emacs: "devicon-emacs-original",
   sublime: "devicon-sublime-plain",
 
+  // ── Hardware / Embedded ────────────────────────────────────────
+  arduino: "devicon-arduino-plain",
+  raspberrypi: "devicon-raspberrypi-line",
+
   // ── Testing ────────────────────────────────────────────────────
   jest: "devicon-jest-plain",
   mocha: "devicon-mocha-plain",

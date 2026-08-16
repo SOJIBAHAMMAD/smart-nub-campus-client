@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { Tag, Network } from "lucide-react";
+import { Tag, Network, Brain, Cloud, Cpu } from "lucide-react";
 import { getTagIcon, hasDeviconIcon } from "../tag-icons";
 
 describe("getTagIcon", () => {
@@ -25,6 +25,25 @@ describe("getTagIcon", () => {
     const result = getTagIcon("DSA");
     expect(result.type).toBe("lucide");
     expect(result.icon).toBe(Network);
+  });
+
+  it("resolves hyphenated lucide keys for multi-word names", () => {
+    expect(getTagIcon("Data Structures")).toEqual({
+      type: "lucide",
+      icon: Network,
+    });
+    expect(getTagIcon("Cloud Computing")).toEqual({
+      type: "lucide",
+      icon: Cloud,
+    });
+    expect(getTagIcon("Machine Learning")).toEqual({
+      type: "lucide",
+      icon: Cpu,
+    });
+    expect(getTagIcon("Artificial Intelligence")).toEqual({
+      type: "lucide",
+      icon: Brain,
+    });
   });
 
   it("falls back to the generic Tag icon for unknown tags", () => {
