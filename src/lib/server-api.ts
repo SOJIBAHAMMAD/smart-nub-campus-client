@@ -26,7 +26,7 @@ import { cookies } from "next/headers";
 import { updateTag, revalidateTag } from "next/cache";
 
 const API_URL =
-  env.API_URL || env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
+  env.API_URL || env.NEXT_PUBLIC_API_URL;
 
 type ApiResponsePromise<T> = Promise<ApiResponse<T>>;
 
@@ -57,6 +57,20 @@ function triggerInvalidation(tags: string[]) {
   }
 }
 
+// Mirrored Better Auth session cookie set on the frontend domain by
+// /api/auth/session. Its name carries a `__Secure-` prefix in production, so
+// match on the suffix to stay independent of the exact prefix.
+const SESSION_MIRROR_COOKIE_SUFFIX = "better-auth.session_token";
+
+function getMirrorSessionToken(
+  cookies: { name: string; value: string }[],
+): string | null {
+  const entry = cookies.find((c) =>
+    c.name.endsWith(SESSION_MIRROR_COOKIE_SUFFIX),
+  );
+  return entry && entry.value ? entry.value : null;
+}
+
 async function apiFetch<T = unknown>(
   endpoint: string,
   config: RequestInit = {},
@@ -67,7 +81,15 @@ async function apiFetch<T = unknown>(
 
   // Gather existing cookies to send TO Express
   const allCookies = cookieStore.getAll();
-  const cookieString = allCookies.map((c) => `${c.name}=${c.value}`).join("; ");
+  const mirrorToken = getMirrorSessionToken(allCookies);
+  // The mirrored session cookie holds only the raw session ID, which fails
+  // Better Auth's signed-cookie check when forwarded as-is. Strip it from the
+  // Cookie header and send it as a Bearer token instead; the backend's
+  // `bearer()` plugin signs it and sets the session cookie internally.
+  const cookieString = allCookies
+    .filter((c) => !c.name.endsWith(SESSION_MIRROR_COOKIE_SUFFIX))
+    .map((c) => `${c.name}=${c.value}`)
+    .join("; ");
 
   // Don't set Content-Type for FormData - browser will set it with boundary
   const isFormData = config.body instanceof FormData;
@@ -75,6 +97,7 @@ async function apiFetch<T = unknown>(
   config.headers = {
     ...(isFormData ? {} : { "Content-Type": "application/json" }),
     Cookie: cookieString,
+    ...(mirrorToken ? { Authorization: `Bearer ${mirrorToken}` } : {}),
     ...config.headers,
   };
 
@@ -102,31 +125,37 @@ async function apiFetch<T = unknown>(
   const response = await fetch(url, config);
 
   // Extract cookies returned FROM Express and set them in Next.js browser
+  // This may throw in Server Components where cookies() is read-only;
+  // silently skip — cookie forwarding still works in Server Actions / Route Handlers.
   const setCookieHeaders = response.headers.getSetCookie(); // Native fetch array method
   if (setCookieHeaders && setCookieHeaders.length > 0) {
-    for (const cookieStr of setCookieHeaders) {
-      // Basic parser to split name=value from attributes
-      const parts = cookieStr.split(";");
-      const [nameValue] = parts;
-      const [name, value] = nameValue.split("=");
+    try {
+      for (const cookieStr of setCookieHeaders) {
+        // Basic parser to split name=value from attributes
+        const parts = cookieStr.split(";");
+        const [nameValue] = parts;
+        const [name, value] = nameValue.split("=");
 
-      if (name) {
-        const cookieName = name.trim();
-        const cookieValue = value?.trim() ?? "";
+        if (name) {
+          const cookieName = name.trim();
+          const cookieValue = value?.trim() ?? "";
 
-        if (cookieValue) {
-          // Set the cookie with the new value
-          cookieStore.set(cookieName, cookieValue, {
-            path: "/",
-            httpOnly: true,
-            secure: env.NODE_ENV === "production",
-            sameSite: "lax",
-          });
-        } else {
-          // Empty value means the cookie should be cleared
-          cookieStore.delete(cookieName);
+          if (cookieValue) {
+            // Set the cookie with the new value
+            cookieStore.set(cookieName, cookieValue, {
+              path: "/",
+              httpOnly: true,
+              secure: env.NODE_ENV === "production",
+              sameSite: "lax",
+            });
+          } else {
+            // Empty value means the cookie should be cleared
+            cookieStore.delete(cookieName);
+          }
         }
       }
+    } catch {
+      // Read-only cookie store (Server Component context) — skip cookie sync
     }
   }
 

@@ -17,6 +17,7 @@ import {
   completeOnboarding,
 } from "@/actions/onboarding.action";
 import Link from "next/link";
+import ROUTES from "@/constants/routes";
 
 interface OnboardingFlowProps {
   initialStep: OnboardingStepValue;
@@ -44,13 +45,30 @@ export function OnboardingFlow({
       studentId: string;
       idCardImage: string;
       idCardImagePublicId?: string | null;
+      requestType: string;
+      graduationYear?: string;
+      degreeTitle?: string;
     }) => {
       setIsSubmitting(true);
       setError(null);
 
       try {
         // Backend sets the onboarding_step cookie and returns full state
-        const response = await createVerificationRequest(formData);
+        const response = await createVerificationRequest({
+          name: formData.name,
+          email: formData.email,
+          dateOfBirth: formData.dateOfBirth,
+          studentId: formData.studentId,
+          idCardImage: formData.idCardImage,
+          idCardImagePublicId: formData.idCardImagePublicId,
+          requestType: formData.requestType as
+            | "STUDENT"
+            | "ALUMNI",
+          graduationYear: formData.graduationYear
+            ? Number(formData.graduationYear)
+            : undefined,
+          degreeTitle: formData.degreeTitle || undefined,
+        });
         setCurrentStep(response.currentStep);
         setVerificationRequest(response.verificationRequest);
       } catch (err) {
@@ -71,9 +89,12 @@ export function OnboardingFlow({
   useEffect(() => {
     if (currentStep !== OnboardingStepValue.ADMIN_REVIEW) return;
 
+    let consecutiveErrors = 0;
+
     const pollStatus = async () => {
       try {
         const data = await getCurrentStep();
+        consecutiveErrors = 0;
 
         // Update verification request data if available (backend now always includes it)
         if (data.verificationRequest) {
@@ -85,7 +106,12 @@ export function OnboardingFlow({
           setCurrentStep(OnboardingStepValue.ACCOUNT_CREATION);
         }
       } catch {
-        // Continue polling on network errors
+        consecutiveErrors += 1;
+        if (consecutiveErrors >= 5) {
+          setError(
+            "Unable to check review status. Please check your connection and refresh the page.",
+          );
+        }
       }
     };
 
@@ -116,12 +142,9 @@ export function OnboardingFlow({
       <div className="flex items-center justify-center py-20">
         <div className="flex flex-col items-center gap-4">
           <p className="text-sm text-destructive">{error}</p>
-          <button
-            onClick={handleRetry}
-            className="text-sm text-brand underline hover:no-underline"
-          >
+          <Button variant="outline" onClick={handleRetry}>
             Try again
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -216,6 +239,11 @@ export function OnboardingFlow({
                   account setup.
                 </p>
               </div>
+              {error && (
+                <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
+                  {error}
+                </div>
+              )}
               <VerifyEmailForm
                 email={verificationRequest?.email}
                 skipInitialSend
@@ -238,12 +266,24 @@ export function OnboardingFlow({
                 </p>
               </div>
               <Button>
-                <Link href="/">Go to Home</Link>
+                <Link href={ROUTES.LOGIN}>Go to Login</Link>
               </Button>
             </div>
           )}
         </div>
       </div>
+
+      {currentStep !== OnboardingStepValue.COMPLETED && (
+        <div className="text-center text-sm text-muted-foreground">
+          Already have an account?{" "}
+          <Link
+            href={ROUTES.LOGIN}
+            className="text-brand font-medium hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm"
+          >
+            Login
+          </Link>
+        </div>
+      )}
     </div>
   );
 }

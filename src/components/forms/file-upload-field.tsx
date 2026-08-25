@@ -19,6 +19,7 @@ import { type UploadContext } from "@/lib/upload/types";
 import { useUpload } from "@/hooks/use-upload";
 import { uploadService } from "@/services/upload.service";
 import * as React from "react";
+import Image from "next/image";
 import { UploadCloud, XIcon } from "lucide-react";
 import { toast } from "sonner";
 
@@ -43,6 +44,7 @@ interface FileUploadFieldOwnProps {
   existingImageUrl?: string;
   existingPublicId?: string | null;
   onPublicIdChange?: (publicId: string | null) => void;
+  isOnboarding?: boolean;
 }
 
 type FileUploadFieldProps<TFieldValues extends FieldValues> =
@@ -67,6 +69,7 @@ export function FileUploadField<TFieldValues extends FieldValues>({
   existingImageUrl,
   existingPublicId,
   onPublicIdChange,
+  isOnboarding,
 }: FileUploadFieldProps<TFieldValues>) {
   const {
     field,
@@ -79,7 +82,7 @@ export function FileUploadField<TFieldValues extends FieldValues>({
 
   const [files, setFiles] = React.useState<File[]>([]);
 
-  const { upload } = useUpload({ context, type });
+  const { upload } = useUpload({ context, type, isOnboarding });
 
   // Track uploaded publicIds keyed by stable file identifier.
   // Using a Record instead of a Map<File, string> avoids issues with
@@ -224,9 +227,12 @@ export function FileUploadField<TFieldValues extends FieldValues>({
       {/* Existing image preview — shown when no new file has been uploaded */}
       {showExistingImage && (
         <div className="relative overflow-hidden rounded-lg border">
-          <img
+          <Image
             src={existingImageUrl}
             alt="Uploaded ID card"
+            width={600}
+            height={192}
+            unoptimized
             className="h-48 w-full object-contain"
           />
           <button

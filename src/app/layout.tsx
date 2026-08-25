@@ -37,23 +37,32 @@ export default function RootLayout({
     <html
       lang="en"
       className={cn(
-        "h-full",
-        "antialiased",
+        "h-full antialiased",
         geistSans.variable,
         geistMono.variable,
         "font-sans",
+        "scrollbar-thin",
+        "scrollbar-track-gray-100",
+        "scrollbar-thumb-blue-500",
         inter.variable,
       )}
       suppressHydrationWarning={true}
     >
-      <body>
+      <head>
+        <link
+          rel="stylesheet"
+          type="text/css"
+          href="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/devicon.min.css"
+        />
+      </head>
+      <body className="h-full" suppressHydrationWarning>
         <ThemeProvider
           attribute="class"
           defaultTheme="light"
           enableSystem={false}
           disableTransitionOnChange
         >
-          <main className="max-w-360 mx-auto p-3 sm:p-4">{children}</main>
+          <main className="h-full">{children}</main>
           <Toaster richColors={true} />
         </ThemeProvider>
       </body>

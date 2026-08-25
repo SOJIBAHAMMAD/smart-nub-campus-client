@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { ShieldCheck, Loader2 } from "lucide-react";
 import AuthInfo from "../_components/AuthInfo";
 import { VerifyEmailForm } from "../onboarding/_components/VerifyEmailForm";
+import ROUTES from "@/constants/routes";
+import { Hyperlink } from "@/components/ui/hyperlink";
 
 export default function VerifyEmailPage() {
   const router = useRouter();
@@ -20,7 +22,6 @@ export default function VerifyEmailPage() {
     const source = sessionStorage.getItem("pending_verification_source");
 
     if (pendingEmail) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- Reading client-side sessionStorage after hydration requires setState in effect
       setInitialEmail(pendingEmail);
       if (source === "login") {
         sessionStorage.removeItem("pending_verification_source");
@@ -33,7 +34,7 @@ export default function VerifyEmailPage() {
   }, []);
 
   const handleSuccess = useCallback(() => {
-    router.push("/auth/login?verified=true");
+    router.push(`${ROUTES.LOGIN}?verified=true`);
   }, [router]);
 
   if (!ready) {
@@ -49,7 +50,7 @@ export default function VerifyEmailPage() {
 
   return (
     <main>
-      <div className="grid overflow-hidden rounded-2xl sm:rounded-[32px] border bg-[url('/images/nub-campus.png')] dark:bg-[url('/images/nub-campus-night.png')] bg-cover bg-center bg-no-repeat text-card-foreground shadow-xl lg:grid-cols-2">
+      <div className="grid overflow-hidden rounded-2xl sm:rounded-[32px] border bg-campus text-card-foreground shadow-xl lg:grid-cols-2">
         <AuthInfo variant="verify-email" />
 
         <section className="flex items-center justify-center py-5 sm:py-8 px-4 sm:px-6">
@@ -75,6 +76,13 @@ export default function VerifyEmailPage() {
                 isEmbedded={false}
                 onSuccess={handleSuccess}
               />
+            </div>
+
+            <div className="mt-6 text-center text-sm">
+              Already Verified?{" "}
+              <Hyperlink href={ROUTES.LOGIN} className="text-brand">
+                Back to Login
+              </Hyperlink>
             </div>
           </div>
         </section>

@@ -5,7 +5,7 @@
 
 import { env } from "@/env";
 
-const API_URL = env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
+const API_URL = env.NEXT_PUBLIC_API_URL;
 
 interface ApiResponsePromise<T> {
   data: T | undefined;
@@ -56,6 +56,21 @@ export const apiClient = {
     apiFetch<T>(endpoint, {
       method: "POST",
       body: JSON.stringify(body),
+    }),
+  patch: <T>(endpoint: string, body: unknown) =>
+    apiFetch<T>(endpoint, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+  put: <T>(endpoint: string, body: unknown) =>
+    apiFetch<T>(endpoint, {
+      method: "PUT",
+      body: JSON.stringify(body),
+    }),
+  del: <T>(endpoint: string, body?: unknown) =>
+    apiFetch<T>(endpoint, {
+      method: "DELETE",
+      ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
     }),
   postForm: <T>(endpoint: string, formData: FormData) =>
     apiFetch<T>(endpoint, { method: "POST", body: formData }),

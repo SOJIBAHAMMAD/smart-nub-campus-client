@@ -128,6 +128,8 @@ type PasswordInputFieldProps = Omit<
 > & {
   showToggle?: boolean;
   toggleLabel?: { show: string; hide: string };
+  placeholder?: string;
+  autoComplete?: string;
   className?: string;
 };
 
@@ -138,6 +140,8 @@ type PasswordInputFieldProps = Omit<
 function PasswordInputField({
   showToggle = true,
   toggleLabel = { show: "Show password", hide: "Hide password" },
+  placeholder = "Enter your password",
+  autoComplete = "current-password",
   className,
   ...props
 }: PasswordInputFieldProps) {
@@ -153,9 +157,9 @@ function PasswordInputField({
         type={ctx.visible ? "text" : "password"}
         value={ctx.value}
         onChange={(e) => ctx.setValue(e.target.value)}
-        placeholder="Enter your password"
+        placeholder={placeholder}
         disabled={ctx.disabled}
-        autoComplete="current-password"
+        autoComplete={autoComplete}
         {...props}
       />
       {showToggle && (

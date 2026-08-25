@@ -32,6 +32,32 @@ const uploadService = {
     return result;
   },
 
+  async uploadForOnboarding(
+    file: File,
+    context: string,
+    type?: "image" | "video" | "raw",
+  ): Promise<UploadResult> {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("context", context);
+    if (type) {
+      formData.append("type", type);
+    }
+
+    const response = await apiClient.postForm<ApiResponse<UploadResult>>(
+      "/upload/onboarding",
+      formData,
+    );
+
+    const result = response.data?.data;
+
+    if (!result?.url) {
+      throw new Error("Upload failed - no URL returned from server");
+    }
+
+    return result;
+  },
+
   async delete(publicId: string): Promise<void> {
     const response = await apiClient.post<ApiResponse<null>>("/upload/delete", {
       publicId,

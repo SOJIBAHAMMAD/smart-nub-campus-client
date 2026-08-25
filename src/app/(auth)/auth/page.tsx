@@ -8,11 +8,12 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import AuthInfo from "./_components/AuthInfo";
+import ROUTES from "@/constants/routes";
 
 export default function AuthPage() {
   return (
     <main>
-      <div className="grid overflow-hidden rounded-2xl sm:rounded-[32px] border bg-[url('/images/nub-campus.png')] dark:bg-[url('/images/nub-campus-night.png')] bg-cover bg-center bg-no-repeat text-card-foreground shadow-xl lg:grid-cols-2">
+      <div className="grid overflow-hidden rounded-2xl sm:rounded-[32px] border bg-campus text-card-foreground shadow-xl lg:grid-cols-2">
         {/* Left Section: Branding & Features */}
         <AuthInfo variant="default" />
         {/* Right Section: Interactive Onboarding Actions */}
@@ -32,7 +33,7 @@ export default function AuthPage() {
 
             <div className="mt-5 sm:mt-8 space-y-4 sm:space-y-6">
               {/* New Student Card */}
-              <Card className="rounded-2xl sm:rounded-3xl bg-brand/5 hover:bg-brand/6 border-border [--card-spacing:--spacing(3)] sm:[--card-spacing:--spacing(6)]">
+              <Card className="rounded-2xl pb-4 sm:rounded-3xl bg-brand/5 hover:bg-brand/6 border-border [--card-spacing:--spacing(3)] sm:[--card-spacing:--spacing(6)]">
                 <CardHeader className="flex flex-row gap-3 sm:gap-5 items-start">
                   <div className="flex h-11 w-11 sm:h-16 sm:w-16 shrink-0 items-center justify-center rounded-full bg-brand-light dark:bg-primary/20">
                     <User className="h-5 w-5 sm:h-8 sm:w-8 text-brand dark:text-primary" />
@@ -49,7 +50,7 @@ export default function AuthPage() {
                       nativeButton={false}
                       className="mt-2.5 sm:mt-5 group w-full sm:w-auto px-5 sm:px-10"
                       render={
-                        <Link href="/auth/onboarding">
+                        <Link href={ROUTES.ONBOARDING}>
                           Verify My Identity{" "}
                           <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform duration-300 h-4 w-4" />
                         </Link>
@@ -60,7 +61,7 @@ export default function AuthPage() {
               </Card>
 
               {/* Verified Student Card */}
-              <Card className="rounded-2xl sm:rounded-3xl bg-success/1 hover:bg-success/4 border-border [--card-spacing:--spacing(3)] sm:[--card-spacing:--spacing(6)]">
+              <Card className="rounded-2xl pb-4 sm:rounded-3xl bg-success/1 hover:bg-success/4 border-border [--card-spacing:--spacing(3)] sm:[--card-spacing:--spacing(6)]">
                 <CardHeader className="flex flex-row gap-3 sm:gap-5 items-start">
                   <div className="flex h-11 w-11 sm:h-16 sm:w-16 shrink-0 items-center justify-center rounded-full bg-success-bg dark:bg-success/20">
                     <ShieldCheck className="h-5 w-5 sm:h-8 sm:w-8 text-success" />
@@ -77,7 +78,7 @@ export default function AuthPage() {
                       nativeButton={false}
                       className="mt-2.5 sm:mt-5 border border-success w-full sm:w-auto px-5 sm:px-10"
                       render={
-                        <Link href="/auth/login">
+                        <Link href={ROUTES.LOGIN}>
                           Login to My Account{" "}
                           <ArrowRight className="ml-2 h-4 w-4" />
                         </Link>
